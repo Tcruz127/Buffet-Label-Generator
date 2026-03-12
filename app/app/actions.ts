@@ -43,7 +43,7 @@ export async function copySheet(formData: FormData) {
       settings: original.settings ?? undefined,
       logoUrl: original.logoUrl,
       items: {
-        create: original.items.map((item) => ({
+        create: original.items.map((item: any) => ({
           positionIndex: item.positionIndex,
           foodName: item.foodName,
           diets: item.diets ?? undefined,
