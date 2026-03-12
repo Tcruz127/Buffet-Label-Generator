@@ -83,7 +83,7 @@ export default async function SheetEditorPage({ params }: PageProps) {
       title: item.foodName ?? "",
       description: "",
       diets: Array.isArray(item.diets)
-        ? item.diets.filter((diet): diet is string => typeof diet === "string")
+        ? item.diets.filter((diet: any) => typeof diet === "string")
         : [],
     })),
   };
