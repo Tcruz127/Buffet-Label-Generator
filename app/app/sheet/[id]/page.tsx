@@ -55,7 +55,7 @@ export default async function SheetPage({ params }: PageProps) {
         <p className="mb-4 font-semibold">Labels</p>
 
         <div className="space-y-2">
-          {sheet.items.map((item) => (
+          {sheet.items.map((item: any) => (
             <div key={item.id} className="rounded border p-3">
               <p className="font-medium">Label {item.positionIndex}</p>
               <p className="text-sm text-gray-600">
