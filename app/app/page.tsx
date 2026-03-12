@@ -87,7 +87,7 @@ export default async function AppDashboardPage() {
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {user.sheets.map((sheet) => (
+            {user.sheets.map((sheet: any) => (
               <div
                 key={sheet.id}
                 className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm"
