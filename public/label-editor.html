@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Buffet Label Generator Pro v15</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#f4f4f4;color:#222;overflow:auto}
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;height:48px}
+.hamburger{width:44px;height:44px;border:1px solid #cfcfcf;background:#fff;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+h1{margin:0;font-size:28px;flex:1}
+.container.side-view{display:grid;
+  grid-template-columns:280px minmax(0,1fr);
+  gap:14px;
+  align-items:stretch;
+  height:calc(100vh - 82px);
+  min-height:calc(100vh - 82px);}
+.container.top-view{display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr;gap:14px;min-height:calc(100vh - 82px)}
+.panel{background:#fff;padding:16px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.controls-panel{overflow:auto;
+  height:100%;}
+.preview-panel{overflow:auto;
+  height:100%;
+  position:relative;}
+.ribbon{display:none}
+.container.top-view .ribbon{display:flex;flex-direction:column;height:100%}
+.ribbon-tabs{display:flex;gap:8px;padding:8px 10px 0;border-bottom:1px solid #ddd;background:#f8f8f8}
+.ribbon-tab{width:auto;padding:8px 14px;margin:0;border-radius:8px 8px 0 0;border:1px solid #d5d5d5;border-bottom:none;background:#efefef;cursor:pointer}
+.ribbon-tab.active{background:#fff;font-weight:bold}
+.ribbon-content{flex:1;overflow-x:auto;overflow-y:hidden;background:#fff;padding:10px}
+.ribbon-panel{display:none;gap:12px;align-items:stretch;min-width:max-content}
+.ribbon-panel.active{display:flex}
+.ribbon-group{min-width:180px;max-width:220px;border-right:1px solid #e5e5e5;padding-right:12px}
+.ribbon-group:last-child{border-right:none}
+.ribbon-group-title{font-size:11px;color:#666;margin-top:8px;text-align:center}
+.ribbon .compact-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ribbon label{display:block;margin-top:6px;font-size:12px;font-weight:bold}
+.ribbon input,.ribbon select,.ribbon textarea,.ribbon button{font-size:12px;padding:6px;margin-top:3px}
+.ribbon input[type="color"]{height:32px;padding:2px}
+.ribbon .align-grid{gap:4px;margin-top:4px}
+.ribbon .align-grid button{padding:6px 3px;font-size:10px}
+.ribbon .food-strip{display:grid;grid-auto-flow:column;grid-auto-columns:190px;gap:8px}
+.ribbon .food-item{padding:8px}
+.ribbon .food-item h4{font-size:12px;margin:0 0 6px 0}
+.ribbon .food-item .inline-label{font-size:11px;margin-top:6px}
+.ribbon .help{font-size:10px;line-height:1.2}
+.ribbon .mini-row{gap:6px}
+.ribbon textarea{min-height:58px;resize:none}
+.ribbon select[multiple]{min-height:78px}
+.controls label,.sidebar label{display:block;margin-top:10px;font-weight:bold}
+input,select,textarea,button{width:100%;padding:8px;margin-top:4px;font:inherit}
+input[type="color"]{padding:4px;height:42px}
+input[type="range"]{padding:0}
+button{cursor:pointer;border:1px solid #cfcfcf;background:#fafafa;border-radius:6px}
+button:hover{background:#f0f0f0}
+.food-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px;padding-right:4px}
+.food-item{border:1px solid #e1e1e1;border-radius:8px;padding:10px;background:#fcfcfc}
+.food-item h4{margin:0 0 8px 0;font-size:14px}
+.food-item .inline-label{font-size:12px;font-weight:bold;margin-top:8px;display:block}
+.help{font-size:12px;color:#666;margin-top:4px}
+.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.align-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.align-grid button{padding:10px 6px;font-size:12px}
+.mini-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.badge{font-size:12px;color:#666;white-space:nowrap}
+.sheet-preview{margin:0 auto 18px;
+  width:fit-content;
+  zoom:.90;}
+.sheet-title{font-size:18px;font-weight:bold;margin:0 0 10px 0}
+.labels{display:grid;
+  grid-template-columns:repeat(2,3.5in);
+  grid-template-rows:repeat(5,2in);
+  column-gap:.5in;
+  row-gap:0;
+  justify-content:center;}
+.sheet-event-name{font-weight:bold;margin-bottom:14px;font-size:22px}
+.doc-status{font-size:13px;color:#666;margin-bottom:8px}
+.label{width:3.5in;height:2in;border:1px solid #cfcfcf;text-align:center;padding:8px;background:white;overflow:hidden;position:relative;display:block}
+.label-content{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.label-logo{position:absolute;object-fit:contain;cursor:move;user-select:none;-webkit-user-drag:none;z-index:2}
+.dish-name{line-height:1.1;word-break:break-word;position:relative;z-index:1}
+.allergen-line{margin-top:5px;line-height:1.15;word-break:break-word;position:relative;z-index:1}
+.preview-panel h3{margin-top:0}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:20}
+.sidebar-overlay.open{display:block}
+.sidebar{position:fixed;top:0;left:0;width:320px;max-width:90vw;height:100vh;background:#fff;box-shadow:2px 0 18px rgba(0,0,0,.2);padding:18px;overflow:auto;transform:translateX(-102%);transition:transform .25s ease;z-index:21}
+.sidebar.open{transform:translateX(0)}
+.sidebar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sidebar-title{font-size:20px;font-weight:bold}
+.close-btn{width:40px;height:40px;font-size:22px;border:1px solid #cfcfcf;background:#fff;border-radius:8px;cursor:pointer}
+.sidebar .toolbar{grid-template-columns:1fr}
+.view-status{font-size:12px;color:#666;margin-top:4px}
+@media print{
+  @page{
+    size: Letter portrait;
+    margin: 0.5in;
+  }
+
+  html,body{
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .topbar,
+  .sidebar,
+  .sidebar-overlay,
+  .controls-panel,
+  .close-btn,
+  button,
+  input,
+  select,
+  textarea,
+  .toolbar,
+  .view-status,
+  .help,
+  .badge,
+  .ribbon,
+  .sidebar-header,
+  #overlay,
+  #sidebar {
+    display: none !important;
+  }
+
+  .container,
+  .container.side-view,
+  .container.top-view{
+    display: block !important;
+    height: auto !important;
+  }
+
+  .panel{
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+
+  .preview-panel{
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  .preview-panel h3,
+  .doc-status,
+  .sheet-event-name,
+  .sheet-title{
+    display: none !important;
+  }
+
+  #previewSheets{
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .sheet-preview{
+  page-break-after: always;
+  break-after: page;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 10in !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+  .sheet-preview:last-child{
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .labels{
+    display:grid;
+  grid-template-columns:repeat(2,3.5in);
+  grid-template-rows:repeat(5,2in);
+  column-gap:.5in;
+  row-gap:0;
+  justify-content:center;
+  }
+
+  .label{
+    width: 3.5in !important;
+    height: 2in !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    overflow: hidden !important;
+  }
+
+  .label-content{
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .dish-name,
+  .allergen-line{
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .label-logo{
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}media print{
+  @page{size:Letter portrait;margin:0.5in}
+  html,body{background:white;padding:0;margin:0;overflow:visible}
+  .topbar,.sidebar,.sidebar-overlay,.controls-panel{display:none!important}
+  .container,.container.side-view,.container.top-view{display:block;height:auto}
+  .preview-panel{box-shadow:none!important;border:none!important;padding:0!important;margin:0!important;background:white!important;height:auto!important;overflow:visible!important;position:static!important}
+  .preview-panel h3,.doc-status,.sheet-event-name,.sheet-title{display:none!important}
+  .sheet-preview{page-break-after:always;break-after:page;margin:0;padding:0;height:9in;overflow:hidden}
+  .labels{display:grid!important;grid-template-columns:repeat(2,3.5in);grid-template-rows:repeat(5,2in);column-gap:.5in;row-gap:0;justify-content:start}
+  .label{border:none!important;outline:none!important;box-shadow:none!important;break-inside:avoid;page-break-inside:avoid}
+  .print-controls{
+  margin-top:10px;
+}
+
+.print-instructions{
+  margin-top:8px;
+  padding:8px 10px;
+  font-size:12px;
+  background:#f5f5f5;
+  border-radius:6px;
+  line-height:1.4;
+  color:#444;
+}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <h1>Buffet Label Generator</h1>
+</div>
+
+<div id="overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar-header"><div class="sidebar-title">Menu</div><button class="close-btn" onclick="closeSidebar()">×</button></div>
+  <label>Current File</label><div id="currentFileName" class="doc-status">Unsaved sheet</div>
+  <label>View</label>
+  <div class="toolbar">
+    <button onclick="setViewMode('side')">Side by Side View</button>
+    <button onclick="setViewMode('top')">Top Editing View</button>
+  </div>
+  <div id="viewStatus" class="view-status"></div>
+  <div class="toolbar">
+   <button onclick="newLabelSheet()">New Label Sheet</button>
+<button onclick="saveSheet()">Save</button>
+<button onclick="saveSheetAs()">Save As</button>
+<button onclick="loadBrowserSave()">Open Browser Save</button>
+<button onclick="document.getElementById('sheetFileInput').click()">Open File</button>
+<button onclick="generateLabels()">Refresh Preview</button>
+
+<div class="print-controls">
+  <button onclick="window.print()">Print / Save PDF</button>
+  <button onclick="printAlignmentTestSheet()">Print Alignment Test Sheet</button>
+
+  <div class="print-instructions">
+    For best results when printing Avery labels:
+    <br>
+    • Set scale to <strong>100%</strong>
+    <br>
+    • Do <strong>NOT</strong> select "Fit to Page"
+    <br>
+    • Use standard <strong>Letter paper</strong>
+  </div>
+</div>
+  </div>
+</aside>
+
+<div id="mainContainer" class="container side-view">
+  <div class="panel controls controls-panel">
+    <div class="ribbon">
+      <div class="ribbon-tabs">
+        <button class="ribbon-tab active" onclick="showRibbonTab('home')">Home</button>
+        <button class="ribbon-tab" onclick="showRibbonTab('logo')">Logo</button>
+        <button class="ribbon-tab" onclick="showRibbonTab('labels')">Labels</button>
+        <button class="ribbon-tab" onclick="showRibbonTab('menu')">Menu</button>
+      </div>
+      <div class="ribbon-content">
+        <div id="ribbon-home" class="ribbon-panel active">
+          <div class="ribbon-group">
+            <label>Event Name</label><input type="text" id="eventNameRibbon" placeholder="Smith Wedding Buffet" oninput="syncField('eventNameRibbon','eventName'); generateLabels();" />
+            <div class="compact-row"><button onclick="addTenLabels()">Add 10</button><button onclick="removeTenLabels()">Remove 10</button></div>
+            <div class="ribbon-group-title">Sheet</div>
+          </div>
+          <div class="ribbon-group">
+            <label>Main Font</label><select id="fontSelectRibbon" onchange="syncField('fontSelectRibbon','fontSelect'); generateLabels();"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Georgia</option><option>Verdana</option></select>
+            <div class="compact-row">
+              <div><label>Size</label><input id="fontSizeRibbon" type="number" value="20" min="8" max="48" oninput="syncField('fontSizeRibbon','fontSize'); generateLabels();" /></div>
+              <div><label>Color</label><input id="textColorRibbon" type="color" value="#000000" oninput="syncField('textColorRibbon','textColor'); generateLabels();" /></div>
+            </div>
+            <div class="ribbon-group-title">Main Font</div>
+          </div>
+          <div class="ribbon-group">
+            <label>Allergen Font</label><select id="allergenFontRibbon" onchange="syncField('allergenFontRibbon','allergenFont'); generateLabels();"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Georgia</option><option>Verdana</option></select>
+            <div class="compact-row">
+              <div><label>Size</label><input id="allergenSizeRibbon" type="number" value="12" min="8" max="30" oninput="syncField('allergenSizeRibbon','allergenSize'); generateLabels();" /></div>
+              <div><label>Color</label><input id="allergenColorRibbon" type="color" value="#000000" oninput="syncField('allergenColorRibbon','allergenColor'); generateLabels();" /></div>
+            </div>
+            <div class="ribbon-group-title">Allergen Font</div>
+          </div>
+          <div class="ribbon-group">
+            <label>Label Background</label><input id="bgColorRibbon" type="color" value="#ffffff" oninput="syncField('bgColorRibbon','bgColor'); generateLabels();" />
+            <div class="ribbon-group-title">Colors</div>
+          </div>
+        </div>
+        <div id="ribbon-logo" class="ribbon-panel">
+          <div class="ribbon-group">
+            <label>Upload Logo</label><input type="file" id="logoUploadRibbon" accept="image/*" onchange="handleRibbonLogoUpload(event)" />
+            <label>Logo Size</label>
+            <div class="mini-row"><input type="range" id="logoSizeRibbon" min="20" max="140" value="55" oninput="syncLogoSize(this.value)" /><div class="badge"><span id="logoSizeValueRibbon">55</span> px</div></div>
+            <div class="ribbon-group-title">Logo</div>
+          </div>
+          <div class="ribbon-group">
+            <label>Alignment</label>
+            <div class="align-grid">
+              <button type="button" onclick="setLogoAlignment('top-left')">Top Left</button>
+              <button type="button" onclick="setLogoAlignment('top-center')">Top Center</button>
+              <button type="button" onclick="setLogoAlignment('top-right')">Top Right</button>
+              <button type="button" onclick="setLogoAlignment('middle-left')">Mid Left</button>
+              <button type="button" onclick="setLogoAlignment('center')">Center</button>
+              <button type="button" onclick="setLogoAlignment('middle-right')">Mid Right</button>
+              <button type="button" onclick="setLogoAlignment('bottom-left')">Bot Left</button>
+              <button type="button" onclick="setLogoAlignment('bottom-center')">Bot Center</button>
+              <button type="button" onclick="setLogoAlignment('bottom-right')">Bot Right</button>
+            </div>
+            <div class="ribbon-group-title">Position</div>
+          </div>
+        </div>
+        <div id="ribbon-labels" class="ribbon-panel">
+          <div class="ribbon-group">
+            <div id="foodInputsRibbon" class="ribbon-food-strip"></div>
+            <div class="ribbon-group-title">Label Editors</div>
+          </div>
+        </div>
+        <div id="ribbon-menu" class="ribbon-panel">
+          <div class="ribbon-group">
+            <label>Paste Menu</label><textarea id="menuPasteRibbon" placeholder="Paste menu items each on a new line" oninput="syncField('menuPasteRibbon','menuPaste')"></textarea>
+            <div class="compact-row"><button onclick="autoFillMenu()">Auto Fill</button><button onclick="clearFoods()">Clear</button></div>
+            <div class="ribbon-group-title">Menu Tools</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-inner">
+      <div class="controls-block">
+        <label>Event Name</label><input type="text" id="eventName" placeholder="Smith Wedding Buffet" />
+        <div class="help">Each sheet contains 10 labels. Use the buttons below to add or remove full sheets.</div>
+        <div class="toolbar">
+          <button onclick="addTenLabels()">Add 10 Labels</button>
+          <button onclick="removeTenLabels()">Remove 10 Labels</button>
+        </div>
+      </div>
+      <div class="controls-block">
+        <label>Upload Logo</label><input type="file" id="logoUpload" accept="image/*" />
+        <label>Logo Size</label>
+        <div class="mini-row"><input type="range" id="logoSize" min="20" max="140" value="55" /><div class="badge"><span id="logoSizeValue">55</span> px</div></div>
+        <div class="help">Drag the logo directly inside any label preview to move its position.</div>
+        <label>Logo Alignment Buttons</label>
+        <div class="align-grid">
+          <button type="button" onclick="setLogoAlignment('top-left')">Top Left</button>
+          <button type="button" onclick="setLogoAlignment('top-center')">Top Center</button>
+          <button type="button" onclick="setLogoAlignment('top-right')">Top Right</button>
+          <button type="button" onclick="setLogoAlignment('middle-left')">Middle Left</button>
+          <button type="button" onclick="setLogoAlignment('center')">Center</button>
+          <button type="button" onclick="setLogoAlignment('middle-right')">Middle Right</button>
+          <button type="button" onclick="setLogoAlignment('bottom-left')">Bottom Left</button>
+          <button type="button" onclick="setLogoAlignment('bottom-center')">Bottom Center</button>
+          <button type="button" onclick="setLogoAlignment('bottom-right')">Bottom Right</button>
+        </div>
+      </div>
+      <div class="controls-block">
+        <label>Main Font</label><select id="fontSelect"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Georgia</option><option>Verdana</option></select>
+        <label>Main Font Size</label><input id="fontSize" type="number" value="20" min="8" max="48" />
+        <label>Main Font Color</label><input id="textColor" type="color" value="#000000" />
+        <label>Allergen Font</label><select id="allergenFont"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Georgia</option><option>Verdana</option></select>
+        <label>Allergen Font Size</label><input id="allergenSize" type="number" value="12" min="8" max="30" />
+        <label>Allergen Font Color</label><input id="allergenColor" type="color" value="#000000" />
+        <label>Label Background</label><input id="bgColor" type="color" value="#ffffff" />
+      </div>
+      <div class="controls-block">
+        <label>Paste Menu (auto fill labels)</label><textarea id="menuPaste" rows="6" placeholder="Paste menu items each on a new line"></textarea>
+        <div class="toolbar"><button onclick="autoFillMenu()">Auto Fill Labels</button><button onclick="clearFoods()">Clear Sheet</button></div>
+        <label>Menu Items & Dietary Tags</label><div class="help">Each label has its own dietary dropdown. Hold Ctrl (or Cmd on Mac) to select multiple items.</div>
+      </div>
+      <div id="foodInputs" class="food-grid controls-block"></div>
+    </div>
+  </div>
+
+  <div class="panel preview-panel">
+    <h3>Preview</h3>
+    <div id="sheetEventNamePreview" class="sheet-event-name"></div>
+    <div id="sheetCountText" class="doc-status"></div>
+    <div id="previewSheets"></div>
+  </div>
+</div>
+
+<input type="file" id="sheetFileInput" accept=".json" style="display:none;" />
+
+<script>
+let logoData=null,logoSettings={x:8,y:8,size:55},currentSaveName="",hasBrowserSave=false,totalLabels=10,viewMode="side";
+const LABEL_WIDTH=336,LABEL_HEIGHT=192,DIET_OPTIONS=[{value:"Gluten Free",icon:"🌾"},{value:"Dairy Free",icon:"🥛"},{value:"Egg Free",icon:"🥚"},{value:"Soy Free",icon:"🫘"},{value:"Nut Free",icon:"🥜"},{value:"Shellfish Free",icon:"🦐"},{value:"Sesame Free",icon:"🫓"},{value:"Vegan",icon:"🌱"},{value:"Vegetarian",icon:"🥬"}];
+
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("overlay").classList.toggle("open")}
+function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("overlay").classList.remove("open")}
+function sanitizeName(v){let n=(v||"buffet-sheet").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");return n||"buffet-sheet"}
+function getFoodValue(i){const el=document.getElementById("food"+i);return el?el.value:""}
+function getSuggestedSheetName(){return sanitizeName(document.getElementById("eventName").value||getFoodValue(1)||"buffet-sheet")}
+function updateCurrentFileName(){document.getElementById("currentFileName").textContent=currentSaveName||"Unsaved sheet"}
+function ensureMultipleOfTen(n){n=Math.max(10,Number(n)||10);return Math.ceil(n/10)*10}
+function syncField(fromId,toId){const a=document.getElementById(fromId),b=document.getElementById(toId); if(a&&b) b.value=a.value}
+function syncLogoSize(v){document.getElementById("logoSize").value=v;document.getElementById("logoSizeRibbon").value=v;document.getElementById("logoSizeValue").textContent=v;document.getElementById("logoSizeValueRibbon").textContent=v;logoSettings.size=Number(v);generateLabels()}
+function handleRibbonLogoUpload(e){const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{logoData=ev.target.result; generateLabels()}; r.readAsDataURL(f)}
+function showRibbonTab(name){
+  document.querySelectorAll(".ribbon-tab").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".ribbon-panel").forEach(el=>el.classList.remove("active"));
+  const order={home:0,logo:1,labels:2,menu:3};
+  const tabs=document.querySelectorAll(".ribbon-tab");
+  if(tabs[order[name]]) tabs[order[name]].classList.add("active");
+  const panel=document.getElementById("ribbon-"+name); if(panel) panel.classList.add("active");
+}
+function setViewMode(mode){
+  viewMode=mode;
+  const c=document.getElementById("mainContainer");
+  c.classList.remove("side-view","top-view");
+  c.classList.add(mode==="top"?"top-view":"side-view");
+  document.getElementById("viewStatus").textContent=mode==="top"?"Current view: Top Editing View":"Current view: Side by Side View";
+  closeSidebar();
+  syncRibbonFields();
+}
+
+document.getElementById("logoUpload").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{logoData=ev.target.result;generateLabels()};r.readAsDataURL(f)});
+document.getElementById("sheetFileInput").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const data=JSON.parse(ev.target.result);applySheetData(data);currentSaveName=f.name;hasBrowserSave=false;updateCurrentFileName();alert("Sheet opened successfully.");closeSidebar()}catch(err){alert("That file could not be loaded. Please choose a valid saved sheet file.")}};r.readAsText(f)});
+document.getElementById("logoSize").addEventListener("input",e=>{syncLogoSize(e.target.value)});
+document.getElementById("eventName").addEventListener("input",()=>{syncRibbonFields();generateLabels()});
+["fontSelect","fontSize","textColor","allergenFont","allergenSize","allergenColor","bgColor","menuPaste"].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener("input",()=>{syncRibbonFields();generateLabels()});
+  el.addEventListener("change",()=>{syncRibbonFields();generateLabels()});
+});
+
+const foodContainer=document.getElementById("foodInputs");
+const foodRibbon=document.getElementById("foodInputsRibbon");
+
+function syncRibbonFields(){
+  const map=[["eventName","eventNameRibbon"],["fontSelect","fontSelectRibbon"],["fontSize","fontSizeRibbon"],["textColor","textColorRibbon"],["allergenFont","allergenFontRibbon"],["allergenSize","allergenSizeRibbon"],["allergenColor","allergenColorRibbon"],["bgColor","bgColorRibbon"],["menuPaste","menuPasteRibbon"]];
+  map.forEach(([a,b])=>{const ea=document.getElementById(a),eb=document.getElementById(b); if(ea&&eb) eb.value=ea.value;});
+  const s=logoSettings.size;
+  document.getElementById("logoSize").value=s;
+  document.getElementById("logoSizeRibbon").value=s;
+  document.getElementById("logoSizeValue").textContent=s;
+  document.getElementById("logoSizeValueRibbon").textContent=s;
+}
+
+function createFoodEditorCard(i,prefix){
+  const w=document.createElement("div");
+  w.className="food-item";
+  w.innerHTML='<h4>Label '+i+'</h4><input placeholder="Food name" id="'+prefix+'food'+i+'"><label class="inline-label">Dietary dropdown</label><select id="'+prefix+'diet'+i+'" multiple size="5"></select><div class="help">Select one or more dietary notes for this label.</div>';
+  return w;
+}
+function attachFoodEvents(i,prefix,isRibbon){
+  const food=document.getElementById(prefix+"food"+i);
+  const diet=document.getElementById(prefix+"diet"+i);
+  DIET_OPTIONS.forEach(opt=>{const o=document.createElement("option");o.value=opt.value;o.textContent=opt.icon+" "+opt.value;diet.appendChild(o)});
+  if(isRibbon){
+    food.addEventListener("input",()=>{document.getElementById("food"+i).value=food.value; generateLabels();});
+    diet.addEventListener("change",()=>{syncRibbonDietToMain(i); generateLabels();});
+  } else {
+    food.addEventListener("input",()=>{const rf=document.getElementById("r_food"+i); if(rf) rf.value=food.value; generateLabels();});
+    diet.addEventListener("change",()=>{syncMainDietToRibbon(i); generateLabels();});
+  }
+}
+function createFoodRows(){
+  foodContainer.innerHTML="";
+  foodRibbon.innerHTML="";
+  for(let i=1;i<=totalLabels;i++){
+    foodContainer.appendChild(createFoodEditorCard(i,""));
+    foodRibbon.appendChild(createFoodEditorCard(i,"r_"));
+  }
+  for(let i=1;i<=totalLabels;i++){
+    attachFoodEvents(i,"",false);
+    attachFoodEvents(i,"r_",true);
+  }
+}
+function collectLabelData(){
+  const labels=[];
+  for(let i=1;i<=totalLabels;i++){
+    const foodEl=document.getElementById("food"+i),dietEl=document.getElementById("diet"+i);
+    labels.push({food:foodEl?foodEl.value:"",diets:dietEl?Array.from(dietEl.selectedOptions).map(opt=>opt.value):[]});
+  }
+  return labels;
+}
+function restoreLabelData(data){
+  data.forEach((row,idx)=>{
+    const i=idx+1;
+    ["food"+i,"r_food"+i].forEach(id=>{const el=document.getElementById(id); if(el) el.value=row.food||"";});
+    ["diet"+i,"r_diet"+i].forEach(id=>{const el=document.getElementById(id); if(el) Array.from(el.options).forEach(opt=>{opt.selected=(row.diets||[]).includes(opt.value);});});
+  });
+}
+function syncRibbonDietToMain(i){
+  const a=document.getElementById("r_diet"+i),b=document.getElementById("diet"+i);
+  if(a&&b){const vals=Array.from(a.selectedOptions).map(o=>o.value); Array.from(b.options).forEach(o=>o.selected=vals.includes(o.value));}
+}
+function syncMainDietToRibbon(i){
+  const a=document.getElementById("diet"+i),b=document.getElementById("r_diet"+i);
+  if(a&&b){const vals=Array.from(a.selectedOptions).map(o=>o.value); Array.from(b.options).forEach(o=>o.selected=vals.includes(o.value));}
+}
+function setTotalLabels(newCount){
+  const oldData=collectLabelData();
+  totalLabels=ensureMultipleOfTen(newCount);
+  createFoodRows();
+  restoreLabelData(oldData);
+  syncRibbonFields();
+  generateLabels();
+}
+function addTenLabels(){setTotalLabels(totalLabels+10)}
+function removeTenLabels(){setTotalLabels(Math.max(10,totalLabels-10))}
+function autoFillMenu(){
+  const text=document.getElementById("menuPaste").value.trim(),items=text?text.split("\n").map(x=>x.trim()):[];
+  if(items.length>totalLabels){setTotalLabels(items.length);}
+  for(let i=1;i<=totalLabels;i++){
+    const v=items[i-1]||"";
+    document.getElementById("food"+i).value=v;
+    const rf=document.getElementById("r_food"+i); if(rf) rf.value=v;
+  }
+  generateLabels();
+}
+function clearFoods(){
+  document.getElementById("menuPaste").value="";
+  document.getElementById("eventName").value="";
+  currentSaveName="";
+  hasBrowserSave=false;
+  updateCurrentFileName();
+  totalLabels=10;
+  createFoodRows();
+  syncRibbonFields();
+  generateLabels();
+}
+function printAlignmentTestSheet() {
+  const previewSheets = document.getElementById("previewSheets");
+  if (!previewSheets) return;
+
+  const originalHtml = previewSheets.innerHTML;
+  const originalEventName = document.getElementById("sheetEventNamePreview").textContent;
+  const originalSheetCount = document.getElementById("sheetCountText").textContent;
+
+  const sheetWrap = document.createElement("div");
+  sheetWrap.className = "sheet-preview";
+
+  const container = document.createElement("div");
+  container.className = "labels";
+
+  for (let i = 1; i <= 10; i++) {
+    const div = document.createElement("div");
+    div.className = "label";
+    div.style.backgroundColor = "#ffffff";
+    div.style.border = "1px solid #999";
+
+    const content = document.createElement("div");
+    content.className = "label-content";
+    content.style.justifyContent = "center";
+    content.style.alignItems = "center";
+
+    const title = document.createElement("div");
+    title.className = "dish-name";
+    title.textContent = `TEST ${i}`;
+    title.style.fontFamily = "Arial";
+    title.style.fontSize = "28px";
+    title.style.fontWeight = "bold";
+
+    const sub = document.createElement("div");
+    sub.className = "allergen-line";
+    sub.textContent = "Alignment Check";
+    sub.style.fontFamily = "Arial";
+    sub.style.fontSize = "14px";
+    sub.style.marginTop = "8px";
+
+    content.appendChild(title);
+    content.appendChild(sub);
+    div.appendChild(content);
+    container.appendChild(div);
+  }
+
+  sheetWrap.appendChild(container);
+
+  previewSheets.innerHTML = "";
+  previewSheets.appendChild(sheetWrap);
+
+  document.getElementById("sheetEventNamePreview").textContent = "";
+  document.getElementById("sheetCountText").textContent = "Alignment Test Sheet";
+
+  window.print();
+
+  previewSheets.innerHTML = originalHtml;
+  document.getElementById("sheetEventNamePreview").textContent = originalEventName;
+  document.getElementById("sheetCountText").textContent = originalSheetCount;
+}
+function newLabelSheet(){saveSheetAs()}
+function getSelectedDietForLabel(index){const select=document.getElementById("diet"+index);return Array.from(select.selectedOptions).map(opt=>DIET_OPTIONS.find(d=>d.value===opt.value)).filter(Boolean)}
+function getSheetData(){return {eventName:document.getElementById("eventName").value,totalLabels:totalLabels,settings:{font:document.getElementById("fontSelect").value,fontSize:document.getElementById("fontSize").value,textColor:document.getElementById("textColor").value,allergenFont:document.getElementById("allergenFont").value,allergenSize:document.getElementById("allergenSize").value,allergenColor:document.getElementById("allergenColor").value,bgColor:document.getElementById("bgColor").value,logoSettings:logoSettings,viewMode:viewMode},logoData:logoData,menuPaste:document.getElementById("menuPaste").value,labels:collectLabelData()}}
+function applySheetData(data){
+  document.getElementById("eventName").value=data.eventName||"";
+  if(data.settings){
+    document.getElementById("fontSelect").value=data.settings.font||"Arial";
+    document.getElementById("fontSize").value=data.settings.fontSize||20;
+    document.getElementById("textColor").value=data.settings.textColor||"#000000";
+    document.getElementById("allergenFont").value=data.settings.allergenFont||"Arial";
+    document.getElementById("allergenSize").value=data.settings.allergenSize||12;
+    document.getElementById("allergenColor").value=data.settings.allergenColor||"#000000";
+    document.getElementById("bgColor").value=data.settings.bgColor||"#ffffff";
+    if(data.settings.logoSettings){logoSettings={x:Number(data.settings.logoSettings.x??8),y:Number(data.settings.logoSettings.y??8),size:Number(data.settings.logoSettings.size??55)}}
+    if(data.settings.viewMode){setViewMode(data.settings.viewMode)}
+  }
+  logoData=data.logoData||null;
+  document.getElementById("menuPaste").value=data.menuPaste||"";
+  totalLabels=ensureMultipleOfTen(data.totalLabels||(data.labels?data.labels.length:10));
+  createFoodRows();
+  restoreLabelData(data.labels||[]);
+  syncRibbonFields();
+  generateLabels();
+}
+function saveToBrowserSlot(slotName){localStorage.setItem("buffetSheetV15:"+slotName,JSON.stringify(getSheetData()))}
+function openBrowserSlot(slotName){const raw=localStorage.getItem("buffetSheetV15:"+slotName);if(!raw){alert("That browser save was not found.");return}applySheetData(JSON.parse(raw));currentSaveName=slotName+" (browser)";hasBrowserSave=true;updateCurrentFileName();alert("Browser save opened.");closeSidebar()}
+function loadBrowserSave(){const suggested=getSuggestedSheetName(),slotName=prompt("Open which browser save?",suggested);if(slotName===null)return;openBrowserSlot(sanitizeName(slotName))}
+function downloadSheetFileWithName(baseName){const data=getSheetData(),blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=baseName+".json";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url)}
+function saveSheet(){if(hasBrowserSave&&currentSaveName){saveToBrowserSlot(currentSaveName.replace(" (browser)",""));alert("Saved to browser.");closeSidebar();return}if(currentSaveName&&currentSaveName.endsWith(".json")){downloadSheetFileWithName(currentSaveName.replace(/\.json$/i,""));alert("Saved file download created.");closeSidebar();return}saveSheetAs()}
+function saveSheetAs(){const suggested=getSuggestedSheetName(),choice=prompt("Type a name for this sheet.\nAdd 'browser:' at the start to save in the browser.\nExample file save: wedding-buffet\nExample browser save: browser:wedding-buffet",suggested);if(choice===null)return;let trimmed=choice.trim();if(!trimmed)trimmed=suggested;if(trimmed.toLowerCase().startsWith("browser:")){const slotName=sanitizeName(trimmed.slice(8).trim()||suggested);saveToBrowserSlot(slotName);currentSaveName=slotName+" (browser)";hasBrowserSave=true;updateCurrentFileName();alert("Saved as browser save.");closeSidebar();return}const fileName=sanitizeName(trimmed);downloadSheetFileWithName(fileName);currentSaveName=fileName+".json";hasBrowserSave=false;updateCurrentFileName();alert("Saved as file download.");closeSidebar()}
+function setLogoAlignment(position){
+  const size = logoSettings.size, margin = 8;
+  let x = margin, y = margin;
+
+  if (position.includes("center") && position !== "center") {
+    x = Math.round((LABEL_WIDTH - size) / 2);
+  }
+
+  if (position === "center") {
+    x = Math.round((LABEL_WIDTH - size) / 2);
+    y = Math.round((LABEL_HEIGHT - size) / 2);
+  }
+
+  if (position.includes("right")) {
+    x = LABEL_WIDTH - size - margin;
+  }
+
+  if (position.includes("middle")) {
+    y = Math.round((LABEL_HEIGHT - size) / 2);
+  }
+
+  if (position.includes("bottom")) {
+    y = LABEL_HEIGHT - size - margin;
+  }
+
+  if (position === "top-center") {
+    x = Math.round((LABEL_WIDTH - size) / 2);
+    y = margin;
+  }
+
+  if (position === "bottom-center") {
+    x = Math.round((LABEL_WIDTH - size) / 2);
+    y = LABEL_HEIGHT - size - margin;
+  }
+
+  logoSettings.x = Math.max(0, x);
+  logoSettings.y = Math.max(0, y);
+
+  generateLabels();
+
+  if (typeof triggerAutosave === "function") {
+    triggerAutosave();
+  }
+}
+function makeLogoDraggable(img,label){
+  let dragging = false, offsetX = 0, offsetY = 0;
+
+  img.onmousedown = function(e){
+    dragging = true;
+    const rect = img.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    e.preventDefault();
+  };
+
+  document.onmousemove = function(e){
+    if(!dragging) return;
+
+    const labelRect = label.getBoundingClientRect();
+    let newX = e.clientX - labelRect.left - offsetX;
+    let newY = e.clientY - labelRect.top - offsetY;
+
+    const maxX = label.clientWidth - img.clientWidth - 4;
+    const maxY = label.clientHeight - img.clientHeight - 4;
+
+    newX = Math.max(0, Math.min(newX, maxX));
+    newY = Math.max(0, Math.min(newY, maxY));
+
+    logoSettings.x = Math.round(newX);
+    logoSettings.y = Math.round(newY);
+
+    img.style.left = logoSettings.x + "px";
+    img.style.top = logoSettings.y + "px";
+  };
+
+  document.onmouseup = function(){
+    if (dragging) {
+      dragging = false;
+
+      if (typeof triggerAutosave === "function") {
+        triggerAutosave();
+      }
+    }
+  };
+}
+function generateLabels(){
+  syncRibbonFields();
+  const font=document.getElementById("fontSelect").value,size=document.getElementById("fontSize").value,color=document.getElementById("textColor").value,allergenFont=document.getElementById("allergenFont").value,allergenSize=document.getElementById("allergenSize").value,allergenColor=document.getElementById("allergenColor").value,bg=document.getElementById("bgColor").value,eventName=document.getElementById("eventName").value.trim();
+  document.getElementById("sheetEventNamePreview").textContent=eventName;
+  document.getElementById("sheetCountText").textContent="Total labels: "+totalLabels+" • Total sheets: "+Math.ceil(totalLabels/10);
+  updateCurrentFileName();
+  const previewSheets=document.getElementById("previewSheets");previewSheets.innerHTML="";const totalSheets=Math.ceil(totalLabels/10);
+  for(let sheetIndex=0;sheetIndex<totalSheets;sheetIndex++){
+    const sheetWrap=document.createElement("div");sheetWrap.className="sheet-preview";
+    const sheetTitle=document.createElement("div");sheetTitle.className="sheet-title";sheetTitle.textContent="Sheet "+(sheetIndex+1);sheetWrap.appendChild(sheetTitle);
+    const container=document.createElement("div");container.className="labels";
+    for(let offset=1;offset<=10;offset++){
+      const i=sheetIndex*10+offset;if(i>totalLabels)break;
+      const food=document.getElementById("food"+i).value.trim()||"Food Name",diets=getSelectedDietForLabel(i);
+      const div=document.createElement("div");div.className="label";div.style.backgroundColor=bg;
+      const content=document.createElement("div");content.className="label-content";
+      if(logoData){const img=document.createElement("img");img.src=logoData;img.className="label-logo";img.style.width=logoSettings.size+"px";img.style.left=logoSettings.x+"px";img.style.top=logoSettings.y+"px";content.appendChild(img);makeLogoDraggable(img,div)}
+      const title=document.createElement("div");title.className="dish-name";title.textContent=food;title.style.fontFamily=font;title.style.fontSize=size+"px";title.style.color=color;title.style.fontWeight="bold";content.appendChild(title);
+      if(diets.length>0){const line=document.createElement("div");line.className="allergen-line";line.style.fontFamily=allergenFont;line.style.fontSize=allergenSize+"px";line.style.color=allergenColor;line.textContent=diets.map(d=>d.icon+" "+d.value).join(" • ");content.appendChild(line)}
+      div.appendChild(content);container.appendChild(div)
+    }
+    sheetWrap.appendChild(container);previewSheets.appendChild(sheetWrap)
+  }
+}
+createFoodRows();
+updateCurrentFileName();
+setViewMode("side");
+syncRibbonFields();
+showRibbonTab('home');
+generateLabels();
+</script>
+<script>
+let autoSaveTimer = null;
+
+function loadSheetFromApp(sheet) {
+  if (!sheet) return;
+
+  const incoming = Array.isArray(sheet.labels) ? sheet.labels : [];
+  const convertedLabels = incoming.map((label) => ({
+    food: label?.title || "",
+    diets: Array.isArray(label?.diets) ? label.diets : []
+  }));
+
+  applySheetData({
+    eventName: sheet.eventName || "",
+    totalLabels: sheet.totalLabels || convertedLabels.length || 10,
+    labels: convertedLabels,
+    settings: sheet.settings || {
+      font: "Arial",
+      fontSize: 20,
+      textColor: "#000000",
+      allergenFont: "Arial",
+      allergenSize: 12,
+      allergenColor: "#000000",
+      bgColor: "#ffffff",
+      logoSettings: { x: 8, y: 8, size: 55 },
+      viewMode: "side"
+    },
+    logoData: sheet.logoData || null,
+    menuPaste: ""
+  });
+
+  currentSaveName = sheet.name ? sheet.name + " (app)" : "App Sheet";
+  hasBrowserSave = false;
+  updateCurrentFileName();
+  syncRibbonFields();
+  generateLabels();
+}
+
+function buildSavePayload() {
+  const data = getSheetData();
+
+  const cleanLabels = Array.isArray(data.labels)
+    ? data.labels.map((label) => ({
+        food: typeof label.food === "string" ? label.food : "",
+        diets: Array.isArray(label.diets) ? label.diets : []
+      }))
+    : [];
+
+  return {
+    eventName: data.eventName,
+    labels: cleanLabels,
+    settings: data.settings,
+    logoData: logoData
+  };
+}
+
+function sendSheetToApp() {
+  window.parent.postMessage(
+    {
+      type: "SAVE_SHEET",
+      payload: buildSavePayload()
+    },
+    window.location.origin
+  );
+}
+
+function triggerAutosave() {
+  window.parent.postMessage(
+    {
+      type: "AUTOSAVE_STATUS",
+      payload: "dirty"
+    },
+    window.location.origin
+  );
+
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+  }
+
+  autoSaveTimer = setTimeout(() => {
+    window.parent.postMessage(
+      {
+        type: "AUTOSAVE_SHEET",
+        payload: buildSavePayload()
+      },
+      window.location.origin
+    );
+  }, 1500);
+}
+
+window.addEventListener("message", (event) => {
+  if (!event.data) return;
+
+  const message = event.data;
+
+  if (message.type !== "LOAD_SHEET") return;
+
+  loadSheetFromApp(message.payload);
+});
+
+saveSheet = function () {
+  sendSheetToApp();
+};
+
+document.addEventListener("input", () => {
+  triggerAutosave();
+});
+
+document.addEventListener("change", () => {
+  triggerAutosave();
+});
+</script>
+</body>
+</html>
