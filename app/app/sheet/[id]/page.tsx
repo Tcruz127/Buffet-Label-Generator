@@ -1,6 +1,8 @@
-import { auth } from "../../../../auth";
-import { prisma } from "../../../../lib/prisma";
+export const dynamic = "force-dynamic";
+
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 
 type PageProps = {
   params: Promise<{
@@ -11,16 +13,19 @@ type PageProps = {
 export default async function SheetPage({ params }: PageProps) {
   const session = await auth();
 
-  if (!session?.user) {
+  if (!session?.user?.email) {
     redirect("/login");
   }
 
   const { id } = await params;
+  const { prisma } = await import("@/lib/prisma");
 
   const sheet = await prisma.labelSheet.findFirst({
     where: {
       id,
-      userId: (session.user as { id: string }).id,
+      user: {
+        email: session.user.email,
+      },
     },
     include: {
       items: {
@@ -36,33 +41,54 @@ export default async function SheetPage({ params }: PageProps) {
   }
 
   return (
-    <main className="p-8">
-      <div className="mb-6">
-        <a href="/app" className="text-blue-600 underline">
-          ← Back to Dashboard
-        </a>
-      </div>
+    <main className="min-h-screen bg-neutral-50">
+      <div className="mx-auto max-w-4xl px-6 py-8">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
+              {sheet.title || "Untitled Sheet"}
+            </h1>
+            <p className="mt-1 text-sm text-neutral-600">
+              {sheet.eventName || "No event name"}
+            </p>
+          </div>
 
-      <h1 className="mb-2 text-3xl font-bold">{sheet.title}</h1>
-      <p className="mb-6 text-gray-600">
-        {sheet.eventName || "No event name yet"}
-      </p>
+          <Link
+            href={`/app/sheet/${sheet.id}/editor`}
+            className="inline-flex items-center rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+          >
+            Open Editor
+          </Link>
+        </div>
 
-      <div className="rounded border p-6">
-        <p className="mb-4 font-semibold">Sheet ID</p>
-        <p className="mb-6 text-sm text-gray-600">{sheet.id}</p>
+        <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 text-sm text-neutral-600">
+            <p>Total labels: {sheet.totalLabels}</p>
+            <p>
+              Updated:{" "}
+              {new Date(sheet.updatedAt).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </p>
+          </div>
 
-        <p className="mb-4 font-semibold">Labels</p>
-
-        <div className="space-y-2">
-          {sheet.items.map((item: any) => (
-            <div key={item.id} className="rounded border p-3">
-              <p className="font-medium">Label {item.positionIndex}</p>
-              <p className="text-sm text-gray-600">
-                {item.foodName || "Empty"}
-              </p>
-            </div>
-          ))}
+          <div className="space-y-3">
+            {sheet.items.map((item: any) => (
+              <div
+                key={item.id}
+                className="rounded-lg border border-neutral-200 p-4"
+              >
+                <p className="font-medium text-neutral-900">
+                  {item.foodName || `Label ${item.positionIndex + 1}`}
+                </p>
+                <p className="text-sm text-neutral-500">
+                  Position: {item.positionIndex + 1}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </main>
