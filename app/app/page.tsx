@@ -1,7 +1,8 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
 import UpgradeButton from "./UpgradeButton";
 import ManageBillingButton from "./ManageBillingButton";
 import SheetActionsMenu from "./SheetActionsMenu";
@@ -12,6 +13,8 @@ export default async function AppDashboardPage() {
   if (!session?.user?.email) {
     redirect("/login");
   }
+
+  const { prisma } = await import("@/lib/prisma");
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
