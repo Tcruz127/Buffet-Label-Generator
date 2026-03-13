@@ -15,7 +15,16 @@ export async function signUpAction(formData: FormData) {
     redirect("/signup");
   }
 
-  const { name, email, password } = parsed.data;
+  const name =
+    typeof parsed.data.name === "string" ? parsed.data.name.trim() : "";
+
+  const email =
+    typeof parsed.data.email === "string"
+      ? parsed.data.email.trim().toLowerCase()
+      : "";
+
+  const password = parsed.data.password;
+
   const { prisma } = await import("../../lib/prisma");
 
   const existing = await prisma.user.findUnique({
