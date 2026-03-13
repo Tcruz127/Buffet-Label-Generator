@@ -1,10 +1,9 @@
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
-import { prisma } from "@/lib/prisma";
+import type Stripe from "stripe";
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -13,6 +12,11 @@ export async function POST(req: Request) {
   if (!signature) {
     return new NextResponse("Missing stripe-signature header", { status: 400 });
   }
+
+  const [{ stripe }, { prisma }] = await Promise.all([
+    import("@/lib/stripe"),
+    import("@/lib/prisma"),
+  ]);
 
   let event: Stripe.Event;
 
