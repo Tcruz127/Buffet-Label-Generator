@@ -1,9 +1,8 @@
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
-import { stripe } from "@/lib/stripe";
 
 export async function POST() {
   try {
@@ -12,6 +11,11 @@ export async function POST() {
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const [{ prisma }, { stripe }] = await Promise.all([
+      import("@/lib/prisma"),
+      import("@/lib/stripe"),
+    ]);
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
