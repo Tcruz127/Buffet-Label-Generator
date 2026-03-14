@@ -4,36 +4,40 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 type LabelData = {
-  id: string;
-  title: string;
-  description: string;
-  diets: string[];
+  id?: string;
+  title?: string;
+  description?: string;
+  diets?: string[];
+  foodName?: string;
 };
 
 type SheetSettings = {
-  font: string;
-  fontSize: string | number;
-  textColor: string;
-  allergenFont: string;
-  allergenSize: string | number;
-  allergenColor: string;
-  bgColor: string;
-  logoSettings: {
+  font?: string;
+  fontSize?: string | number;
+  textColor?: string;
+  allergenFont?: string;
+  allergenSize?: string | number;
+  allergenColor?: string;
+  bgColor?: string;
+  logoSettings?: {
     x: number;
     y: number;
     size: number;
   };
-  viewMode: string;
+  viewMode?: string;
 };
 
 type SheetData = {
   id: string;
-  name: string;
-  eventName: string;
-  totalLabels: number;
-  settings: SheetSettings;
-  logoData: string | null;
-  labels: LabelData[];
+  name?: string;
+  title?: string;
+  eventName?: string;
+  totalLabels?: number;
+  settings?: SheetSettings | null;
+  logoData?: string | null;
+  logoUrl?: string | null;
+  labels?: LabelData[];
+  items?: LabelData[];
 };
 
 export default function EditorFrame({ sheet }: { sheet: SheetData }) {
@@ -41,9 +45,14 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
 
   const [saveStatus, setSaveStatus] = useState("Ready");
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-  const [title, setTitle] = useState(sheet.name || "Untitled Sheet");
+
+  const initialTitle = sheet.name ?? sheet.title ?? "Untitled Sheet";
+  const [title, setTitle] = useState(initialTitle);
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const normalizedLabels: LabelData[] =
+    sheet.labels ?? sheet.items ?? [];
 
   const latestEditorPayloadRef = useRef<{
     eventName?: string;
@@ -51,18 +60,18 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     settings?: unknown;
     logoData?: string | null;
   }>({
-    eventName: sheet.eventName,
-    labels: sheet.labels.map((label) => ({
-      food: label.title,
-      diets: label.diets,
+    eventName: sheet.eventName ?? "",
+    labels: normalizedLabels.map((label) => ({
+      food: label.title ?? label.foodName ?? "",
+      diets: label.diets ?? [],
     })),
-    settings: sheet.settings,
-    logoData: sheet.logoData,
+    settings: sheet.settings ?? {},
+    logoData: sheet.logoData ?? sheet.logoUrl ?? null,
   });
 
   useEffect(() => {
-    setTitle(sheet.name || "Untitled Sheet");
-  }, [sheet.name]);
+    setTitle(sheet.name ?? sheet.title ?? "Untitled Sheet");
+  }, [sheet.name, sheet.title]);
 
   const formatSavedTime = () => {
     return new Date().toLocaleTimeString([], {
@@ -79,7 +88,11 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       iframe.contentWindow?.postMessage(
         {
           type: "LOAD_SHEET",
-          payload: sheet,
+          payload: {
+            ...sheet,
+            labels: normalizedLabels,
+            logoData: sheet.logoData ?? sheet.logoUrl ?? null,
+          },
         },
         window.location.origin
       );
@@ -153,7 +166,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       iframe.removeEventListener("load", sendSheet);
       window.removeEventListener("message", handleMessage);
     };
-  }, [sheet, title]);
+  }, [sheet, title, normalizedLabels]);
 
   const triggerTitleAutosave = (nextTitle: string) => {
     setSaveStatus("Editing...");
