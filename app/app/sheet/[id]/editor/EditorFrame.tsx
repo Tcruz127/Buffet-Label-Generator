@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type LabelData = {
   id?: string;
@@ -42,31 +42,30 @@ type SheetData = {
 
 export default function EditorFrame({ sheet }: { sheet: SheetData }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [saveStatus, setSaveStatus] = useState("Ready");
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [title, setTitle] = useState(sheet.name ?? sheet.title ?? "Untitled Sheet");
 
-  const initialTitle = sheet.name ?? sheet.title ?? "Untitled Sheet";
-  const [title, setTitle] = useState(initialTitle);
+  const normalizedSheetPayload = useMemo(() => {
+    const normalizedLabels: LabelData[] = sheet.labels ?? sheet.items ?? [];
 
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const normalizedLabels: LabelData[] = sheet.labels ?? sheet.items ?? [];
-
-  const normalizedSheetPayload = {
-    ...sheet,
-    name: sheet.name ?? sheet.title ?? "Untitled Sheet",
-    title: sheet.title ?? sheet.name ?? "Untitled Sheet",
-    eventName: sheet.eventName ?? "",
-    settings: sheet.settings ?? {},
-    logoData: sheet.logoData ?? sheet.logoUrl ?? null,
-    labels: normalizedLabels.map((label) => ({
-      id: label.id,
-      title: label.title ?? label.foodName ?? "",
-      description: label.description ?? "",
-      diets: Array.isArray(label.diets) ? label.diets : [],
-    })),
-  };
+    return {
+      ...sheet,
+      name: sheet.name ?? sheet.title ?? "Untitled Sheet",
+      title: sheet.title ?? sheet.name ?? "Untitled Sheet",
+      eventName: sheet.eventName ?? "",
+      settings: sheet.settings ?? {},
+      logoData: sheet.logoData ?? sheet.logoUrl ?? null,
+      labels: normalizedLabels.map((label) => ({
+        id: label.id,
+        title: label.title ?? label.foodName ?? "",
+        description: label.description ?? "",
+        diets: Array.isArray(label.diets) ? label.diets : [],
+      })),
+    };
+  }, [sheet]);
 
   const latestEditorPayloadRef = useRef<{
     eventName?: string;
@@ -94,6 +93,36 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     });
   };
 
+  const saveToDatabase = async (payload: {
+    title?: string;
+    eventName?: string;
+    labels?: unknown[];
+    settings?: unknown;
+    logoData?: string | null;
+  }) => {
+    try {
+      setSaveStatus("Saving...");
+
+      const response = await fetch(`/api/sheets/${sheet.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Save failed");
+      }
+
+      setSaveStatus("Saved");
+      setLastSavedAt(formatSavedTime());
+    } catch (error) {
+      console.error("Save failed:", error);
+      setSaveStatus("Save failed");
+    }
+  };
+
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
@@ -108,50 +137,22 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       );
     };
 
-    const saveToDatabase = async (payload: unknown) => {
-      try {
-        setSaveStatus("Saving...");
-
-        const response = await fetch(`/api/sheets/${sheet.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          throw new Error("Save failed");
-        }
-
-        setSaveStatus("Saved");
-        setLastSavedAt(formatSavedTime());
-      } catch (error) {
-        console.error("Save failed:", error);
-        setSaveStatus("Save failed");
-      }
-    };
-
-    const buildPayloadWithTitle = (payload: {
-      eventName?: string;
-      labels?: unknown[];
-      settings?: unknown;
-      logoData?: string | null;
-    }) => ({
-      title: title.trim() || "Untitled Sheet",
-      eventName: payload.eventName ?? "",
-      labels: Array.isArray(payload.labels) ? payload.labels : [],
-      settings: payload.settings ?? null,
-      logoData: payload.logoData ?? null,
-    });
-
     const handleMessage = async (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       if (!event.data) return;
 
       if (event.data.type === "SAVE_SHEET") {
         latestEditorPayloadRef.current = event.data.payload;
-        await saveToDatabase(buildPayloadWithTitle(event.data.payload));
+
+        await saveToDatabase({
+          title: title.trim() || "Untitled Sheet",
+          eventName: event.data.payload?.eventName ?? "",
+          labels: Array.isArray(event.data.payload?.labels)
+            ? event.data.payload.labels
+            : [],
+          settings: event.data.payload?.settings ?? null,
+          logoData: event.data.payload?.logoData ?? null,
+        });
       }
 
       if (event.data.type === "AUTOSAVE_STATUS") {
@@ -162,7 +163,16 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
 
       if (event.data.type === "AUTOSAVE_SHEET") {
         latestEditorPayloadRef.current = event.data.payload;
-        await saveToDatabase(buildPayloadWithTitle(event.data.payload));
+
+        await saveToDatabase({
+          title: title.trim() || "Untitled Sheet",
+          eventName: event.data.payload?.eventName ?? "",
+          labels: Array.isArray(event.data.payload?.labels)
+            ? event.data.payload.labels
+            : [],
+          settings: event.data.payload?.settings ?? null,
+          logoData: event.data.payload?.logoData ?? null,
+        });
       }
     };
 
@@ -176,7 +186,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       iframe.removeEventListener("load", sendSheet);
       window.removeEventListener("message", handleMessage);
     };
-  }, [sheet.id, title, normalizedSheetPayload]);
+  }, [sheet.id, normalizedSheetPayload]);
 
   const triggerTitleAutosave = (nextTitle: string) => {
     setSaveStatus("Editing...");
@@ -186,29 +196,9 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     }
 
     autosaveTimerRef.current = setTimeout(async () => {
-      try {
-        setSaveStatus("Saving...");
-
-        const response = await fetch(`/api/sheets/${sheet.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: nextTitle.trim() || "Untitled Sheet",
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Save failed");
-        }
-
-        setSaveStatus("Saved");
-        setLastSavedAt(formatSavedTime());
-      } catch (error) {
-        console.error("Title save failed:", error);
-        setSaveStatus("Save failed");
-      }
+      await saveToDatabase({
+        title: nextTitle.trim() || "Untitled Sheet",
+      });
     }, 1200);
   };
 
