@@ -73,52 +73,74 @@ export async function PUT(req: Request, context: RouteContext) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
     }
 
-    const labels = Array.isArray(body.labels) ? body.labels : [];
+    const hasLabels = Array.isArray(body.labels);
 
-    await prisma.$transaction([
-      prisma.labelSheet.update({
-        where: { id },
-        data: {
-          title:
-            typeof body.title === "string" && body.title.trim()
-              ? body.title.trim()
-              : "Untitled Sheet",
-          eventName:
-            typeof body.eventName === "string" ? body.eventName : "",
-          settings: body.settings ?? null,
-          logoUrl:
-            typeof body.logoData === "string" ? body.logoData : null,
-          totalLabels: labels.length > 0 ? labels.length : sheet.totalLabels,
-        },
-      }),
+    await prisma.labelSheet.update({
+      where: { id },
+      data: {
+        ...(typeof body.title === "string"
+          ? {
+              title: body.title.trim() || "Untitled Sheet",
+            }
+          : {}),
+        ...(typeof body.eventName === "string"
+          ? {
+              eventName: body.eventName,
+            }
+          : {}),
+        ...(body.settings !== undefined
+          ? {
+              settings: body.settings,
+            }
+          : {}),
+        ...(body.logoData !== undefined
+          ? {
+              logoUrl: typeof body.logoData === "string" ? body.logoData : null,
+            }
+          : {}),
+        ...(hasLabels
+          ? {
+              totalLabels: body.labels.length,
+            }
+          : {}),
+      },
+    });
 
-      prisma.labelItem.deleteMany({
-        where: { sheetId: id },
-      }),
-
-      prisma.labelItem.createMany({
-        data: labels.map(
-          (
-            label: {
-              food?: string;
-              title?: string;
-              diets?: string[];
-            },
-            index: number
-          ) => ({
-            sheetId: id,
-            positionIndex: index,
-            foodName:
-              typeof label.food === "string"
-                ? label.food
-                : typeof label.title === "string"
-                ? label.title
-                : "",
-            diets: Array.isArray(label.diets) ? label.diets : [],
-          })
-        ),
-      }),
-    ]);
+    if (hasLabels) {
+      await prisma.$transaction([
+        prisma.labelItem.deleteMany({
+          where: { sheetId: id },
+        }),
+        prisma.labelItem.createMany({
+          data: body.labels.map(
+            (
+              label: {
+                food?: string;
+                title?: string;
+                name?: string;
+                foodName?: string;
+                diets?: string[];
+              },
+              index: number
+            ) => ({
+              sheetId: id,
+              positionIndex: index,
+              foodName:
+                typeof label.food === "string"
+                  ? label.food
+                  : typeof label.title === "string"
+                  ? label.title
+                  : typeof label.name === "string"
+                  ? label.name
+                  : typeof label.foodName === "string"
+                  ? label.foodName
+                  : "",
+              diets: Array.isArray(label.diets) ? label.diets : [],
+            })
+          ),
+        }),
+      ]);
+    }
 
     const updated = await prisma.labelSheet.findUnique({
       where: { id },

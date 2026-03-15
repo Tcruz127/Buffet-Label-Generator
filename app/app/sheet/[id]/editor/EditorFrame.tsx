@@ -51,8 +51,22 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const normalizedLabels: LabelData[] =
-    sheet.labels ?? sheet.items ?? [];
+  const normalizedLabels: LabelData[] = sheet.labels ?? sheet.items ?? [];
+
+  const normalizedSheetPayload = {
+    ...sheet,
+    name: sheet.name ?? sheet.title ?? "Untitled Sheet",
+    title: sheet.title ?? sheet.name ?? "Untitled Sheet",
+    eventName: sheet.eventName ?? "",
+    settings: sheet.settings ?? {},
+    logoData: sheet.logoData ?? sheet.logoUrl ?? null,
+    labels: normalizedLabels.map((label) => ({
+      id: label.id,
+      title: label.title ?? label.foodName ?? "",
+      description: label.description ?? "",
+      diets: Array.isArray(label.diets) ? label.diets : [],
+    })),
+  };
 
   const latestEditorPayloadRef = useRef<{
     eventName?: string;
@@ -60,13 +74,13 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     settings?: unknown;
     logoData?: string | null;
   }>({
-    eventName: sheet.eventName ?? "",
-    labels: normalizedLabels.map((label) => ({
-      food: label.title ?? label.foodName ?? "",
+    eventName: normalizedSheetPayload.eventName,
+    labels: normalizedSheetPayload.labels.map((label) => ({
+      food: label.title ?? "",
       diets: label.diets ?? [],
     })),
-    settings: sheet.settings ?? {},
-    logoData: sheet.logoData ?? sheet.logoUrl ?? null,
+    settings: normalizedSheetPayload.settings,
+    logoData: normalizedSheetPayload.logoData,
   });
 
   useEffect(() => {
@@ -88,11 +102,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       iframe.contentWindow?.postMessage(
         {
           type: "LOAD_SHEET",
-          payload: {
-            ...sheet,
-            labels: normalizedLabels,
-            logoData: sheet.logoData ?? sheet.logoUrl ?? null,
-          },
+          payload: normalizedSheetPayload,
         },
         window.location.origin
       );
@@ -166,7 +176,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       iframe.removeEventListener("load", sendSheet);
       window.removeEventListener("message", handleMessage);
     };
-  }, [sheet, title, normalizedLabels]);
+  }, [sheet.id, title, normalizedSheetPayload]);
 
   const triggerTitleAutosave = (nextTitle: string) => {
     setSaveStatus("Editing...");
@@ -186,12 +196,6 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
           },
           body: JSON.stringify({
             title: nextTitle.trim() || "Untitled Sheet",
-            eventName: latestEditorPayloadRef.current.eventName ?? "",
-            labels: Array.isArray(latestEditorPayloadRef.current.labels)
-              ? latestEditorPayloadRef.current.labels
-              : [],
-            settings: latestEditorPayloadRef.current.settings ?? null,
-            logoData: latestEditorPayloadRef.current.logoData ?? null,
           }),
         });
 
