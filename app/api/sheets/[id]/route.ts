@@ -10,21 +10,70 @@ type RouteContext = {
   }>;
 };
 
-export async function GET(_req: Request, context: RouteContext) {
+type IncomingLabel = {
+  id?: string;
+  positionIndex?: number;
+  food?: string;
+  title?: string;
+  name?: string;
+  foodName?: string;
+  diets?: unknown;
+};
+
+function normalizeDiets(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function normalizeFoodName(label: IncomingLabel): string {
+  if (typeof label.foodName === "string") return label.foodName;
+  if (typeof label.food === "string") return label.food;
+  if (typeof label.title === "string") return label.title;
+  if (typeof label.name === "string") return label.name;
+  return "";
+}
+
+async function getAuthorizedSheetOrNull(id: string, email: string) {
   const { prisma } = await import("@/lib/prisma");
+
+  return prisma.labelSheet.findFirst({
+    where: {
+      id,
+      user: {
+        email,
+      },
+    },
+    include: {
+      items: {
+        orderBy: {
+          positionIndex: "asc",
+        },
+      },
+    },
+  });
+}
+
+export async function GET(_req: Request, context: RouteContext) {
+  const session = await auth();
+
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
 
   try {
-    const sheet = await prisma.labelSheet.findUnique({
-      where: { id },
-      include: {
-        items: {
-          orderBy: {
-            positionIndex: "asc",
-          },
-        },
-      },
-    });
+    const sheet = await getAuthorizedSheetOrNull(id, session.user.email);
 
     if (!sheet) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
@@ -53,27 +102,31 @@ export async function PUT(req: Request, context: RouteContext) {
   try {
     const body = await req.json();
 
-    const sheet = await prisma.labelSheet.findFirst({
-      where: {
-        id,
-        user: {
-          email: session.user.email,
-        },
-      },
-      include: {
-        items: {
-          orderBy: {
-            positionIndex: "asc",
-          },
-        },
-      },
-    });
+    const existingSheet = await getAuthorizedSheetOrNull(id, session.user.email);
 
-    if (!sheet) {
+    if (!existingSheet) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
     }
 
-    const hasLabels = Array.isArray(body.labels);
+    const rawLabels = Array.isArray(body.labelItems)
+      ? body.labelItems
+      : Array.isArray(body.labels)
+      ? body.labels
+      : null;
+
+    const hasLabels = Array.isArray(rawLabels);
+
+    const normalizedLabels = hasLabels
+      ? rawLabels.map((label: IncomingLabel, index: number) => ({
+          sheetId: id,
+          positionIndex:
+            typeof label.positionIndex === "number"
+              ? label.positionIndex
+              : index,
+          foodName: normalizeFoodName(label),
+          diets: normalizeDiets(label.diets),
+        }))
+      : [];
 
     await prisma.labelSheet.update({
       where: { id },
@@ -83,24 +136,37 @@ export async function PUT(req: Request, context: RouteContext) {
               title: body.title.trim() || "Untitled Sheet",
             }
           : {}),
+
         ...(typeof body.eventName === "string"
           ? {
               eventName: body.eventName,
             }
+          : body.eventName === null
+          ? {
+              eventName: null,
+            }
           : {}),
+
         ...(body.settings !== undefined
           ? {
               settings: body.settings,
             }
           : {}),
-        ...(body.logoData !== undefined
+
+        ...((body.logoUrl !== undefined || body.logoData !== undefined)
           ? {
-              logoUrl: typeof body.logoData === "string" ? body.logoData : null,
+              logoUrl:
+                typeof body.logoUrl === "string"
+                  ? body.logoUrl
+                  : typeof body.logoData === "string"
+                  ? body.logoData
+                  : null,
             }
           : {}),
+
         ...(hasLabels
           ? {
-              totalLabels: body.labels.length,
+              totalLabels: normalizedLabels.length,
             }
           : {}),
       },
@@ -111,34 +177,13 @@ export async function PUT(req: Request, context: RouteContext) {
         prisma.labelItem.deleteMany({
           where: { sheetId: id },
         }),
-        prisma.labelItem.createMany({
-          data: body.labels.map(
-            (
-              label: {
-                food?: string;
-                title?: string;
-                name?: string;
-                foodName?: string;
-                diets?: string[];
-              },
-              index: number
-            ) => ({
-              sheetId: id,
-              positionIndex: index,
-              foodName:
-                typeof label.food === "string"
-                  ? label.food
-                  : typeof label.title === "string"
-                  ? label.title
-                  : typeof label.name === "string"
-                  ? label.name
-                  : typeof label.foodName === "string"
-                  ? label.foodName
-                  : "",
-              diets: Array.isArray(label.diets) ? label.diets : [],
-            })
-          ),
-        }),
+        ...(normalizedLabels.length > 0
+          ? [
+              prisma.labelItem.createMany({
+                data: normalizedLabels,
+              }),
+            ]
+          : []),
       ]);
     }
 
