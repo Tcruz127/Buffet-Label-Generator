@@ -771,7 +771,19 @@ function loadSheetFromApp(sheet) {
     eventName: sheet.eventName || "",
     totalLabels: sheet.totalLabels || convertedLabels.length || 10,
     labels: convertedLabels,
-    settings: sheet.settings || {
+   settings: sheet.settings
+  ? {
+      font: sheet.settings.fontFamily || sheet.settings.font || "Arial",
+      fontSize: sheet.settings.foodNameSize || sheet.settings.fontSize || 20,
+      textColor: sheet.settings.textColor || "#000000",
+      allergenFont: sheet.settings.allergenFont || "Arial",
+      allergenSize: sheet.settings.dietTextSize || sheet.settings.allergenSize || 12,
+      allergenColor: sheet.settings.accentColor || sheet.settings.allergenColor || "#000000",
+      bgColor: sheet.settings.backgroundColor || sheet.settings.bgColor || "#ffffff",
+      logoSettings: sheet.settings.logoSettings || { x: 8, y: 8, size: 55 },
+      viewMode: sheet.settings.viewMode || "side"
+    }
+  : {
       font: "Arial",
       fontSize: 20,
       textColor: "#000000",
