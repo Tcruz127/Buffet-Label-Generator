@@ -412,8 +412,137 @@ button:hover{background:#f0f0f0}
 <input type="file" id="sheetFileInput" accept=".json" style="display:none;" />
 
 <script>
-let logoData=null,logoSettings={x:8,y:8,size:55},currentSaveName="",hasBrowserSave=false,totalLabels=10,viewMode="side";
+let logoData=null,logoSettings={x:8,y:8,size:55},currentSaveName="",hasBrowserSave=false,totalLabels=10,viewMode="side",advancedTemplateSettings={};
 const LABEL_WIDTH=336,LABEL_HEIGHT=192,DIET_OPTIONS=[{value:"Gluten Free",icon:"🌾"},{value:"Dairy Free",icon:"🥛"},{value:"Egg Free",icon:"🥚"},{value:"Soy Free",icon:"🫘"},{value:"Nut Free",icon:"🥜"},{value:"Shellfish Free",icon:"🦐"},{value:"Sesame Free",icon:"🫓"},{value:"Vegan",icon:"🌱"},{value:"Vegetarian",icon:"🥬"}];
+
+function getDefaultTemplateSettings() {
+  return {
+    themeName: "Classic White",
+    backgroundColor: "#ffffff",
+    backgroundTexture: "",
+    backgroundImage: "",
+    textColor: "#111111",
+    accentColor: "#444444",
+    fontFamily: "Arial",
+    foodNameSize: 20,
+    dietTextSize: 12,
+    align: "center",
+    padding: 8,
+    cardGap: 0,
+    showBorder: true,
+    borderColor: "#cfcfcf",
+    borderWidth: 1,
+    borderRadius: 12,
+    borderStyle: "classic",
+    divider: "none",
+    showLogo: true,
+    logoPosition: "top",
+    logoSettings: { x: 8, y: 8, size: 55 },
+    viewMode: "side"
+  };
+}
+
+function normalizeTemplateSettings(raw) {
+  const defaults = getDefaultTemplateSettings();
+  const safe = raw || {};
+
+  return {
+    ...defaults,
+    ...safe,
+    backgroundColor: safe.backgroundColor || safe.bgColor || defaults.backgroundColor,
+    textColor: safe.textColor || defaults.textColor,
+    accentColor: safe.accentColor || safe.allergenColor || defaults.accentColor,
+    fontFamily: safe.fontFamily || safe.font || defaults.fontFamily,
+    foodNameSize: Number(safe.foodNameSize ?? safe.fontSize ?? defaults.foodNameSize),
+    dietTextSize: Number(safe.dietTextSize ?? safe.allergenSize ?? defaults.dietTextSize),
+    align: safe.align || defaults.align,
+    padding: Number(safe.padding ?? defaults.padding),
+    cardGap: Number(safe.cardGap ?? defaults.cardGap),
+    showBorder: typeof safe.showBorder === "boolean" ? safe.showBorder : defaults.showBorder,
+    borderColor: safe.borderColor || defaults.borderColor,
+    borderWidth: Number(safe.borderWidth ?? defaults.borderWidth),
+    borderRadius: Number(safe.borderRadius ?? defaults.borderRadius),
+    borderStyle: safe.borderStyle || defaults.borderStyle,
+    divider: safe.divider || defaults.divider,
+    showLogo: typeof safe.showLogo === "boolean" ? safe.showLogo : defaults.showLogo,
+    logoPosition: safe.logoPosition || defaults.logoPosition,
+    backgroundTexture: safe.backgroundTexture || "",
+    backgroundImage: safe.backgroundImage || "",
+    logoSettings: safe.logoSettings
+      ? {
+          x: Number(safe.logoSettings.x ?? 8),
+          y: Number(safe.logoSettings.y ?? 8),
+          size: Number(safe.logoSettings.size ?? 55)
+        }
+      : defaults.logoSettings,
+    viewMode: safe.viewMode || defaults.viewMode
+  };
+}
+
+function getMergedRenderSettings() {
+  const normalizedAdvanced = normalizeTemplateSettings(advancedTemplateSettings);
+
+  return {
+    ...normalizedAdvanced,
+    fontFamily: document.getElementById("fontSelect").value || normalizedAdvanced.fontFamily,
+    foodNameSize: Number(document.getElementById("fontSize").value || normalizedAdvanced.foodNameSize),
+    textColor: document.getElementById("textColor").value || normalizedAdvanced.textColor,
+    dietTextSize: Number(document.getElementById("allergenSize").value || normalizedAdvanced.dietTextSize),
+    accentColor: document.getElementById("allergenColor").value || normalizedAdvanced.accentColor,
+    backgroundColor: document.getElementById("bgColor").value || normalizedAdvanced.backgroundColor,
+    logoSettings: {
+      ...normalizedAdvanced.logoSettings,
+      ...logoSettings,
+      size: Number(logoSettings.size ?? normalizedAdvanced.logoSettings.size ?? 55)
+    },
+    viewMode
+  };
+}
+
+function getBorderCss(settings) {
+  if (!settings.showBorder || settings.borderStyle === "none") {
+    return "none";
+  }
+
+  const width = Number(settings.borderWidth || 1);
+  const color = settings.borderColor || "#cfcfcf";
+
+  if (settings.borderStyle === "double") {
+    return `${Math.max(3, width + 1)}px double ${color}`;
+  }
+
+  return `${width}px solid ${color}`;
+}
+
+function addDividerToContent(content, settings) {
+  if (!settings.divider || settings.divider === "none") return;
+
+  const divider = document.createElement("div");
+  divider.style.width = "80%";
+  divider.style.marginTop = "8px";
+  divider.style.marginBottom = "6px";
+  divider.style.flexShrink = "0";
+
+  if (settings.divider === "line") {
+    divider.style.borderTop = `1px solid ${settings.accentColor || settings.textColor}`;
+  } else if (settings.divider === "elegant") {
+    divider.style.borderTop = `2px solid ${settings.accentColor || settings.textColor}`;
+    divider.style.opacity = "0.7";
+    divider.style.width = "68%";
+  } else if (settings.divider === "floral") {
+    divider.textContent = "✦ ✦ ✦";
+    divider.style.textAlign = "center";
+    divider.style.fontSize = "12px";
+    divider.style.color = settings.accentColor || settings.textColor;
+  } else if (settings.divider === "modern") {
+    divider.style.borderTop = `3px solid ${settings.accentColor || settings.textColor}`;
+    divider.style.width = "55%";
+    divider.style.marginLeft = "0";
+    divider.style.marginRight = "0";
+  }
+
+  content.appendChild(divider);
+}
 
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("overlay").classList.toggle("open")}
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("overlay").classList.remove("open")}
@@ -611,25 +740,47 @@ function printAlignmentTestSheet() {
 }
 function newLabelSheet(){saveSheetAs()}
 function getSelectedDietForLabel(index){const select=document.getElementById("diet"+index);return Array.from(select.selectedOptions).map(opt=>DIET_OPTIONS.find(d=>d.value===opt.value)).filter(Boolean)}
-function getSheetData(){return {eventName:document.getElementById("eventName").value,totalLabels:totalLabels,settings:{font:document.getElementById("fontSelect").value,fontSize:document.getElementById("fontSize").value,textColor:document.getElementById("textColor").value,allergenFont:document.getElementById("allergenFont").value,allergenSize:document.getElementById("allergenSize").value,allergenColor:document.getElementById("allergenColor").value,bgColor:document.getElementById("bgColor").value,logoSettings:logoSettings,viewMode:viewMode},logoData:logoData,menuPaste:document.getElementById("menuPaste").value,labels:collectLabelData()}}
+function getSheetData(){
+  return {
+    eventName: document.getElementById("eventName").value,
+    totalLabels: totalLabels,
+    settings: getMergedRenderSettings(),
+    logoData: logoData,
+    menuPaste: document.getElementById("menuPaste").value,
+    labels: collectLabelData()
+  };
+}
 function applySheetData(data){
-  document.getElementById("eventName").value=data.eventName||"";
-  if(data.settings){
-    document.getElementById("fontSelect").value=data.settings.font||"Arial";
-    document.getElementById("fontSize").value=data.settings.fontSize||20;
-    document.getElementById("textColor").value=data.settings.textColor||"#000000";
-    document.getElementById("allergenFont").value=data.settings.allergenFont||"Arial";
-    document.getElementById("allergenSize").value=data.settings.allergenSize||12;
-    document.getElementById("allergenColor").value=data.settings.allergenColor||"#000000";
-    document.getElementById("bgColor").value=data.settings.bgColor||"#ffffff";
-    if(data.settings.logoSettings){logoSettings={x:Number(data.settings.logoSettings.x??8),y:Number(data.settings.logoSettings.y??8),size:Number(data.settings.logoSettings.size??55)}}
-    if(data.settings.viewMode){setViewMode(data.settings.viewMode)}
+  const normalizedSettings = normalizeTemplateSettings(data.settings || {});
+  advancedTemplateSettings = normalizedSettings;
+
+  document.getElementById("eventName").value = data.eventName || "";
+
+  document.getElementById("fontSelect").value = normalizedSettings.fontFamily || "Arial";
+  document.getElementById("fontSize").value = normalizedSettings.foodNameSize || 20;
+  document.getElementById("textColor").value = normalizedSettings.textColor || "#000000";
+
+  document.getElementById("allergenFont").value = normalizedSettings.allergenFont || normalizedSettings.fontFamily || "Arial";
+  document.getElementById("allergenSize").value = normalizedSettings.dietTextSize || 12;
+  document.getElementById("allergenColor").value = normalizedSettings.accentColor || "#000000";
+
+  document.getElementById("bgColor").value = normalizedSettings.backgroundColor || "#ffffff";
+
+  logoSettings = {
+    x: Number(normalizedSettings.logoSettings?.x ?? 8),
+    y: Number(normalizedSettings.logoSettings?.y ?? 8),
+    size: Number(normalizedSettings.logoSettings?.size ?? 55)
+  };
+
+  if (normalizedSettings.viewMode) {
+    setViewMode(normalizedSettings.viewMode);
   }
-  logoData=data.logoData||null;
-  document.getElementById("menuPaste").value=data.menuPaste||"";
-  totalLabels=ensureMultipleOfTen(data.totalLabels||(data.labels?data.labels.length:10));
+
+  logoData = data.logoData || null;
+  document.getElementById("menuPaste").value = data.menuPaste || "";
+  totalLabels = ensureMultipleOfTen(data.totalLabels || (data.labels ? data.labels.length : 10));
   createFoodRows();
-  restoreLabelData(data.labels||[]);
+  restoreLabelData(data.labels || []);
   syncRibbonFields();
   generateLabels();
 }
@@ -726,26 +877,120 @@ function makeLogoDraggable(img,label){
 }
 function generateLabels(){
   syncRibbonFields();
-  const font=document.getElementById("fontSelect").value,size=document.getElementById("fontSize").value,color=document.getElementById("textColor").value,allergenFont=document.getElementById("allergenFont").value,allergenSize=document.getElementById("allergenSize").value,allergenColor=document.getElementById("allergenColor").value,bg=document.getElementById("bgColor").value,eventName=document.getElementById("eventName").value.trim();
-  document.getElementById("sheetEventNamePreview").textContent=eventName;
-  document.getElementById("sheetCountText").textContent="Total labels: "+totalLabels+" • Total sheets: "+Math.ceil(totalLabels/10);
+
+  const settings = getMergedRenderSettings();
+  const eventName = document.getElementById("eventName").value.trim();
+
+  document.getElementById("sheetEventNamePreview").textContent = eventName;
+  document.getElementById("sheetCountText").textContent =
+    "Total labels: " + totalLabels + " • Total sheets: " + Math.ceil(totalLabels / 10);
+
   updateCurrentFileName();
-  const previewSheets=document.getElementById("previewSheets");previewSheets.innerHTML="";const totalSheets=Math.ceil(totalLabels/10);
-  for(let sheetIndex=0;sheetIndex<totalSheets;sheetIndex++){
-    const sheetWrap=document.createElement("div");sheetWrap.className="sheet-preview";
-    const sheetTitle=document.createElement("div");sheetTitle.className="sheet-title";sheetTitle.textContent="Sheet "+(sheetIndex+1);sheetWrap.appendChild(sheetTitle);
-    const container=document.createElement("div");container.className="labels";
-    for(let offset=1;offset<=10;offset++){
-      const i=sheetIndex*10+offset;if(i>totalLabels)break;
-      const food=document.getElementById("food"+i).value.trim()||"Food Name",diets=getSelectedDietForLabel(i);
-      const div=document.createElement("div");div.className="label";div.style.backgroundColor=bg;
-      const content=document.createElement("div");content.className="label-content";
-      if(logoData){const img=document.createElement("img");img.src=logoData;img.className="label-logo";img.style.width=logoSettings.size+"px";img.style.left=logoSettings.x+"px";img.style.top=logoSettings.y+"px";content.appendChild(img);makeLogoDraggable(img,div)}
-      const title=document.createElement("div");title.className="dish-name";title.textContent=food;title.style.fontFamily=font;title.style.fontSize=size+"px";title.style.color=color;title.style.fontWeight="bold";content.appendChild(title);
-      if(diets.length>0){const line=document.createElement("div");line.className="allergen-line";line.style.fontFamily=allergenFont;line.style.fontSize=allergenSize+"px";line.style.color=allergenColor;line.textContent=diets.map(d=>d.icon+" "+d.value).join(" • ");content.appendChild(line)}
-      div.appendChild(content);container.appendChild(div)
+
+  const previewSheets = document.getElementById("previewSheets");
+  previewSheets.innerHTML = "";
+
+  const totalSheets = Math.ceil(totalLabels / 10);
+
+  for(let sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++){
+    const sheetWrap = document.createElement("div");
+    sheetWrap.className = "sheet-preview";
+
+    const sheetTitle = document.createElement("div");
+    sheetTitle.className = "sheet-title";
+    sheetTitle.textContent = "Sheet " + (sheetIndex + 1);
+    sheetWrap.appendChild(sheetTitle);
+
+    const container = document.createElement("div");
+    container.className = "labels";
+    container.style.columnGap = ".5in";
+    container.style.rowGap = settings.cardGap + "px";
+
+    for(let offset = 1; offset <= 10; offset++){
+      const i = sheetIndex * 10 + offset;
+      if(i > totalLabels) break;
+
+      const food = document.getElementById("food" + i).value.trim() || "Food Name";
+      const diets = getSelectedDietForLabel(i);
+
+      const div = document.createElement("div");
+      div.className = "label";
+      div.style.backgroundColor = settings.backgroundColor;
+      div.style.border = getBorderCss(settings);
+      div.style.borderRadius = (settings.borderRadius || 12) + "px";
+      div.style.padding = (settings.padding || 8) + "px";
+      div.style.textAlign = settings.align || "center";
+      div.style.backgroundSize = "cover";
+      div.style.backgroundPosition = "center";
+      div.style.backgroundRepeat = "no-repeat";
+
+      if (settings.backgroundTexture) {
+        div.style.backgroundImage = `url(${settings.backgroundTexture})`;
+      } else if (settings.backgroundImage) {
+        div.style.backgroundImage = `url(${settings.backgroundImage})`;
+      } else {
+        div.style.backgroundImage = "none";
+      }
+
+      if (settings.borderStyle === "gold-frame") {
+        div.style.boxShadow = `inset 0 0 0 2px ${settings.borderColor || "#d4af37"}, inset 0 0 0 6px rgba(212,175,55,0.18)`;
+      } else if (settings.borderStyle === "elegant") {
+        div.style.boxShadow = `inset 0 0 0 1px ${settings.borderColor || "#dbc7aa"}, inset 0 0 0 4px rgba(219,199,170,0.18)`;
+      } else if (settings.borderStyle === "modern") {
+        div.style.boxShadow = `0 2px 10px rgba(15,23,42,0.08)`;
+      } else {
+        div.style.boxShadow = "none";
+      }
+
+      const content = document.createElement("div");
+      content.className = "label-content";
+      content.style.alignItems =
+        settings.align === "left" ? "flex-start" :
+        settings.align === "right" ? "flex-end" :
+        "center";
+      content.style.justifyContent = "center";
+      content.style.textAlign = settings.align || "center";
+
+      if(logoData && settings.showLogo !== false){
+        const img = document.createElement("img");
+        img.src = logoData;
+        img.className = "label-logo";
+        img.style.width = settings.logoSettings.size + "px";
+        img.style.left = settings.logoSettings.x + "px";
+        img.style.top = settings.logoSettings.y + "px";
+        content.appendChild(img);
+        makeLogoDraggable(img, div);
+      }
+
+      const title = document.createElement("div");
+      title.className = "dish-name";
+      title.textContent = food;
+      title.style.fontFamily = settings.fontFamily || "Arial";
+      title.style.fontSize = (settings.foodNameSize || 20) + "px";
+      title.style.color = settings.textColor || "#111111";
+      title.style.fontWeight = "bold";
+      title.style.width = "100%";
+      content.appendChild(title);
+
+      if(diets.length > 0){
+        addDividerToContent(content, settings);
+
+        const line = document.createElement("div");
+        line.className = "allergen-line";
+        line.style.fontFamily = settings.fontFamily || "Arial";
+        line.style.fontSize = (settings.dietTextSize || 12) + "px";
+        line.style.color = settings.accentColor || settings.textColor || "#444444";
+        line.style.width = "100%";
+        line.textContent = diets.map(d => d.icon + " " + d.value).join(" • ");
+        content.appendChild(line);
+      }
+
+      div.appendChild(content);
+      container.appendChild(div);
     }
-    sheetWrap.appendChild(container);previewSheets.appendChild(sheetWrap)
+
+    sheetWrap.appendChild(container);
+    previewSheets.appendChild(sheetWrap);
   }
 }
 createFoodRows();
@@ -761,9 +1006,25 @@ let autoSaveTimer = null;
 function loadSheetFromApp(sheet) {
   if (!sheet) return;
 
-  const incoming = Array.isArray(sheet.labels) ? sheet.labels : [];
+  const incoming = Array.isArray(sheet.labels)
+    ? sheet.labels
+    : Array.isArray(sheet.labelItems)
+    ? sheet.labelItems
+    : Array.isArray(sheet.items)
+    ? sheet.items
+    : [];
+
   const convertedLabels = incoming.map((label) => ({
-    food: label?.title || "",
+    food:
+      typeof label?.food === "string"
+        ? label.food
+        : typeof label?.foodName === "string"
+        ? label.foodName
+        : typeof label?.title === "string"
+        ? label.title
+        : typeof label?.name === "string"
+        ? label.name
+        : "",
     diets: Array.isArray(label?.diets) ? label.diets : []
   }));
 
@@ -771,34 +1032,12 @@ function loadSheetFromApp(sheet) {
     eventName: sheet.eventName || "",
     totalLabels: sheet.totalLabels || convertedLabels.length || 10,
     labels: convertedLabels,
-   settings: sheet.settings
-  ? {
-      font: sheet.settings.fontFamily || sheet.settings.font || "Arial",
-      fontSize: sheet.settings.foodNameSize || sheet.settings.fontSize || 20,
-      textColor: sheet.settings.textColor || "#000000",
-      allergenFont: sheet.settings.allergenFont || "Arial",
-      allergenSize: sheet.settings.dietTextSize || sheet.settings.allergenSize || 12,
-      allergenColor: sheet.settings.accentColor || sheet.settings.allergenColor || "#000000",
-      bgColor: sheet.settings.backgroundColor || sheet.settings.bgColor || "#ffffff",
-      logoSettings: sheet.settings.logoSettings || { x: 8, y: 8, size: 55 },
-      viewMode: sheet.settings.viewMode || "side"
-    }
-  : {
-      font: "Arial",
-      fontSize: 20,
-      textColor: "#000000",
-      allergenFont: "Arial",
-      allergenSize: 12,
-      allergenColor: "#000000",
-      bgColor: "#ffffff",
-      logoSettings: { x: 8, y: 8, size: 55 },
-      viewMode: "side"
-    },
-    logoData: sheet.logoData || null,
+    settings: sheet.settings || {},
+    logoData: sheet.logoData || sheet.logoUrl || null,
     menuPaste: ""
   });
 
-  currentSaveName = sheet.name ? sheet.name + " (app)" : "App Sheet";
+  currentSaveName = sheet.title ? sheet.title + " (app)" : "App Sheet";
   hasBrowserSave = false;
   updateCurrentFileName();
   syncRibbonFields();
