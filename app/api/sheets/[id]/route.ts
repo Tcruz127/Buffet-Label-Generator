@@ -3,6 +3,10 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import {
+  FREE_PLAN_MAX_LABELS,
+  isProUser,
+} from "@/lib/plan";
 
 type RouteContext = {
   params: Promise<{
@@ -43,26 +47,6 @@ function normalizeFoodName(label: IncomingLabel): string {
   return "";
 }
 
-async function getAuthorizedSheetOrNull(id: string, email: string) {
-  const { prisma } = await import("@/lib/prisma");
-
-  return prisma.labelSheet.findFirst({
-    where: {
-      id,
-      user: {
-        email,
-      },
-    },
-    include: {
-      items: {
-        orderBy: {
-          positionIndex: "asc",
-        },
-      },
-    },
-  });
-}
-
 export async function GET(_req: Request, context: RouteContext) {
   const session = await auth();
 
@@ -70,10 +54,25 @@ export async function GET(_req: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { prisma } = await import("@/lib/prisma");
   const { id } = await context.params;
 
   try {
-    const sheet = await getAuthorizedSheetOrNull(id, session.user.email);
+    const sheet = await prisma.labelSheet.findFirst({
+      where: {
+        id,
+        user: {
+          email: session.user.email,
+        },
+      },
+      include: {
+        items: {
+          orderBy: {
+            positionIndex: "asc",
+          },
+        },
+      },
+    });
 
     if (!sheet) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
@@ -102,7 +101,35 @@ export async function PUT(req: Request, context: RouteContext) {
   try {
     const body = await req.json();
 
-    const existingSheet = await getAuthorizedSheetOrNull(id, session.user.email);
+    const user = await prisma.user.findUnique({
+      where: {
+        email: session.user.email,
+      },
+      select: {
+        id: true,
+        subscriptionStatus: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const isPro = isProUser(user.subscriptionStatus);
+
+    const existingSheet = await prisma.labelSheet.findFirst({
+      where: {
+        id,
+        userId: user.id,
+      },
+      include: {
+        items: {
+          orderBy: {
+            positionIndex: "asc",
+          },
+        },
+      },
+    });
 
     if (!existingSheet) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
@@ -127,6 +154,38 @@ export async function PUT(req: Request, context: RouteContext) {
           diets: normalizeDiets(label.diets),
         }))
       : [];
+
+    if (!isPro && hasLabels && normalizedLabels.length > FREE_PLAN_MAX_LABELS) {
+      return NextResponse.json(
+        {
+          error: `Free plan supports up to ${FREE_PLAN_MAX_LABELS} labels per sheet.`,
+        },
+        { status: 403 }
+      );
+    }
+
+    const attemptedLogoChange =
+      body.logoUrl !== undefined ||
+      body.logoData !== undefined ||
+      existingSheet.logoUrl !== null;
+
+    if (!isPro && attemptedLogoChange) {
+      const incomingLogoValue =
+        typeof body.logoUrl === "string"
+          ? body.logoUrl
+          : typeof body.logoData === "string"
+          ? body.logoData
+          : null;
+
+      if (incomingLogoValue !== null || existingSheet.logoUrl !== null) {
+        return NextResponse.json(
+          {
+            error: "Logo upload is available on the Pro plan.",
+          },
+          { status: 403 }
+        );
+      }
+    }
 
     await prisma.labelSheet.update({
       where: { id },
@@ -153,7 +212,7 @@ export async function PUT(req: Request, context: RouteContext) {
             }
           : {}),
 
-        ...((body.logoUrl !== undefined || body.logoData !== undefined)
+        ...((body.logoUrl !== undefined || body.logoData !== undefined) && isPro
           ? {
               logoUrl:
                 typeof body.logoUrl === "string"
@@ -223,12 +282,23 @@ export async function DELETE(_req: Request, context: RouteContext) {
   const { id } = await context.params;
 
   try {
+    const user = await prisma.user.findUnique({
+      where: {
+        email: session.user.email,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const sheet = await prisma.labelSheet.findFirst({
       where: {
         id,
-        user: {
-          email: session.user.email,
-        },
+        userId: user.id,
       },
       select: {
         id: true,
