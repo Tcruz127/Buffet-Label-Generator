@@ -3,6 +3,31 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { headers } from "next/headers";
+
+function getBaseUrl(host: string | null) {
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (envUrl) {
+    if (!envUrl.startsWith("http://") && !envUrl.startsWith("https://")) {
+      throw new Error(
+        "NEXT_PUBLIC_APP_URL must start with http:// or https://"
+      );
+    }
+    return envUrl.replace(/\/$/, "");
+  }
+
+  if (!host) {
+    throw new Error("Unable to determine app URL");
+  }
+
+  const protocol =
+    host.includes("localhost") || host.startsWith("127.0.0.1")
+      ? "http"
+      : "https";
+
+  return `${protocol}://${host}`;
+}
 
 export async function POST() {
   try {
@@ -46,17 +71,25 @@ export async function POST() {
       });
     }
 
+    const headersList = await headers();
+    const host = headersList.get("host");
+    const baseUrl = getBaseUrl(host);
+
+    if (!process.env.STRIPE_PRICE_ID_MONTHLY) {
+      throw new Error("STRIPE_PRICE_ID_MONTHLY is not set");
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: stripeCustomerId,
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID_MONTHLY!,
+          price: process.env.STRIPE_PRICE_ID_MONTHLY,
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/app?upgraded=1`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/app?canceled=1`,
+      success_url: `${baseUrl}/app?upgraded=1`,
+      cancel_url: `${baseUrl}/app?canceled=1`,
       allow_promotion_codes: true,
       metadata: {
         userId: user.id,
@@ -72,7 +105,12 @@ export async function POST() {
   } catch (error) {
     console.error("Checkout error:", error);
     return NextResponse.json(
-      { error: "Failed to create checkout session" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to create checkout session",
+      },
       { status: 500 }
     );
   }
