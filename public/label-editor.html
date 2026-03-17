@@ -827,48 +827,48 @@ button:hover{
           </div>
         </div>
 
-        <div id="ribbon-logo" class="ribbon-panel">
-          <div class="ribbon-group">
-            <label>Upload Logo</label>
-<div class="logo-upload-row">
-  <input type="file" id="logoUpload" accept="image/*" />
-  <button
-    type="button"
-    id="clearLogoBtn"
-    class="logo-clear-btn"
-    onclick="removeLogo()"
-    title="Remove logo"
-    disabled
-  >
-    ×
-  </button>
+       <div id="ribbon-logo" class="ribbon-panel">
+  <div class="ribbon-group">
+    <label>Upload Logo</label>
+    <input
+      type="file"
+      id="logoUploadRibbon"
+      accept="image/*"
+      onchange="handleRibbonLogoUpload(event)"
+    />
+
+    <label>Logo Size</label>
+    <div class="mini-row">
+      <input
+        type="range"
+        id="logoSizeRibbon"
+        min="20"
+        max="140"
+        value="55"
+        oninput="syncLogoSize(this.value)"
+      />
+      <div class="badge"><span id="logoSizeValueRibbon">55</span> px</div>
+    </div>
+
+    <div class="ribbon-group-title">Logo</div>
+  </div>
+
+  <div class="ribbon-group">
+    <label>Alignment</label>
+    <div class="align-grid">
+      <button type="button" onclick="setLogoAlignment('top-left')">Top Left</button>
+      <button type="button" onclick="setLogoAlignment('top-center')">Top Center</button>
+      <button type="button" onclick="setLogoAlignment('top-right')">Top Right</button>
+      <button type="button" onclick="setLogoAlignment('middle-left')">Mid Left</button>
+      <button type="button" onclick="setLogoAlignment('center')">Center</button>
+      <button type="button" onclick="setLogoAlignment('middle-right')">Mid Right</button>
+      <button type="button" onclick="setLogoAlignment('bottom-left')">Bot Left</button>
+      <button type="button" onclick="setLogoAlignment('bottom-center')">Bot Center</button>
+      <button type="button" onclick="setLogoAlignment('bottom-right')">Bot Right</button>
+    </div>
+    <div class="ribbon-group-title">Position</div>
+  </div>
 </div>
-
-            <label>Logo Size</label>
-            <div class="mini-row">
-              <input type="range" id="logoSizeRibbon" min="20" max="140" value="55" oninput="syncLogoSize(this.value)" />
-              <div class="badge"><span id="logoSizeValueRibbon">55</span> px</div>
-            </div>
-
-            <div class="ribbon-group-title">Logo</div>
-          </div>
-
-          <div class="ribbon-group">
-            <label>Alignment</label>
-            <div class="align-grid">
-              <button type="button" onclick="setLogoAlignment('top-left')">Top Left</button>
-              <button type="button" onclick="setLogoAlignment('top-center')">Top Center</button>
-              <button type="button" onclick="setLogoAlignment('top-right')">Top Right</button>
-              <button type="button" onclick="setLogoAlignment('middle-left')">Mid Left</button>
-              <button type="button" onclick="setLogoAlignment('center')">Center</button>
-              <button type="button" onclick="setLogoAlignment('middle-right')">Mid Right</button>
-              <button type="button" onclick="setLogoAlignment('bottom-left')">Bot Left</button>
-              <button type="button" onclick="setLogoAlignment('bottom-center')">Bot Center</button>
-              <button type="button" onclick="setLogoAlignment('bottom-right')">Bot Right</button>
-            </div>
-            <div class="ribbon-group-title">Position</div>
-          </div>
-        </div>
 
         <div id="ribbon-labels" class="ribbon-panel">
           <div class="ribbon-group">
@@ -905,30 +905,42 @@ button:hover{
       </div>
 
       <div class="controls-block">
-        <label>Upload Logo</label>
-        <input type="file" id="logoUpload" accept="image/*" />
+  <label>Upload Logo</label>
+  <div class="logo-upload-row">
+    <input type="file" id="logoUpload" accept="image/*" />
+    <button
+      type="button"
+      id="clearLogoBtn"
+      class="logo-clear-btn"
+      onclick="removeLogo()"
+      title="Remove logo"
+      disabled
+    >
+      ×
+    </button>
+  </div>
 
-        <label>Logo Size</label>
-        <div class="mini-row">
-          <input type="range" id="logoSize" min="20" max="140" value="55" />
-          <div class="badge"><span id="logoSizeValue">55</span> px</div>
-        </div>
+  <label>Logo Size</label>
+  <div class="mini-row">
+    <input type="range" id="logoSize" min="20" max="140" value="55" />
+    <div class="badge"><span id="logoSizeValue">55</span> px</div>
+  </div>
 
-        <div class="help">Drag the logo directly inside any label preview to move its position.</div>
+  <div class="help">Drag the logo directly inside any label preview to move its position.</div>
 
-        <label>Logo Alignment</label>
-        <div class="align-grid">
-          <button type="button" onclick="setLogoAlignment('top-left')">Top Left</button>
-          <button type="button" onclick="setLogoAlignment('top-center')">Top Center</button>
-          <button type="button" onclick="setLogoAlignment('top-right')">Top Right</button>
-          <button type="button" onclick="setLogoAlignment('middle-left')">Middle Left</button>
-          <button type="button" onclick="setLogoAlignment('center')">Center</button>
-          <button type="button" onclick="setLogoAlignment('middle-right')">Middle Right</button>
-          <button type="button" onclick="setLogoAlignment('bottom-left')">Bottom Left</button>
-          <button type="button" onclick="setLogoAlignment('bottom-center')">Bottom Center</button>
-          <button type="button" onclick="setLogoAlignment('bottom-right')">Bottom Right</button>
-        </div>
-      </div>
+  <label>Logo Alignment</label>
+  <div class="align-grid">
+    <button type="button" onclick="setLogoAlignment('top-left')">Top Left</button>
+    <button type="button" onclick="setLogoAlignment('top-center')">Top Center</button>
+    <button type="button" onclick="setLogoAlignment('top-right')">Top Right</button>
+    <button type="button" onclick="setLogoAlignment('middle-left')">Middle Left</button>
+    <button type="button" onclick="setLogoAlignment('center')">Center</button>
+    <button type="button" onclick="setLogoAlignment('middle-right')">Middle Right</button>
+    <button type="button" onclick="setLogoAlignment('bottom-left')">Bottom Left</button>
+    <button type="button" onclick="setLogoAlignment('bottom-center')">Bottom Center</button>
+    <button type="button" onclick="setLogoAlignment('bottom-right')">Bottom Right</button>
+  </div>
+</div>
 
       <div class="controls-block">
         <label>Main Font</label>
