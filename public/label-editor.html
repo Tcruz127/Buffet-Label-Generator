@@ -1474,7 +1474,8 @@ function openPrintWindow() {
     align-content: start;
     width: 7.25in;
     height: 10in;
-    margin: 0;
+    margin-left: 0.125in;
+    margin-right: 0;
     padding: 0;
   }
 
@@ -1545,19 +1546,6 @@ function openPrintWindow() {
   printWindow.document.open();
   printWindow.document.write(printHtml);
   printWindow.document.close();
-}
-
-function newLabelSheet(){saveSheetAs()}
-function getSelectedDietForLabel(index){const select=document.getElementById("diet"+index);return Array.from(select.selectedOptions).map(opt=>DIET_OPTIONS.find(d=>d.value===opt.value)).filter(Boolean)}
-function getSheetData(){
-  return {
-    eventName: document.getElementById("eventName").value,
-    totalLabels: totalLabels,
-    settings: getMergedRenderSettings(),
-    logoData: logoData,
-    menuPaste: document.getElementById("menuPaste").value,
-    labels: collectLabelData()
-  };
 }
 function applySheetData(data){
   const normalizedSettings = normalizeTemplateSettings(data.settings || {});
