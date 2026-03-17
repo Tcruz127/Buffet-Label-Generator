@@ -1,7 +1,16 @@
 import Link from "next/link";
-import { signIn, signOut } from "../../auth";
+import { redirect } from "next/navigation";
+import { AuthError } from "next-auth";
+import { signIn } from "../../auth";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ error?: string }>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const error = resolvedSearchParams?.error;
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <div className="absolute inset-0 -z-10">
@@ -68,17 +77,34 @@ export default function LoginPage() {
                   </p>
                 </div>
 
+                {error === "invalid" && (
+                  <div className="mb-5 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                    Invalid email or password.
+                  </div>
+                )}
+
                 <form
                   action={async (formData) => {
                     "use server";
 
-                    await signOut({ redirect: false });
+                    const email = formData.get("email");
+                    const password = formData.get("password");
 
-                    await signIn("credentials", {
-                      email: formData.get("email"),
-                      password: formData.get("password"),
-                      redirectTo: "/app",
-                    });
+                    try {
+                      await signIn("credentials", {
+                        email,
+                        password,
+                        redirectTo: "/app",
+                      });
+                    } catch (error) {
+                      if (error instanceof AuthError) {
+                        if (error.type === "CredentialsSignin") {
+                          redirect("/login?error=invalid");
+                        }
+                      }
+
+                      throw error;
+                    }
                   }}
                   className="space-y-5"
                 >
