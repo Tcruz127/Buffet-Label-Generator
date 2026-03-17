@@ -526,10 +526,11 @@ button:hover{
   }
 
   html,body{
-    background: white !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: visible !important;
+    background:white !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+    height:auto !important;
   }
 
   .topbar,
@@ -548,101 +549,123 @@ button:hover{
   .ribbon,
   .sidebar-header,
   #overlay,
-  #sidebar {
-    display: none !important;
+  #sidebar{
+    display:none !important;
   }
 
   .container,
   .container.side-view,
   .container.top-view{
-    display: block !important;
-    height: auto !important;
+    display:block !important;
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    overflow:visible !important;
+    margin:0 !important;
+    padding:0 !important;
   }
 
   .panel{
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: white !important;
+    background:white !important;
+    border:none !important;
+    box-shadow:none !important;
+    border-radius:0 !important;
+    backdrop-filter:none !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+    min-height:0 !important;
   }
 
   .preview-panel{
-    box-shadow: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: white !important;
-    height: auto !important;
-    overflow: visible !important;
-    position: static !important;
+    display:block !important;
+    background:white !important;
+    border:none !important;
+    box-shadow:none !important;
+    border-radius:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    height:auto !important;
+    min-height:0 !important;
+    overflow:visible !important;
+    position:static !important;
+    width:100% !important;
   }
 
   .preview-panel h3,
   .doc-status,
   .sheet-event-name,
   .sheet-title{
-    display: none !important;
+    display:none !important;
   }
 
   #previewSheets{
-    margin: 0 !important;
-    padding: 0 !important;
+    display:block !important;
+    margin:0 !important;
+    padding:0 !important;
+    width:100% !important;
+    overflow:visible !important;
   }
 
   .sheet-preview{
-    page-break-after: always;
-    break-after: page;
-    margin: 0 !important;
-    padding: 0 !important;
-    min-height: 10in !important;
-    height: auto !important;
-    overflow: visible !important;
+    display:block !important;
+    page-break-after:always;
+    break-after:page;
+    width:auto !important;
+    margin:0 !important;
+    padding:0 !important;
+    min-height:0 !important;
+    height:auto !important;
+    background:white !important;
     border:none !important;
     box-shadow:none !important;
-    background:white !important;
+    border-radius:0 !important;
+    overflow:visible !important;
+    zoom:1 !important;
   }
 
   .sheet-preview:last-child{
-    page-break-after: auto;
-    break-after: auto;
+    page-break-after:auto;
+    break-after:auto;
   }
 
   .labels{
-    display:grid;
-    grid-template-columns:repeat(2,3.5in);
-    grid-template-rows:repeat(5,2in);
-    column-gap:.5in;
-    row-gap:0;
-    justify-content:center;
+    display:grid !important;
+    grid-template-columns:repeat(2,3.5in) !important;
+    grid-template-rows:repeat(5,2in) !important;
+    column-gap:.5in !important;
+    row-gap:0 !important;
+    justify-content:center !important;
+    width:auto !important;
+    margin:0 auto !important;
   }
 
   .label{
-    width: 3.5in !important;
-    height: 2in !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-    overflow: hidden !important;
+    display:block !important;
+    width:3.5in !important;
+    height:2in !important;
+    background:white !important;
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+    border-radius:0 !important;
+    overflow:hidden !important;
+    break-inside:avoid !important;
+    page-break-inside:avoid !important;
   }
 
   .label-content{
-    width: 100% !important;
-    height: 100% !important;
+    width:100% !important;
+    height:100% !important;
+    display:flex !important;
+    overflow:hidden !important;
   }
 
   .dish-name,
-  .allergen-line{
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
+  .allergen-line,
   .label-logo{
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
   }
 }
 </style>
