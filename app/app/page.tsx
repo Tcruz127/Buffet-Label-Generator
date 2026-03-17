@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 import UpgradeButton from "./UpgradeButton";
 import ManageBillingButton from "./ManageBillingButton";
 import SheetActionsMenu from "./SheetActionsMenu";
@@ -35,10 +35,13 @@ export default async function AppDashboardPage() {
     user.subscriptionStatus === "active" ||
     user.subscriptionStatus === "trialing";
 
+  const displayName =
+    user.name?.trim() || user.email?.split("@")[0] || "Account";
+
   return (
     <main className="min-h-screen bg-neutral-50">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="mb-8 flex items-center justify-between gap-4">
+        <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
               Your Sheets
@@ -66,7 +69,58 @@ export default async function AppDashboardPage() {
               New Sheet
             </Link>
 
-            {isPro ? <ManageBillingButton /> : <UpgradeButton />}
+            <details className="group relative">
+              <summary className="flex cursor-pointer list-none items-center rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-900 shadow-sm transition hover:bg-neutral-100">
+                <span className="max-w-[140px] truncate">{displayName}</span>
+                <svg
+                  className="ml-2 h-4 w-4 text-neutral-500 transition group-open:rotate-180"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </summary>
+
+              <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-neutral-200 bg-white p-2 shadow-lg">
+                <div className="border-b border-neutral-100 px-3 py-2">
+                  <div className="truncate text-sm font-medium text-neutral-900">
+                    {user.name || "Your Account"}
+                  </div>
+                  <div className="truncate text-xs text-neutral-500">
+                    {user.email}
+                  </div>
+                </div>
+
+                <div className="p-2">
+                  {isPro ? (
+                    <ManageBillingButton />
+                  ) : (
+                    <UpgradeButton />
+                  )}
+                </div>
+
+                <div className="p-2 pt-0">
+                  <form
+                    action={async () => {
+                      "use server";
+                      await signOut({ redirectTo: "/login" });
+                    }}
+                  >
+                    <button
+                      type="submit"
+                      className="inline-flex w-full items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-900 shadow-sm transition hover:bg-neutral-100"
+                    >
+                      Log Out
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
 
