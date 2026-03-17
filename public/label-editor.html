@@ -1073,7 +1073,7 @@ function closeSidebar(){document.getElementById("sidebar").classList.remove("ope
 function sanitizeName(v){let n=(v||"buffet-sheet").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");return n||"buffet-sheet"}
 function getFoodValue(i){const el=document.getElementById("food"+i);return el?el.value:""}
 function getSuggestedSheetName(){return sanitizeName(document.getElementById("eventName").value||getFoodValue(1)||"buffet-sheet")}
-function updateCurrentFileName(){document.getElementById("currentFileName").textContent=currentSaveName||"Unsaved sheet"}
+function updateCurrentFileName(){document.getElementById("currentFileName").textContent=currentSaveName||"Unsaved sheet • local workspace"}
 function ensureMultipleOfTen(n){n=Math.max(10,Number(n)||10);return Math.ceil(n/10)*10}
 function syncField(fromId,toId){const a=document.getElementById(fromId),b=document.getElementById(toId); if(a&&b) b.value=a.value}
 function syncLogoSize(v){document.getElementById("logoSize").value=v;document.getElementById("logoSizeRibbon").value=v;document.getElementById("logoSizeValue").textContent=v;document.getElementById("logoSizeValueRibbon").textContent=v;logoSettings.size=Number(v);generateLabels()}
