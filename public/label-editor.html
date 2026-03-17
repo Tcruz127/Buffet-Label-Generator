@@ -86,8 +86,8 @@ body{
   gap:16px;
   align-items:stretch;
   width:100%;
-  height:calc(100vh - 124px);
-  min-height:calc(100vh - 124px);
+  height:100%;
+  min-height:100%;
 }
 
 .container.top-view{
@@ -112,9 +112,8 @@ body{
 .controls-panel{
   overflow:auto;
   height:100%;
+  min-height:0;
   padding:16px;
-  width:auto;
-  min-width:0;
 }
 
 .preview-panel{
@@ -122,6 +121,7 @@ body{
   min-width:0;
   overflow:auto;
   height:100%;
+  min-height:0;
   position:relative;
   padding:12px 18px 18px;
   background:
