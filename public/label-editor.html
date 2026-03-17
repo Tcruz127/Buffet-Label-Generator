@@ -581,6 +581,23 @@ button:hover{
 
   .container,
   .container.side-view,
+  .container.top-view,
+  .panel,
+  .preview-panel,
+  #previewSheets,
+  .sheet-preview,
+  .labels,
+  .label,
+  .label-content{
+    background:white !important;
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+    border-radius:0 !important;
+  }
+
+  .container,
+  .container.side-view,
   .container.top-view{
     display:block !important;
     width:100% !important;
@@ -591,33 +608,17 @@ button:hover{
     padding:0 !important;
   }
 
-  .panel{
-    background:white !important;
-    border:none !important;
-    outline:none !important;
-    box-shadow:none !important;
-    border-radius:0 !important;
-    backdrop-filter:none !important;
-    margin:0 !important;
-    padding:0 !important;
-    overflow:visible !important;
-    min-height:0 !important;
-  }
-
-  .preview-panel{
+  .panel,
+  .preview-panel,
+  #previewSheets{
     display:block !important;
-    background:white !important;
-    border:none !important;
-    outline:none !important;
-    box-shadow:none !important;
-    border-radius:0 !important;
     margin:0 !important;
     padding:0 !important;
+    width:100% !important;
     height:auto !important;
     min-height:0 !important;
     overflow:visible !important;
     position:static !important;
-    width:100% !important;
   }
 
   .preview-panel h3,
@@ -627,36 +628,21 @@ button:hover{
     display:none !important;
   }
 
-  #previewSheets{
-    display:block !important;
-    margin:0 !important;
-    padding:0 !important;
-    width:100% !important;
-    overflow:visible !important;
-  }
-
   .sheet-preview{
     display:block !important;
-    page-break-after:always;
-    break-after:page;
     width:8.5in !important;
     height:11in !important;
     margin:0 !important;
     padding:0.5in !important;
-    min-height:0 !important;
-    background:white !important;
-    border:none !important;
-    outline:none !important;
-    box-shadow:none !important;
-    border-radius:0 !important;
     overflow:hidden !important;
     box-sizing:border-box !important;
-    zoom:1 !important;
+    page-break-after:always !important;
+    break-after:page !important;
   }
 
   .sheet-preview:last-child{
-    page-break-after:auto;
-    break-after:auto;
+    page-break-after:auto !important;
+    break-after:auto !important;
   }
 
   .labels{
@@ -677,15 +663,19 @@ button:hover{
     display:block !important;
     width:3.5in !important;
     height:2in !important;
-    background:white !important;
-    border:none !important;
-    outline:none !important;
-    box-shadow:none !important;
-    border-radius:0 !important;
     overflow:hidden !important;
     break-inside:avoid !important;
     page-break-inside:avoid !important;
     box-sizing:border-box !important;
+  }
+
+  .label *,
+  .label::before,
+  .label::after,
+  .label-content *,
+  .label-content::before,
+  .label-content::after{
+    box-shadow:none !important;
   }
 
   .label-content{
@@ -695,9 +685,6 @@ button:hover{
     overflow:hidden !important;
     box-sizing:border-box !important;
     padding:10px !important;
-    border:none !important;
-    outline:none !important;
-    box-shadow:none !important;
   }
 
   .dish-name,
