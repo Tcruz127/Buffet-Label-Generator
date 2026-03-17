@@ -519,6 +519,31 @@ button:hover{
 }
 ::-webkit-scrollbar-thumb:hover{background:#94a3b8;background-clip:padding-box}
 
+.logo-upload-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 44px;
+  gap:8px;
+  align-items:end;
+}
+
+.logo-clear-btn{
+  margin-top:6px;
+  height:44px;
+  width:44px;
+  padding:0;
+  border-radius:12px;
+  font-size:22px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.logo-clear-btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
 @media print{
   @page{
     size: Letter portrait;
@@ -805,7 +830,19 @@ button:hover{
         <div id="ribbon-logo" class="ribbon-panel">
           <div class="ribbon-group">
             <label>Upload Logo</label>
-            <input type="file" id="logoUploadRibbon" accept="image/*" onchange="handleRibbonLogoUpload(event)" />
+<div class="logo-upload-row">
+  <input type="file" id="logoUpload" accept="image/*" />
+  <button
+    type="button"
+    id="clearLogoBtn"
+    class="logo-clear-btn"
+    onclick="removeLogo()"
+    title="Remove logo"
+    disabled
+  >
+    ×
+  </button>
+</div>
 
             <label>Logo Size</label>
             <div class="mini-row">
@@ -1116,8 +1153,50 @@ function setViewMode(mode){
   closeSidebar();
   syncRibbonFields();
 }
+function updateLogoClearButton(){
+  const btn = document.getElementById("clearLogoBtn");
+  if (btn) {
+    btn.disabled = !logoData;
+  }
+}
 
-document.getElementById("logoUpload").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{logoData=ev.target.result;generateLabels()};r.readAsDataURL(f)});
+function applyLogoFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    logoData = ev.target.result;
+    updateLogoClearButton();
+    generateLabels();
+
+    if (typeof triggerAutosave === "function") {
+      triggerAutosave();
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo(){
+  if(!logoData) return;
+
+  logoData = null;
+
+  const mainInput = document.getElementById("logoUpload");
+  const ribbonInput = document.getElementById("logoUploadRibbon");
+
+  if (mainInput) mainInput.value = "";
+  if (ribbonInput) ribbonInput.value = "";
+
+  updateLogoClearButton();
+  generateLabels();
+
+  if (typeof triggerAutosave === "function") {
+    triggerAutosave();
+  }
+}
+document.getElementById("logoUpload").addEventListener("change", e => {
+  const file = e.target.files[0];
+  applyLogoFile(file);
+});
 document.getElementById("sheetFileInput").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const data=JSON.parse(ev.target.result);applySheetData(data);currentSaveName=f.name;hasBrowserSave=false;updateCurrentFileName();alert("Sheet opened successfully.");closeSidebar()}catch(err){alert("That file could not be loaded. Please choose a valid saved sheet file.")}};r.readAsText(f)});
 document.getElementById("logoSize").addEventListener("input",e=>{syncLogoSize(e.target.value)});
 document.getElementById("eventName").addEventListener("input",()=>{syncRibbonFields();generateLabels()});
@@ -1217,12 +1296,15 @@ function clearFoods(){
   document.getElementById("menuPaste").value="";
   document.getElementById("eventName").value="";
   currentSaveName="";
+  logoData = null;
+  updateLogoClearButton();
   hasBrowserSave=false;
   updateCurrentFileName();
   totalLabels=10;
   createFoodRows();
   syncRibbonFields();
   generateLabels();
+  updateLogoClearButton();
 }
 function printAlignmentTestSheet() {
   const previewSheets = document.getElementById("previewSheets");
@@ -1449,6 +1531,7 @@ function applySheetData(data){
   }
 
   logoData = data.logoData || null;
+  updateLogoClearButton();
   document.getElementById("menuPaste").value = data.menuPaste || "";
   totalLabels = ensureMultipleOfTen(data.totalLabels || (data.labels ? data.labels.length : 10));
   createFoodRows();
