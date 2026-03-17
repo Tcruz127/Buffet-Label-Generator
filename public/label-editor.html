@@ -1410,7 +1410,7 @@ function openPrintWindow() {
 <style>
   @page {
     size: Letter portrait;
-    margin: 0.5in;
+    margin: 0;
   }
 
   html, body {
@@ -1419,6 +1419,8 @@ function openPrintWindow() {
     background: white;
     color: #000;
     font-family: Arial, sans-serif;
+    width: 100%;
+    height: auto;
   }
 
   body {
@@ -1427,17 +1429,30 @@ function openPrintWindow() {
 
   .print-wrap {
     width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
-  .sheet-event-name {
-    display: none;
+  .sheet-event-name,
+  .sheet-title {
+    display: none !important;
   }
 
   .sheet-preview {
+    display: block;
+    width: 8.5in;
+    height: 11in;
+    margin: 0;
+    padding: 0.5in;
+    box-sizing: border-box;
+    background: white;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: hidden;
     page-break-after: always;
     break-after: page;
-    margin: 0;
-    padding: 0;
   }
 
   .sheet-preview:last-child {
@@ -1445,38 +1460,56 @@ function openPrintWindow() {
     break-after: auto;
   }
 
-  .sheet-title {
-    display: none;
-  }
-
   .labels {
     display: grid;
     grid-template-columns: repeat(2, 3.5in);
     grid-template-rows: repeat(5, 2in);
-    column-gap: 0.5in;
+    column-gap: 0.25in;
     row-gap: 0;
-    justify-content: center;
-    width: 100%;
+    justify-content: start;
+    align-content: start;
+    width: 7.25in;
+    height: 10in;
+    margin: 0;
+    padding: 0;
   }
 
   .label {
     width: 3.5in !important;
     height: 2in !important;
-    box-sizing: border-box;
+    box-sizing: border-box !important;
     overflow: hidden !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    background: white !important;
+    border: none !important;
+    outline: none !important;
     box-shadow: none !important;
+    border-radius: 0 !important;
   }
 
   .label-content {
     width: 100% !important;
     height: 100% !important;
     display: flex !important;
-    flex-direction: column;
+    flex-direction: column !important;
     align-items: center;
     justify-content: center;
     position: relative;
+    box-sizing: border-box !important;
+    padding: 10px !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .label *,
+  .label::before,
+  .label::after,
+  .label-content *,
+  .label-content::before,
+  .label-content::after {
+    box-shadow: none !important;
   }
 
   .dish-name,
@@ -1509,6 +1542,7 @@ function openPrintWindow() {
   printWindow.document.write(printHtml);
   printWindow.document.close();
 }
+
 function newLabelSheet(){saveSheetAs()}
 function getSelectedDietForLabel(index){const select=document.getElementById("diet"+index);return Array.from(select.selectedOptions).map(opt=>DIET_OPTIONS.find(d=>d.value===opt.value)).filter(Boolean)}
 function getSheetData(){
@@ -1675,7 +1709,7 @@ function generateLabels(){
 
     const container = document.createElement("div");
     container.className = "labels";
-    container.style.columnGap = ".5in";
+    container.style.columnGap = ".25in";
     container.style.rowGap = settings.cardGap + "px";
 
     for(let offset = 1; offset <= 10; offset++){
