@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { signIn } from "../../auth";
+import { signIn, signOut } from "../../auth";
 
 export default function LoginPage() {
   return (
@@ -71,6 +71,8 @@ export default function LoginPage() {
                 <form
                   action={async (formData) => {
                     "use server";
+
+                    await signOut({ redirect: false });
 
                     await signIn("credentials", {
                       email: formData.get("email"),
