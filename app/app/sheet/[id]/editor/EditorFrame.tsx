@@ -46,7 +46,9 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
 
   const [saveStatus, setSaveStatus] = useState("Ready");
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-  const [title, setTitle] = useState(sheet.name ?? sheet.title ?? "Untitled Sheet");
+  const [title, setTitle] = useState(
+    sheet.name ?? sheet.title ?? "Untitled Sheet"
+  );
 
   const normalizedSheetPayload = useMemo(() => {
     const normalizedLabels: LabelData[] = sheet.labels ?? sheet.items ?? [];
@@ -259,27 +261,6 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
               >
                 ← Back to Dashboard
               </Link>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100 bg-slate-50/80 px-5 py-3 lg:px-6">
-            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
-                <span className="font-semibold text-slate-900">Sheet ID</span>
-                <span className="max-w-[180px] truncate">{sheet.id}</span>
-              </div>
-
-              <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
-                <span className="font-semibold text-slate-900">Labels</span>
-                <span>{sheet.totalLabels ?? normalizedSheetPayload.labels.length ?? 0}</span>
-              </div>
-
-              <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
-                <span className="font-semibold text-slate-900">Event</span>
-                <span className="max-w-[220px] truncate">
-                  {sheet.eventName?.trim() || "No event name"}
-                </span>
-              </div>
             </div>
           </div>
         </div>
