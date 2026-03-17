@@ -1161,9 +1161,10 @@ function updateLogoClearButton(){
 }
 
 function applyLogoFile(file){
-  if(!file) return;
+  if (!file) return;
+
   const reader = new FileReader();
-  reader.onload = (ev) => {
+  reader.onload = function (ev) {
     logoData = ev.target.result;
     updateLogoClearButton();
     generateLabels();
@@ -1175,9 +1176,12 @@ function applyLogoFile(file){
   reader.readAsDataURL(file);
 }
 
-function removeLogo(){
-  if(!logoData) return;
+function handleRibbonLogoUpload(e){
+  const file = e.target.files[0];
+  applyLogoFile(file);
+}
 
+function removeLogo(){
   logoData = null;
 
   const mainInput = document.getElementById("logoUpload");
@@ -1193,7 +1197,7 @@ function removeLogo(){
     triggerAutosave();
   }
 }
-document.getElementById("logoUpload").addEventListener("change", e => {
+document.getElementById("logoUpload").addEventListener("change", function(e){
   const file = e.target.files[0];
   applyLogoFile(file);
 });
