@@ -66,167 +66,160 @@ export default async function AppDashboardPage() {
   const recentSheet = user.sheets[0];
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
-      <div className="absolute inset-0 -z-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.18),transparent_30%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.10),transparent_28%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#020617_0%,#0f172a_45%,#111827_100%)]" />
-      </div>
-
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(circle_at_center,black,transparent_80%)]" />
-
+    <main className="min-h-screen bg-[linear-gradient(to_bottom,#f8fbff_0%,#f6f8fc_45%,#ffffff_100%)] text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-        <div className="mb-8 overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 shadow-2xl shadow-cyan-500/10 backdrop-blur-2xl">
-          <div className="border-b border-white/10 bg-white/5 px-5 py-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 text-sm font-bold text-white shadow-lg shadow-cyan-500/30">
-                  {initials}
-                </div>
-
-                <div>
-                  <div className="text-sm text-slate-300">
-                    Welcome back,
-                  </div>
-                  <h1 className="text-2xl font-black tracking-tight text-white md:text-3xl">
-                    {displayName}
-                  </h1>
-                </div>
+        <div className="mb-8 rounded-[2rem] border border-slate-200/80 bg-white/85 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur xl:p-8">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+            <div className="max-w-3xl">
+              <div className="mb-4 inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-sm font-medium text-cyan-700">
+                Buffet Label Generator Workspace
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+                Welcome back, {displayName}
+              </h1>
+
+              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+                Create, organize, and edit buffet label sheets for weddings,
+                corporate events, catering jobs, and hospitality teams.
+              </p>
+
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/app/new"
+                  className="inline-flex items-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
+                >
+                  Create New Sheet
+                </Link>
+
                 <span
                   className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
                     isPro
-                      ? "border border-emerald-400/20 bg-emerald-400/15 text-emerald-200"
-                      : "border border-white/10 bg-white/10 text-slate-200"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-slate-100 text-slate-700"
                   }`}
                 >
                   {isPro ? "Pro Plan" : "Free Plan"}
                 </span>
+              </div>
+            </div>
 
-                <Link
-                  href="/app/new"
-                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-xl shadow-cyan-500/20 transition hover:scale-[1.01]"
+            <details className="group relative shrink-0 self-start">
+              <summary className="flex list-none cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition hover:border-slate-300 hover:shadow-md">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-violet-500 text-sm font-bold text-white">
+                  {initials}
+                </div>
+
+                <div className="hidden min-w-0 sm:block">
+                  <div className="max-w-[160px] truncate text-sm font-semibold text-slate-900">
+                    {displayName}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {isPro ? "Pro account" : "Free account"}
+                  </div>
+                </div>
+
+                <svg
+                  className="h-4 w-4 text-slate-500 transition group-open:rotate-180"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
                 >
-                  New Sheet
-                </Link>
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </summary>
 
-                <details className="group relative">
-                  <summary className="flex list-none cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-3 py-2 shadow-lg shadow-slate-950/10 transition hover:border-cyan-300/30 hover:bg-white/15">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-xs font-semibold text-white ring-1 ring-white/10">
+              <div className="absolute right-0 z-20 mt-3 w-72 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.16)]">
+                <div className="bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(168,85,247,0.10))] px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-violet-500 text-sm font-semibold text-white">
                       {initials}
                     </div>
 
-                    <div className="hidden min-w-0 sm:block">
-                      <div className="max-w-[140px] truncate text-sm font-semibold text-white">
-                        {displayName}
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-slate-900">
+                        {user.name || "Your Account"}
                       </div>
-                      <div className="text-xs text-slate-300">
-                        {isPro ? "Pro account" : "Free account"}
+                      <div className="truncate text-xs text-slate-500">
+                        {user.email}
                       </div>
-                    </div>
-
-                    <svg
-                      className="h-4 w-4 text-slate-300 transition duration-200 group-open:rotate-180"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </summary>
-
-                  <div className="absolute right-0 z-20 mt-3 w-72 overflow-hidden rounded-3xl border border-white/10 bg-slate-950/95 shadow-2xl shadow-cyan-500/10 ring-1 ring-white/10 backdrop-blur-2xl">
-                    <div className="bg-[linear-gradient(135deg,rgba(56,189,248,0.22),rgba(168,85,247,0.18))] px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white ring-1 ring-white/10">
-                          {initials}
-                        </div>
-
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-white">
-                            {user.name || "Your Account"}
-                          </div>
-                          <div className="truncate text-xs text-slate-200">
-                            {user.email}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border-b border-white/10 px-4 py-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
-                          Subscription
-                        </span>
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                            isPro
-                              ? "bg-emerald-400/15 text-emerald-200"
-                              : "bg-white/10 text-slate-200"
-                          }`}
-                        >
-                          {isPro ? "Pro Plan" : "Free Plan"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 p-4">
-                      <div className="[&_button]:w-full">
-                        {isPro ? <ManageBillingButton /> : <UpgradeButton />}
-                      </div>
-
-                      <form
-                        action={async () => {
-                          "use server";
-                          await signOut({ redirectTo: "/login" });
-                        }}
-                      >
-                        <button
-                          type="submit"
-                          className="inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-white/10"
-                        >
-                          Log Out
-                        </button>
-                      </form>
                     </div>
                   </div>
-                </details>
+                </div>
+
+                <div className="border-b border-slate-100 px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                      Subscription
+                    </span>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                        isPro
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {isPro ? "Pro Plan" : "Free Plan"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 p-4">
+                  <div className="[&_button]:w-full">
+                    {isPro ? <ManageBillingButton /> : <UpgradeButton />}
+                  </div>
+
+                  <form
+                    action={async () => {
+                      "use server";
+                      await signOut({ redirectTo: "/login" });
+                    }}
+                  >
+                    <button
+                      type="submit"
+                      className="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-sm transition hover:bg-slate-50"
+                    >
+                      Log Out
+                    </button>
+                  </form>
+                </div>
               </div>
-            </div>
+            </details>
           </div>
 
-          <div className="grid gap-4 px-5 py-5 md:grid-cols-3">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-cyan-500/5 backdrop-blur">
-              <p className="text-sm text-slate-300">Total Sheets</p>
-              <p className="mt-2 text-3xl font-black text-white">
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <div className="rounded-3xl border border-cyan-100 bg-cyan-50/70 p-5">
+              <p className="text-sm font-medium text-cyan-700">Total Sheets</p>
+              <p className="mt-2 text-3xl font-black text-slate-950">
                 {totalSheets}
               </p>
-              <p className="mt-2 text-xs text-slate-400">
-                All saved buffet label sheets in your workspace
+              <p className="mt-2 text-sm text-slate-600">
+                Saved buffet label sheets in your workspace
               </p>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-violet-500/5 backdrop-blur">
-              <p className="text-sm text-slate-300">Total Labels</p>
-              <p className="mt-2 text-3xl font-black text-white">
+            <div className="rounded-3xl border border-violet-100 bg-violet-50/70 p-5">
+              <p className="text-sm font-medium text-violet-700">Total Labels</p>
+              <p className="mt-2 text-3xl font-black text-slate-950">
                 {totalLabels}
               </p>
-              <p className="mt-2 text-xs text-slate-400">
-                Labels across all of your saved sheets
+              <p className="mt-2 text-sm text-slate-600">
+                Labels across all saved sheets
               </p>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-cyan-500/5 backdrop-blur">
-              <p className="text-sm text-slate-300">Most Recent Sheet</p>
-              <p className="mt-2 truncate text-lg font-bold text-white">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
+              <p className="text-sm font-medium text-slate-700">
+                Most Recent Sheet
+              </p>
+              <p className="mt-2 truncate text-lg font-bold text-slate-950">
                 {recentSheet?.title || "No sheets yet"}
               </p>
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-sm text-slate-600">
                 {recentSheet
                   ? `Updated ${formatUpdatedAt(recentSheet.updatedAt)}`
                   : "Create your first sheet to get started"}
@@ -235,20 +228,20 @@ export default async function AppDashboardPage() {
           </div>
         </div>
 
-        <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="mb-5 flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-black tracking-tight text-white">
+            <h2 className="text-2xl font-black tracking-tight text-slate-950">
               Your Sheets
             </h2>
-            <p className="mt-1 text-sm text-slate-300">
-              Create, edit, and manage buffet label sheets for your events.
+            <p className="mt-1 text-sm text-slate-600">
+              Open and manage your saved buffet label projects.
             </p>
           </div>
         </div>
 
         {user.sheets.length === 0 ? (
-          <div className="rounded-[2rem] border border-white/10 bg-white/10 p-10 text-center shadow-2xl shadow-cyan-500/10 backdrop-blur-2xl">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/20 to-violet-500/20 text-white ring-1 ring-white/10">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-10 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-100 to-violet-100 text-slate-700">
               <svg
                 className="h-8 w-8"
                 viewBox="0 0 24 24"
@@ -269,10 +262,10 @@ export default async function AppDashboardPage() {
               </svg>
             </div>
 
-            <h3 className="mt-6 text-2xl font-bold text-white">
+            <h3 className="mt-6 text-2xl font-bold text-slate-950">
               No sheets yet
             </h3>
-            <p className="mt-3 text-sm text-slate-300">
+            <p className="mt-3 text-sm text-slate-600">
               Create your first buffet label sheet to start building polished,
               printable event signage.
             </p>
@@ -280,7 +273,7 @@ export default async function AppDashboardPage() {
             <div className="mt-8">
               <Link
                 href="/app/new"
-                className="inline-flex items-center rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-xl shadow-cyan-500/20 transition hover:scale-[1.01]"
+                className="inline-flex items-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
               >
                 Create Your First Sheet
               </Link>
@@ -291,24 +284,24 @@ export default async function AppDashboardPage() {
             {user.sheets.map((sheet: any) => (
               <div
                 key={sheet.id}
-                className="group rounded-[2rem] border border-white/10 bg-white/10 p-5 shadow-2xl shadow-slate-950/10 backdrop-blur-2xl transition hover:-translate-y-1 hover:border-cyan-300/20 hover:bg-white/[0.12] hover:shadow-cyan-500/10"
+                className="group rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(34,211,238,0.12)]"
               >
                 <div className="mb-5 flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-300">
+                    <div className="mb-3 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
                       Buffet Sheet
                     </div>
 
-                    <h3 className="truncate text-xl font-bold text-white">
+                    <h3 className="truncate text-xl font-bold text-slate-950">
                       {sheet.title || "Untitled Sheet"}
                     </h3>
 
-                    <p className="mt-2 truncate text-sm text-slate-300">
+                    <p className="mt-2 truncate text-sm text-slate-600">
                       {sheet.eventName || "No event name"}
                     </p>
                   </div>
 
-                  <div className="[&_button]:border-white/10 [&_button]:bg-white/5 [&_button]:text-white [&_button]:hover:bg-white/10">
+                  <div className="[&_button]:border-slate-200 [&_button]:bg-white [&_button]:text-slate-700 [&_button]:hover:bg-slate-50">
                     <SheetActionsMenu
                       sheetId={sheet.id}
                       sheetTitle={sheet.title}
@@ -317,20 +310,20 @@ export default async function AppDashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
                       Labels
                     </p>
-                    <p className="mt-2 text-lg font-bold text-white">
+                    <p className="mt-2 text-lg font-bold text-slate-950">
                       {sheet.totalLabels}
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
                       Updated
                     </p>
-                    <p className="mt-2 text-sm font-semibold text-white">
+                    <p className="mt-2 text-sm font-semibold text-slate-950">
                       {formatUpdatedAt(sheet.updatedAt)}
                     </p>
                   </div>
@@ -339,14 +332,14 @@ export default async function AppDashboardPage() {
                 <div className="mt-5 flex items-center justify-between gap-3">
                   <Link
                     href={`/app/sheet/${sheet.id}/editor`}
-                    className="inline-flex items-center rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
+                    className="inline-flex items-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-cyan-500/20 transition hover:scale-[1.01]"
                   >
                     Open Editor
                   </Link>
 
                   <Link
                     href={`/app/sheet/${sheet.id}/editor`}
-                    className="text-sm font-medium text-cyan-200 transition hover:text-cyan-100"
+                    className="text-sm font-medium text-cyan-700 transition hover:text-cyan-600"
                   >
                     Continue →
                   </Link>
