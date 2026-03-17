@@ -91,13 +91,16 @@ body{
 
 .container.top-view{
   display:grid;
-  grid-template-columns:1fr;
-  grid-template-rows:auto 1fr;
+  grid-template-columns:320px minmax(0,1fr);
   gap:16px;
+  align-items:stretch;
+  width:100%;
+  height:calc(100vh - 124px);
   min-height:calc(100vh - 124px);
 }
 
 .panel{
+  min-width:0;
   background:rgba(255,255,255,.92);
   border:1px solid rgba(219,228,240,.95);
   border-radius:26px;
@@ -106,14 +109,16 @@ body{
 }
 
 .controls-panel{
+  width:100%;
+  min-width:0;
   overflow:auto;
   height:100%;
   padding:16px;
 }
 
 .preview-panel{
-  flex:1;
-  min-width:0px;
+   width:100%;
+  min-width:0;
   overflow:auto;
   height:100%;
   position:relative;
