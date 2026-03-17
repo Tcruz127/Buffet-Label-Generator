@@ -217,9 +217,9 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       : "border-emerald-200 bg-emerald-50 text-emerald-700";
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(to_bottom,#f8fbff_0%,#f4f7fb_55%,#ffffff_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-[1700px] flex-col px-4 py-4 lg:px-6">
-        <div className="mb-4 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/85 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+    <div className="flex h-screen flex-col overflow-hidden bg-[linear-gradient(to_bottom,#f8fbff_0%,#f4f7fb_55%,#ffffff_100%)]">
+      <div className="shrink-0 px-4 pt-4 lg:px-6">
+        <div className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-6">
             <div className="min-w-0 flex-1">
               <div className="mb-2 inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-700">
@@ -283,14 +283,16 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="min-h-0 flex-1 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <div className="h-full overflow-hidden rounded-[2rem] bg-white p-2">
+      <div className="min-h-0 flex-1 px-4 pb-4 pt-4 lg:px-6">
+        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+          <div className="min-h-0 flex-1 overflow-hidden p-2">
             <iframe
               ref={iframeRef}
               src="/label-editor.html"
               title="Label Editor"
-              className="h-full w-full rounded-[1.4rem] border-0 bg-white"
+              className="block h-full w-full rounded-[1.4rem] border-0 bg-white"
             />
           </div>
         </div>
