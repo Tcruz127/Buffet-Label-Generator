@@ -6,91 +6,516 @@
 <title>Buffet Label Generator Pro v15</title>
 <style>
 *{box-sizing:border-box}
-body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#f4f4f4;color:#222;overflow:auto}
-.topbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;height:48px}
-.hamburger{width:44px;height:44px;border:1px solid #cfcfcf;background:#fff;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-h1{margin:0;font-size:28px;flex:1}
-.container.side-view{display:grid;
-  grid-template-columns:280px minmax(0,1fr);
+:root{
+  --bg:#f4f7fb;
+  --surface:#ffffff;
+  --surface-2:#f8fbff;
+  --surface-3:#f3f6fb;
+  --border:#dbe4f0;
+  --border-strong:#c7d4e5;
+  --text:#0f172a;
+  --muted:#64748b;
+  --muted-2:#94a3b8;
+  --cyan:#06b6d4;
+  --violet:#8b5cf6;
+  --green:#10b981;
+  --shadow-lg:0 20px 50px rgba(15,23,42,.12);
+  --shadow-md:0 12px 30px rgba(15,23,42,.08);
+  --shadow-sm:0 6px 16px rgba(15,23,42,.06);
+  --radius-xl:24px;
+  --radius-lg:18px;
+  --radius-md:14px;
+  --radius-sm:10px;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:
+    radial-gradient(circle at top left, rgba(6,182,212,.10), transparent 24%),
+    radial-gradient(circle at top right, rgba(139,92,246,.10), transparent 28%),
+    linear-gradient(to bottom,#f8fbff 0%,#f4f7fb 55%,#ffffff 100%);
+  color:var(--text);
+  font-family:Inter,Arial,sans-serif;
+  overflow:auto;
+}
+
+body{
+  padding:18px;
+}
+
+.topbar{
+  display:flex;
+  align-items:center;
   gap:14px;
+  margin-bottom:16px;
+  min-height:72px;
+  padding:14px 16px;
+  border:1px solid rgba(255,255,255,.7);
+  background:rgba(255,255,255,.82);
+  backdrop-filter:blur(14px);
+  border-radius:24px;
+  box-shadow:var(--shadow-lg);
+}
+
+.hamburger{
+  width:46px;
+  height:46px;
+  border:1px solid var(--border);
+  background:linear-gradient(to bottom,#ffffff,#f8fbff);
+  border-radius:14px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  color:var(--text);
+  box-shadow:var(--shadow-sm);
+}
+
+.topbar h1{
+  margin:0;
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-.02em;
+  flex:1;
+  color:var(--text);
+}
+
+.container.side-view{
+  display:grid;
+  grid-template-columns:320px minmax(0,1fr);
+  gap:16px;
   align-items:stretch;
-  height:calc(100vh - 82px);
-  min-height:calc(100vh - 82px);}
-.container.top-view{display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr;gap:14px;min-height:calc(100vh - 82px)}
-.panel{background:#fff;padding:16px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
-.controls-panel{overflow:auto;
-  height:100%;}
-.preview-panel{overflow:auto;
+  height:calc(100vh - 124px);
+  min-height:calc(100vh - 124px);
+}
+
+.container.top-view{
+  display:grid;
+  grid-template-columns:1fr;
+  grid-template-rows:auto 1fr;
+  gap:16px;
+  min-height:calc(100vh - 124px);
+}
+
+.panel{
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(219,228,240,.95);
+  border-radius:26px;
+  box-shadow:var(--shadow-lg);
+  backdrop-filter:blur(14px);
+}
+
+.controls-panel{
+  overflow:auto;
   height:100%;
-  position:relative;}
+  padding:16px;
+}
+
+.preview-panel{
+  overflow:auto;
+  height:100%;
+  position:relative;
+  padding:18px;
+  background:
+    linear-gradient(to bottom,rgba(255,255,255,.95),rgba(248,251,255,.95));
+}
+
+.preview-panel h3{
+  margin:0 0 10px 0;
+  font-size:15px;
+  font-weight:800;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.14em;
+}
+
 .ribbon{display:none}
 .container.top-view .ribbon{display:flex;flex-direction:column;height:100%}
-.ribbon-tabs{display:flex;gap:8px;padding:8px 10px 0;border-bottom:1px solid #ddd;background:#f8f8f8}
-.ribbon-tab{width:auto;padding:8px 14px;margin:0;border-radius:8px 8px 0 0;border:1px solid #d5d5d5;border-bottom:none;background:#efefef;cursor:pointer}
-.ribbon-tab.active{background:#fff;font-weight:bold}
-.ribbon-content{flex:1;overflow-x:auto;overflow-y:hidden;background:#fff;padding:10px}
+
+.ribbon-tabs{
+  display:flex;
+  gap:8px;
+  padding:6px 6px 0;
+  border-bottom:1px solid var(--border);
+  background:transparent;
+}
+
+.ribbon-tab{
+  width:auto;
+  padding:10px 14px;
+  margin:0;
+  border-radius:12px 12px 0 0;
+  border:1px solid transparent;
+  border-bottom:none;
+  background:transparent;
+  cursor:pointer;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.ribbon-tab.active{
+  background:#fff;
+  color:var(--text);
+  border-color:var(--border);
+}
+
+.ribbon-content{
+  flex:1;
+  overflow-x:auto;
+  overflow-y:hidden;
+  background:#fff;
+  padding:12px;
+  border-radius:0 0 18px 18px;
+}
+
 .ribbon-panel{display:none;gap:12px;align-items:stretch;min-width:max-content}
 .ribbon-panel.active{display:flex}
-.ribbon-group{min-width:180px;max-width:220px;border-right:1px solid #e5e5e5;padding-right:12px}
+
+.ribbon-group{
+  min-width:190px;
+  max-width:230px;
+  border-right:1px solid var(--border);
+  padding-right:12px;
+}
+
 .ribbon-group:last-child{border-right:none}
-.ribbon-group-title{font-size:11px;color:#666;margin-top:8px;text-align:center}
+
+.ribbon-group-title{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:8px;
+  text-align:center;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
 .ribbon .compact-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.ribbon label{display:block;margin-top:6px;font-size:12px;font-weight:bold}
-.ribbon input,.ribbon select,.ribbon textarea,.ribbon button{font-size:12px;padding:6px;margin-top:3px}
-.ribbon input[type="color"]{height:32px;padding:2px}
-.ribbon .align-grid{gap:4px;margin-top:4px}
-.ribbon .align-grid button{padding:6px 3px;font-size:10px}
-.ribbon .food-strip{display:grid;grid-auto-flow:column;grid-auto-columns:190px;gap:8px}
-.ribbon .food-item{padding:8px}
+.ribbon label{display:block;margin-top:6px;font-size:12px;font-weight:700;color:var(--text)}
+.ribbon input,.ribbon select,.ribbon textarea,.ribbon button{font-size:12px;padding:9px 10px;margin-top:4px}
+.ribbon input[type="color"]{height:38px;padding:4px}
+.ribbon .align-grid{gap:6px;margin-top:6px}
+.ribbon .align-grid button{padding:8px 5px;font-size:10px}
+.ribbon .food-strip{display:grid;grid-auto-flow:column;grid-auto-columns:200px;gap:10px}
+.ribbon .food-item{padding:10px}
 .ribbon .food-item h4{font-size:12px;margin:0 0 6px 0}
 .ribbon .food-item .inline-label{font-size:11px;margin-top:6px}
-.ribbon .help{font-size:10px;line-height:1.2}
+.ribbon .help{font-size:10px;line-height:1.25}
 .ribbon .mini-row{gap:6px}
-.ribbon textarea{min-height:58px;resize:none}
-.ribbon select[multiple]{min-height:78px}
-.controls label,.sidebar label{display:block;margin-top:10px;font-weight:bold}
-input,select,textarea,button{width:100%;padding:8px;margin-top:4px;font:inherit}
-input[type="color"]{padding:4px;height:42px}
-input[type="range"]{padding:0}
-button{cursor:pointer;border:1px solid #cfcfcf;background:#fafafa;border-radius:6px}
-button:hover{background:#f0f0f0}
-.food-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px;padding-right:4px}
-.food-item{border:1px solid #e1e1e1;border-radius:8px;padding:10px;background:#fcfcfc}
-.food-item h4{margin:0 0 8px 0;font-size:14px}
-.food-item .inline-label{font-size:12px;font-weight:bold;margin-top:8px;display:block}
-.help{font-size:12px;color:#666;margin-top:4px}
-.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.align-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
-.align-grid button{padding:10px 6px;font-size:12px}
-.mini-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
-.badge{font-size:12px;color:#666;white-space:nowrap}
-.sheet-preview{margin:0 auto 18px;
+.ribbon textarea{min-height:64px;resize:none}
+.ribbon select[multiple]{min-height:88px}
+
+.controls label,.sidebar label{
+  display:block;
+  margin-top:12px;
+  font-weight:800;
+  color:var(--text);
+  font-size:13px;
+}
+
+input,select,textarea,button{
+  width:100%;
+  padding:11px 12px;
+  margin-top:6px;
+  font:inherit;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+input:focus,select:focus,textarea:focus{
+  outline:none;
+  border-color:rgba(6,182,212,.55);
+  box-shadow:0 0 0 4px rgba(6,182,212,.10);
+}
+
+input[type="color"]{
+  padding:4px;
+  height:44px;
+}
+
+input[type="range"]{
+  padding:0;
+  border:none;
+  background:transparent;
+  box-shadow:none;
+}
+
+button{
+  cursor:pointer;
+  font-weight:700;
+  background:linear-gradient(to bottom,#ffffff,#f8fbff);
+  box-shadow:var(--shadow-sm);
+}
+
+button:hover{
+  background:#f8fbff;
+  border-color:var(--border-strong);
+}
+
+.food-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+  margin-top:12px;
+  padding-right:4px;
+}
+
+.food-item{
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:12px;
+  background:linear-gradient(to bottom,#ffffff,#f9fbff);
+  box-shadow:var(--shadow-sm);
+}
+
+.food-item h4{
+  margin:0 0 8px 0;
+  font-size:14px;
+  font-weight:800;
+  color:var(--text);
+}
+
+.food-item .inline-label{
+  font-size:12px;
+  font-weight:700;
+  margin-top:8px;
+  display:block;
+  color:var(--text);
+}
+
+.help{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:6px;
+  line-height:1.35;
+}
+
+.toolbar{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+.align-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:8px;
+}
+
+.align-grid button{
+  padding:10px 8px;
+  font-size:12px;
+  min-height:44px;
+}
+
+.mini-row{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  align-items:center;
+}
+
+.badge{
+  font-size:12px;
+  color:var(--muted);
+  white-space:nowrap;
+  font-weight:700;
+}
+
+.sheet-preview{
+  margin:0 auto 24px;
   width:fit-content;
-  zoom:.90;}
-.sheet-title{font-size:18px;font-weight:bold;margin:0 0 10px 0}
-.labels{display:grid;
+  zoom:.92;
+  padding:16px;
+  border-radius:24px;
+  background:#fff;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-md);
+}
+
+.sheet-title{
+  font-size:18px;
+  font-weight:800;
+  margin:0 0 12px 0;
+  color:var(--text);
+}
+
+.labels{
+  display:grid;
   grid-template-columns:repeat(2,3.5in);
   grid-template-rows:repeat(5,2in);
   column-gap:.5in;
   row-gap:0;
-  justify-content:center;}
-.sheet-event-name{font-weight:bold;margin-bottom:14px;font-size:22px}
-.doc-status{font-size:13px;color:#666;margin-bottom:8px}
-.label{width:3.5in;height:2in;border:1px solid #cfcfcf;text-align:center;padding:8px;background:white;overflow:hidden;position:relative;display:block}
-.label-content{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
-.label-logo{position:absolute;object-fit:contain;cursor:move;user-select:none;-webkit-user-drag:none;z-index:2}
-.dish-name{line-height:1.1;word-break:break-word;position:relative;z-index:1}
-.allergen-line{margin-top:5px;line-height:1.15;word-break:break-word;position:relative;z-index:1}
-.preview-panel h3{margin-top:0}
-.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:20}
+  justify-content:center;
+}
+
+.sheet-event-name{
+  font-weight:800;
+  margin-bottom:14px;
+  font-size:24px;
+  color:var(--text);
+}
+
+.doc-status{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:10px;
+  font-weight:600;
+}
+
+.label{
+  width:3.5in;
+  height:2in;
+  border:1px solid var(--border);
+  text-align:center;
+  padding:10px;
+  background:white;
+  overflow:hidden;
+  position:relative;
+  display:block;
+  border-radius:16px;
+  box-shadow:0 8px 20px rgba(15,23,42,.06);
+}
+
+.label-content{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+}
+
+.label-logo{
+  position:absolute;
+  object-fit:contain;
+  cursor:move;
+  user-select:none;
+  -webkit-user-drag:none;
+  z-index:2;
+}
+
+.dish-name{
+  line-height:1.1;
+  word-break:break-word;
+  position:relative;
+  z-index:1;
+}
+
+.allergen-line{
+  margin-top:5px;
+  line-height:1.15;
+  word-break:break-word;
+  position:relative;
+  z-index:1;
+}
+
+.sidebar-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.30);
+  display:none;
+  z-index:20;
+  backdrop-filter:blur(4px);
+}
+
 .sidebar-overlay.open{display:block}
-.sidebar{position:fixed;top:0;left:0;width:320px;max-width:90vw;height:100vh;background:#fff;box-shadow:2px 0 18px rgba(0,0,0,.2);padding:18px;overflow:auto;transform:translateX(-102%);transition:transform .25s ease;z-index:21}
+
+.sidebar{
+  position:fixed;
+  top:0;
+  left:0;
+  width:340px;
+  max-width:92vw;
+  height:100vh;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 20px 50px rgba(15,23,42,.18);
+  padding:20px;
+  overflow:auto;
+  transform:translateX(-102%);
+  transition:transform .25s ease;
+  z-index:21;
+  border-right:1px solid var(--border);
+  backdrop-filter:blur(12px);
+}
+
 .sidebar.open{transform:translateX(0)}
-.sidebar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.sidebar-title{font-size:20px;font-weight:bold}
-.close-btn{width:40px;height:40px;font-size:22px;border:1px solid #cfcfcf;background:#fff;border-radius:8px;cursor:pointer}
+
+.sidebar-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:14px;
+}
+
+.sidebar-title{
+  font-size:20px;
+  font-weight:800;
+  color:var(--text);
+}
+
+.close-btn{
+  width:42px;
+  height:42px;
+  font-size:22px;
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:12px;
+  cursor:pointer;
+  box-shadow:var(--shadow-sm);
+}
+
 .sidebar .toolbar{grid-template-columns:1fr}
-.view-status{font-size:12px;color:#666;margin-top:4px}
+.view-status{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:6px;
+  font-weight:600;
+}
+
+.controls-block{
+  border:1px solid var(--border);
+  background:linear-gradient(to bottom,#ffffff,#f9fbff);
+  border-radius:22px;
+  padding:14px;
+  margin-bottom:14px;
+  box-shadow:var(--shadow-sm);
+}
+
+.print-controls{
+  margin-top:10px;
+}
+
+.print-instructions{
+  margin-top:8px;
+  padding:10px 12px;
+  font-size:12px;
+  background:#f8fbff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  line-height:1.45;
+  color:var(--muted);
+}
+
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{
+  background:#cbd5e1;
+  border-radius:999px;
+  border:2px solid transparent;
+  background-clip:padding-box;
+}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8;background-clip:padding-box}
+
 @media print{
   @page{
     size: Letter portrait;
@@ -164,14 +589,17 @@ button:hover{background:#f0f0f0}
   }
 
   .sheet-preview{
-  page-break-after: always;
-  break-after: page;
-  margin: 0 !important;
-  padding: 0 !important;
-  min-height: 10in !important;
-  height: auto !important;
-  overflow: visible !important;
-}
+    page-break-after: always;
+    break-after: page;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 10in !important;
+    height: auto !important;
+    overflow: visible !important;
+    border:none !important;
+    box-shadow:none !important;
+    background:white !important;
+  }
 
   .sheet-preview:last-child{
     page-break-after: auto;
@@ -180,11 +608,11 @@ button:hover{background:#f0f0f0}
 
   .labels{
     display:grid;
-  grid-template-columns:repeat(2,3.5in);
-  grid-template-rows:repeat(5,2in);
-  column-gap:.5in;
-  row-gap:0;
-  justify-content:center;
+    grid-template-columns:repeat(2,3.5in);
+    grid-template-rows:repeat(5,2in);
+    column-gap:.5in;
+    row-gap:0;
+    justify-content:center;
   }
 
   .label{
@@ -213,70 +641,66 @@ button:hover{background:#f0f0f0}
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-}media print{
-  @page{size:Letter portrait;margin:0.5in}
-  html,body{background:white;padding:0;margin:0;overflow:visible}
-  .topbar,.sidebar,.sidebar-overlay,.controls-panel{display:none!important}
-  .container,.container.side-view,.container.top-view{display:block;height:auto}
-  .preview-panel{box-shadow:none!important;border:none!important;padding:0!important;margin:0!important;background:white!important;height:auto!important;overflow:visible!important;position:static!important}
-  .preview-panel h3,.doc-status,.sheet-event-name,.sheet-title{display:none!important}
-  .sheet-preview{page-break-after:always;break-after:page;margin:0;padding:0;height:9in;overflow:hidden}
-  .labels{display:grid!important;grid-template-columns:repeat(2,3.5in);grid-template-rows:repeat(5,2in);column-gap:.5in;row-gap:0;justify-content:start}
-  .label{border:none!important;outline:none!important;box-shadow:none!important;break-inside:avoid;page-break-inside:avoid}
-  .print-controls{
-  margin-top:10px;
-}
-
-.print-instructions{
-  margin-top:8px;
-  padding:8px 10px;
-  font-size:12px;
-  background:#f5f5f5;
-  border-radius:6px;
-  line-height:1.4;
-  color:#444;
-}
 }
 </style>
 </head>
 <body>
 <div class="topbar">
   <button class="hamburger" onclick="toggleSidebar()">☰</button>
-  <h1>Buffet Label Generator</h1>
+  <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+    <h1>Buffet Label Generator</h1>
+    <div style="font-size:13px;color:#64748b;font-weight:600;">
+      Design polished buffet labels with a cleaner, more professional workspace.
+    </div>
+  </div>
 </div>
 
 <div id="overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
 <aside id="sidebar" class="sidebar">
-  <div class="sidebar-header"><div class="sidebar-title">Menu</div><button class="close-btn" onclick="closeSidebar()">×</button></div>
-  <label>Current File</label><div id="currentFileName" class="doc-status">Unsaved sheet</div>
-  <label>View</label>
+  <div class="sidebar-header">
+    <div>
+      <div class="sidebar-title">Workspace Menu</div>
+      <div style="font-size:12px;color:#64748b;margin-top:4px;">
+        Quick actions, saves, layout, and print tools
+      </div>
+    </div>
+    <button class="close-btn" onclick="closeSidebar()">×</button>
+  </div>
+
+  <label>Current File</label>
+  <div id="currentFileName" class="doc-status">Unsaved sheet</div>
+
+  <label>View Mode</label>
   <div class="toolbar">
-    <button onclick="setViewMode('side')">Side by Side View</button>
+    <button onclick="setViewMode('side')">Side by Side</button>
     <button onclick="setViewMode('top')">Top Editing View</button>
   </div>
+
   <div id="viewStatus" class="view-status"></div>
+
   <div class="toolbar">
-   <button onclick="newLabelSheet()">New Label Sheet</button>
-<button onclick="saveSheet()">Save</button>
-<button onclick="saveSheetAs()">Save As</button>
-<button onclick="loadBrowserSave()">Open Browser Save</button>
-<button onclick="document.getElementById('sheetFileInput').click()">Open File</button>
-<button onclick="generateLabels()">Refresh Preview</button>
-
-<div class="print-controls">
-  <button onclick="window.print()">Print / Save PDF</button>
-  <button onclick="printAlignmentTestSheet()">Print Alignment Test Sheet</button>
-
-  <div class="print-instructions">
-    For best results when printing Avery labels:
-    <br>
-    • Set scale to <strong>100%</strong>
-    <br>
-    • Do <strong>NOT</strong> select "Fit to Page"
-    <br>
-    • Use standard <strong>Letter paper</strong>
+    <button onclick="newLabelSheet()">New Label Sheet</button>
+    <button onclick="saveSheet()">Save</button>
+    <button onclick="saveSheetAs()">Save As</button>
+    <button onclick="loadBrowserSave()">Open Browser Save</button>
+    <button onclick="document.getElementById('sheetFileInput').click()">Open File</button>
+    <button onclick="generateLabels()">Refresh Preview</button>
   </div>
-</div>
+
+  <div class="print-controls">
+    <button onclick="window.print()">Print / Save PDF</button>
+    <button onclick="printAlignmentTestSheet()">Print Alignment Test Sheet</button>
+
+    <div class="print-instructions">
+      For best results when printing Avery labels:
+      <br>
+      • Set scale to <strong>100%</strong>
+      <br>
+      • Do <strong>not</strong> use “Fit to Page”
+      <br>
+      • Use standard <strong>Letter paper</strong>
+    </div>
   </div>
 </aside>
 
@@ -289,41 +713,88 @@ button:hover{background:#f0f0f0}
         <button class="ribbon-tab" onclick="showRibbonTab('labels')">Labels</button>
         <button class="ribbon-tab" onclick="showRibbonTab('menu')">Menu</button>
       </div>
+
       <div class="ribbon-content">
         <div id="ribbon-home" class="ribbon-panel active">
           <div class="ribbon-group">
-            <label>Event Name</label><input type="text" id="eventNameRibbon" placeholder="Smith Wedding Buffet" oninput="syncField('eventNameRibbon','eventName'); generateLabels();" />
-            <div class="compact-row"><button onclick="addTenLabels()">Add 10</button><button onclick="removeTenLabels()">Remove 10</button></div>
+            <label>Event Name</label>
+            <input type="text" id="eventNameRibbon" placeholder="Smith Wedding Buffet" oninput="syncField('eventNameRibbon','eventName'); generateLabels();" />
+            <div class="compact-row">
+              <button onclick="addTenLabels()">Add 10</button>
+              <button onclick="removeTenLabels()">Remove 10</button>
+            </div>
             <div class="ribbon-group-title">Sheet</div>
           </div>
+
           <div class="ribbon-group">
-            <label>Main Font</label><select id="fontSelectRibbon" onchange="syncField('fontSelectRibbon','fontSelect'); generateLabels();"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Georgia</option><option>Verdana</option></select>
+            <label>Main Font</label>
+            <select id="fontSelectRibbon" onchange="syncField('fontSelectRibbon','fontSelect'); generateLabels();">
+              <option>Arial</option>
+              <option>Times New Roman</option>
+              <option>Helvetica</option>
+              <option>Georgia</option>
+              <option>Verdana</option>
+            </select>
+
             <div class="compact-row">
-              <div><label>Size</label><input id="fontSizeRibbon" type="number" value="20" min="8" max="48" oninput="syncField('fontSizeRibbon','fontSize'); generateLabels();" /></div>
-              <div><label>Color</label><input id="textColorRibbon" type="color" value="#000000" oninput="syncField('textColorRibbon','textColor'); generateLabels();" /></div>
+              <div>
+                <label>Size</label>
+                <input id="fontSizeRibbon" type="number" value="20" min="8" max="48" oninput="syncField('fontSizeRibbon','fontSize'); generateLabels();" />
+              </div>
+              <div>
+                <label>Color</label>
+                <input id="textColorRibbon" type="color" value="#000000" oninput="syncField('textColorRibbon','textColor'); generateLabels();" />
+              </div>
             </div>
+
             <div class="ribbon-group-title">Main Font</div>
           </div>
+
           <div class="ribbon-group">
-            <label>Allergen Font</label><select id="allergenFontRibbon" onchange="syncField('allergenFontRibbon','allergenFont'); generateLabels();"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Georgia</option><option>Verdana</option></select>
+            <label>Allergen Font</label>
+            <select id="allergenFontRibbon" onchange="syncField('allergenFontRibbon','allergenFont'); generateLabels();">
+              <option>Arial</option>
+              <option>Times New Roman</option>
+              <option>Helvetica</option>
+              <option>Georgia</option>
+              <option>Verdana</option>
+            </select>
+
             <div class="compact-row">
-              <div><label>Size</label><input id="allergenSizeRibbon" type="number" value="12" min="8" max="30" oninput="syncField('allergenSizeRibbon','allergenSize'); generateLabels();" /></div>
-              <div><label>Color</label><input id="allergenColorRibbon" type="color" value="#000000" oninput="syncField('allergenColorRibbon','allergenColor'); generateLabels();" /></div>
+              <div>
+                <label>Size</label>
+                <input id="allergenSizeRibbon" type="number" value="12" min="8" max="30" oninput="syncField('allergenSizeRibbon','allergenSize'); generateLabels();" />
+              </div>
+              <div>
+                <label>Color</label>
+                <input id="allergenColorRibbon" type="color" value="#000000" oninput="syncField('allergenColorRibbon','allergenColor'); generateLabels();" />
+              </div>
             </div>
+
             <div class="ribbon-group-title">Allergen Font</div>
           </div>
+
           <div class="ribbon-group">
-            <label>Label Background</label><input id="bgColorRibbon" type="color" value="#ffffff" oninput="syncField('bgColorRibbon','bgColor'); generateLabels();" />
+            <label>Label Background</label>
+            <input id="bgColorRibbon" type="color" value="#ffffff" oninput="syncField('bgColorRibbon','bgColor'); generateLabels();" />
             <div class="ribbon-group-title">Colors</div>
           </div>
         </div>
+
         <div id="ribbon-logo" class="ribbon-panel">
           <div class="ribbon-group">
-            <label>Upload Logo</label><input type="file" id="logoUploadRibbon" accept="image/*" onchange="handleRibbonLogoUpload(event)" />
+            <label>Upload Logo</label>
+            <input type="file" id="logoUploadRibbon" accept="image/*" onchange="handleRibbonLogoUpload(event)" />
+
             <label>Logo Size</label>
-            <div class="mini-row"><input type="range" id="logoSizeRibbon" min="20" max="140" value="55" oninput="syncLogoSize(this.value)" /><div class="badge"><span id="logoSizeValueRibbon">55</span> px</div></div>
+            <div class="mini-row">
+              <input type="range" id="logoSizeRibbon" min="20" max="140" value="55" oninput="syncLogoSize(this.value)" />
+              <div class="badge"><span id="logoSizeValueRibbon">55</span> px</div>
+            </div>
+
             <div class="ribbon-group-title">Logo</div>
           </div>
+
           <div class="ribbon-group">
             <label>Alignment</label>
             <div class="align-grid">
@@ -340,16 +811,22 @@ button:hover{background:#f0f0f0}
             <div class="ribbon-group-title">Position</div>
           </div>
         </div>
+
         <div id="ribbon-labels" class="ribbon-panel">
           <div class="ribbon-group">
             <div id="foodInputsRibbon" class="ribbon-food-strip"></div>
             <div class="ribbon-group-title">Label Editors</div>
           </div>
         </div>
+
         <div id="ribbon-menu" class="ribbon-panel">
           <div class="ribbon-group">
-            <label>Paste Menu</label><textarea id="menuPasteRibbon" placeholder="Paste menu items each on a new line" oninput="syncField('menuPasteRibbon','menuPaste')"></textarea>
-            <div class="compact-row"><button onclick="autoFillMenu()">Auto Fill</button><button onclick="clearFoods()">Clear</button></div>
+            <label>Paste Menu</label>
+            <textarea id="menuPasteRibbon" placeholder="Paste menu items each on a new line" oninput="syncField('menuPasteRibbon','menuPaste')"></textarea>
+            <div class="compact-row">
+              <button onclick="autoFillMenu()">Auto Fill</button>
+              <button onclick="clearFoods()">Clear</button>
+            </div>
             <div class="ribbon-group-title">Menu Tools</div>
           </div>
         </div>
@@ -358,19 +835,30 @@ button:hover{background:#f0f0f0}
 
     <div class="controls-inner">
       <div class="controls-block">
-        <label>Event Name</label><input type="text" id="eventName" placeholder="Smith Wedding Buffet" />
-        <div class="help">Each sheet contains 10 labels. Use the buttons below to add or remove full sheets.</div>
+        <label>Event Name</label>
+        <input type="text" id="eventName" placeholder="Smith Wedding Buffet" />
+        <div class="help">
+          Each sheet contains 10 labels. Use the buttons below to add or remove full sheets.
+        </div>
         <div class="toolbar">
           <button onclick="addTenLabels()">Add 10 Labels</button>
           <button onclick="removeTenLabels()">Remove 10 Labels</button>
         </div>
       </div>
+
       <div class="controls-block">
-        <label>Upload Logo</label><input type="file" id="logoUpload" accept="image/*" />
+        <label>Upload Logo</label>
+        <input type="file" id="logoUpload" accept="image/*" />
+
         <label>Logo Size</label>
-        <div class="mini-row"><input type="range" id="logoSize" min="20" max="140" value="55" /><div class="badge"><span id="logoSizeValue">55</span> px</div></div>
+        <div class="mini-row">
+          <input type="range" id="logoSize" min="20" max="140" value="55" />
+          <div class="badge"><span id="logoSizeValue">55</span> px</div>
+        </div>
+
         <div class="help">Drag the logo directly inside any label preview to move its position.</div>
-        <label>Logo Alignment Buttons</label>
+
+        <label>Logo Alignment</label>
         <div class="align-grid">
           <button type="button" onclick="setLogoAlignment('top-left')">Top Left</button>
           <button type="button" onclick="setLogoAlignment('top-center')">Top Center</button>
@@ -383,26 +871,62 @@ button:hover{background:#f0f0f0}
           <button type="button" onclick="setLogoAlignment('bottom-right')">Bottom Right</button>
         </div>
       </div>
+
       <div class="controls-block">
-        <label>Main Font</label><select id="fontSelect"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Georgia</option><option>Verdana</option></select>
-        <label>Main Font Size</label><input id="fontSize" type="number" value="20" min="8" max="48" />
-        <label>Main Font Color</label><input id="textColor" type="color" value="#000000" />
-        <label>Allergen Font</label><select id="allergenFont"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Georgia</option><option>Verdana</option></select>
-        <label>Allergen Font Size</label><input id="allergenSize" type="number" value="12" min="8" max="30" />
-        <label>Allergen Font Color</label><input id="allergenColor" type="color" value="#000000" />
-        <label>Label Background</label><input id="bgColor" type="color" value="#ffffff" />
+        <label>Main Font</label>
+        <select id="fontSelect">
+          <option>Arial</option>
+          <option>Times New Roman</option>
+          <option>Helvetica</option>
+          <option>Georgia</option>
+          <option>Verdana</option>
+        </select>
+
+        <label>Main Font Size</label>
+        <input id="fontSize" type="number" value="20" min="8" max="48" />
+
+        <label>Main Font Color</label>
+        <input id="textColor" type="color" value="#000000" />
+
+        <label>Allergen Font</label>
+        <select id="allergenFont">
+          <option>Arial</option>
+          <option>Times New Roman</option>
+          <option>Helvetica</option>
+          <option>Georgia</option>
+          <option>Verdana</option>
+        </select>
+
+        <label>Allergen Font Size</label>
+        <input id="allergenSize" type="number" value="12" min="8" max="30" />
+
+        <label>Allergen Font Color</label>
+        <input id="allergenColor" type="color" value="#000000" />
+
+        <label>Label Background</label>
+        <input id="bgColor" type="color" value="#ffffff" />
       </div>
+
       <div class="controls-block">
-        <label>Paste Menu (auto fill labels)</label><textarea id="menuPaste" rows="6" placeholder="Paste menu items each on a new line"></textarea>
-        <div class="toolbar"><button onclick="autoFillMenu()">Auto Fill Labels</button><button onclick="clearFoods()">Clear Sheet</button></div>
-        <label>Menu Items & Dietary Tags</label><div class="help">Each label has its own dietary dropdown. Hold Ctrl (or Cmd on Mac) to select multiple items.</div>
+        <label>Paste Menu (auto fill labels)</label>
+        <textarea id="menuPaste" rows="6" placeholder="Paste menu items each on a new line"></textarea>
+        <div class="toolbar">
+          <button onclick="autoFillMenu()">Auto Fill Labels</button>
+          <button onclick="clearFoods()">Clear Sheet</button>
+        </div>
+
+        <label>Menu Items & Dietary Tags</label>
+        <div class="help">
+          Each label has its own dietary dropdown. Hold Ctrl (or Cmd on Mac) to select multiple items.
+        </div>
       </div>
+
       <div id="foodInputs" class="food-grid controls-block"></div>
     </div>
   </div>
 
   <div class="panel preview-panel">
-    <h3>Preview</h3>
+    <h3>Live Preview</h3>
     <div id="sheetEventNamePreview" class="sheet-event-name"></div>
     <div id="sheetCountText" class="doc-status"></div>
     <div id="previewSheets"></div>
