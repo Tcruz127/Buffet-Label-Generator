@@ -1417,23 +1417,23 @@ function openPrintWindow() {
   }
 
   html, body {
-    margin: 0;
-    padding: 0;
-    background: white;
-    color: #000;
-    font-family: Arial, sans-serif;
-    width: 100%;
-    height: auto;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: #000 !important;
+    font-family: Arial, sans-serif !important;
+    width: 100% !important;
+    height: auto !important;
   }
 
   body {
-    padding: 0;
+    padding: 0 !important;
   }
 
   .print-wrap {
-    width: 100%;
-    margin: 0;
-    padding: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .sheet-event-name,
@@ -1442,38 +1442,38 @@ function openPrintWindow() {
   }
 
   .sheet-preview {
-    display: block;
-    width: 8.5in;
-    height: 11in;
-    margin: 0;
-    padding: 0.5in;
-    box-sizing: border-box;
-    background: white;
+    display: block !important;
+    width: 8.5in !important;
+    height: 11in !important;
+    margin: 0 !important;
+    padding: 0.5in !important;
+    box-sizing: border-box !important;
+    background: white !important;
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    overflow: hidden;
-    page-break-after: always;
-    break-after: page;
+    overflow: hidden !important;
+    page-break-after: always !important;
+    break-after: page !important;
   }
 
   .sheet-preview:last-child {
-    page-break-after: auto;
-    break-after: auto;
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 
   .labels {
-    display: grid;
-    grid-template-columns: repeat(2, 3.5in);
-    grid-template-rows: repeat(5, 2in);
-    column-gap: 0in;
-    row-gap: 0;
-    width: 7in;
-    height: 10in;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0;
+    display: grid !important;
+    grid-template-columns: repeat(2, 3.5in) !important;
+    grid-template-rows: repeat(5, 2in) !important;
+    column-gap: 0in !important;
+    row-gap: 0 !important;
+    width: 7in !important;
+    height: 10in !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 0 !important;
   }
 
   .label {
@@ -1488,6 +1488,9 @@ function openPrintWindow() {
     outline: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
+    position: static !important;
+    left: auto !important;
+    margin: 0 !important;
   }
 
   .label:nth-child(even) {
@@ -1500,9 +1503,9 @@ function openPrintWindow() {
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
     box-sizing: border-box !important;
     text-align: center !important;
     padding-top: 10px !important;
@@ -1512,6 +1515,12 @@ function openPrintWindow() {
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
+  }
+
+  .dish-name,
+  .allergen-line {
+    width: 100% !important;
+    text-align: center !important;
   }
 
   .label *,
@@ -1526,8 +1535,8 @@ function openPrintWindow() {
   .dish-name,
   .allergen-line,
   .label-logo {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 </style>
 </head>
