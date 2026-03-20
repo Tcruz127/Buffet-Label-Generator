@@ -70,9 +70,9 @@ export async function POST(req: Request) {
         break;
       }
 
+      case "customer.subscription.created":
       case "customer.subscription.updated":
-      case "customer.subscription.deleted":
-      case "customer.subscription.created": {
+      case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
 
         const stripeCustomerId =
@@ -88,6 +88,24 @@ export async function POST(req: Request) {
               subscriptionStatus: subscription.status,
               subscriptionPriceId:
                 subscription.items.data[0]?.price.id ?? null,
+            },
+          });
+        }
+
+        break;
+      }
+
+      case "invoice.paid": {
+        const invoice = event.data.object as Stripe.Invoice;
+
+        const stripeCustomerId =
+          typeof invoice.customer === "string" ? invoice.customer : null;
+
+        if (stripeCustomerId) {
+          await prisma.user.updateMany({
+            where: { stripeCustomerId },
+            data: {
+              subscriptionStatus: "active",
             },
           });
         }
