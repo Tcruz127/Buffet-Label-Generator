@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
-import { signIn } from "../../auth";
+import { signIn, signOut } from "../../auth";
 
 export default async function LoginPage({
   searchParams,
@@ -91,6 +91,8 @@ export default async function LoginPage({
                     const password = formData.get("password");
 
                     try {
+                      await signOut({ redirect: false });
+
                       await signIn("credentials", {
                         email,
                         password,
