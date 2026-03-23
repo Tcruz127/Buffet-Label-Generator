@@ -94,10 +94,11 @@ export default async function LoginPage({
                       await signOut({ redirect: false });
 
                       await signIn("credentials", {
-                        email,
-                        password,
-                        redirectTo: "/app",
-                      });
+                     email,
+                     password,
+                     redirect: false,
+                   });
+                    redirect("/app");
                     } catch (error) {
                       if (error instanceof AuthError) {
                         if (error.type === "CredentialsSignin") {
