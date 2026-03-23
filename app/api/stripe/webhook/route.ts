@@ -36,17 +36,17 @@ export async function POST(req: Request) {
       case "checkout.session.completed": {
         const checkoutSession = event.data.object as Stripe.Checkout.Session;
 
-        const userId = checkoutSession.metadata?.userId;
         const stripeCustomerId =
           typeof checkoutSession.customer === "string"
             ? checkoutSession.customer
             : null;
+
         const stripeSubscriptionId =
           typeof checkoutSession.subscription === "string"
             ? checkoutSession.subscription
             : null;
 
-        if (userId) {
+        if (stripeCustomerId) {
           let subscription: Stripe.Subscription | null = null;
 
           if (stripeSubscriptionId) {
@@ -55,14 +55,13 @@ export async function POST(req: Request) {
             );
           }
 
-          await prisma.user.update({
-            where: { id: userId },
+          await prisma.user.updateMany({
+            where: { stripeCustomerId },
             data: {
-              stripeCustomerId: stripeCustomerId ?? undefined,
-              stripeSubscriptionId: stripeSubscriptionId ?? undefined,
+              stripeSubscriptionId: stripeSubscriptionId ?? null,
               subscriptionStatus: subscription?.status ?? "active",
               subscriptionPriceId:
-                subscription?.items.data[0]?.price.id ?? undefined,
+                subscription?.items.data[0]?.price.id ?? null,
             },
           });
         }
