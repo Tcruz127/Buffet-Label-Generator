@@ -84,31 +84,33 @@ export default async function LoginPage({
                 )}
 
                 <form
-                  action={async (formData) => {
-                    "use server";
+  action={async (formData) => {
+    "use server";
 
-                    const email = formData.get("email");
-                    const password = formData.get("password");
+    const email = formData.get("email");
+    const password = formData.get("password");
 
-                    try {
-                      await signOut({ redirect: false });
+    await signOut({ redirect: false });
 
-                      await signIn("credentials", {
-                     email,
-                     password,
-                     redirect: false,
-                   });
-                    redirect("/app");
-                    } catch (error) {
-                      if (error instanceof AuthError) {
-                        if (error.type === "CredentialsSignin") {
-                          redirect("/login?error=invalid");
-                        }
-                      }
+    try {
+      await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-                      throw error;
-                    }
-                  }}
+      redirect("/app");
+    } catch (error) {
+      if (error instanceof AuthError) {
+        if (error.type === "CredentialsSignin") {
+          redirect("/login?error=invalid");
+        }
+      }
+
+      throw error;
+    }
+  }}
+
                   className="space-y-5"
                 >
                   <div>
