@@ -9,7 +9,7 @@ const features = [
   {
     title: "Save every sheet",
     description:
-      "Keep event setups organized and return to them anytime from your private dashboard.",
+      "Keep event setups organized and return to them anytime from your private Instabels Workspace.",
   },
   {
     title: "Customize every detail",
@@ -78,12 +78,12 @@ export default function HomePage() {
           <header className="mb-16 flex items-center justify-between rounded-full border border-white/10 bg-white/5 px-5 py-3 shadow-2xl shadow-cyan-500/5 backdrop-blur-xl">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 text-sm font-bold text-white shadow-lg shadow-cyan-500/30">
-                BL
+                IB
               </div>
 
               <div>
                 <p className="text-sm font-semibold tracking-wide text-white">
-                  Buffet Label Generator
+                  Instabels
                 </p>
                 <p className="text-xs text-slate-300">
                   Premium buffet label software
@@ -111,20 +111,20 @@ export default function HomePage() {
           <div className="grid items-center gap-16 pb-20 lg:grid-cols-[1.08fr_.92fr]">
             <div>
               <div className="mb-6 inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-100 backdrop-blur">
-                Designed for caterers, resorts, wedding venues, banquet teams, and hospitality groups
+                Meet Instabels — built for caterers, resorts, wedding venues, banquet teams, and hospitality groups
               </div>
 
               <h1 className="max-w-5xl text-5xl font-black leading-[0.95] tracking-tight text-white md:text-7xl">
-                Buffet labels that{" "}
+                <span className="block">Instabels makes</span>
                 <span className="bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 bg-clip-text text-transparent">
-                  actually look premium.
+                  buffet labels feel premium.
                 </span>
               </h1>
 
               <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">
                 Create, save, edit, and print polished buffet labels from one
-                beautiful workspace. Built for hospitality teams that need fast
-                output without sacrificing presentation.
+                beautiful workspace. Instabels is built for hospitality teams
+                that need fast output without sacrificing presentation.
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -132,7 +132,7 @@ export default function HomePage() {
                   href="/signup"
                   className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-7 py-3.5 text-base font-semibold text-white shadow-2xl shadow-cyan-500/30 transition hover:scale-[1.02]"
                 >
-                  Start creating labels
+                  Start with Instabels
                 </Link>
 
                 <Link
@@ -175,10 +175,10 @@ export default function HomePage() {
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-white">
-                        Wedding Buffet Labels
+                        Instabels Workspace
                       </p>
                       <p className="text-xs text-slate-400">
-                        Saved at 3:42 PM
+                        Wedding Buffet Labels · Saved at 3:42 PM
                       </p>
                     </div>
 
@@ -218,7 +218,7 @@ export default function HomePage() {
                   <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="mb-3 flex items-center justify-between">
                       <p className="text-sm font-semibold text-white">
-                        Dashboard
+                        Saved sheets
                       </p>
                       <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold text-slate-300">
                         12 saved sheets
@@ -260,13 +260,13 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600">
-              Product highlights
+              Why Instabels
             </p>
             <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
               Built for the way hospitality teams actually work
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Everything is designed to reduce busywork and help your team
+              Instabels is designed to reduce busywork and help your team
               produce consistent, polished labels faster.
             </p>
           </div>
@@ -313,8 +313,8 @@ export default function HomePage() {
               </h2>
               <p className="mt-5 text-lg leading-8 text-slate-600">
                 Whether you’re preparing a wedding buffet, hotel breakfast,
-                resort service, banquet event, or corporate lunch, this helps
-                your staff move faster while keeping the final presentation
+                resort service, banquet event, or corporate lunch, Instabels
+                helps your staff move faster while keeping the final presentation
                 clean and professional.
               </p>
             </div>
@@ -344,22 +344,22 @@ export default function HomePage() {
               Pricing
             </p>
             <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-              Simple pricing for hospitality teams
+              Simple pricing for teams using Instabels
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Start with a free trial, then upgrade when you’re ready to use it
-              across real events and services.
+              Start free, then upgrade to Instabels Pro when you’re ready to
+              use it across real events and services.
             </p>
           </div>
 
           <div className="mt-16 grid gap-6 lg:grid-cols-2">
             <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
               <div className="mb-5 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                Free Trial
+                Instabels
               </div>
 
               <h3 className="text-2xl font-bold text-slate-950">
-                Try the platform
+                Start free
               </h3>
 
               <div className="mt-4 flex items-end gap-2">
@@ -410,7 +410,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="mb-5 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-100">
-                  Pro
+                  Instabels Pro
                 </div>
 
                 <h3 className="text-2xl font-bold">For active teams</h3>
@@ -427,7 +427,7 @@ export default function HomePage() {
 
                 <div className="mt-8 space-y-3">
                   {[
-                    "Everything in the free trial",
+                    "Everything in the free plan",
                     "Unlimited saved sheets",
                     "Full editor workflow with autosave",
                     "Logo, styling, allergen, and print support",
@@ -447,7 +447,7 @@ export default function HomePage() {
                     href="/signup"
                     className="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
                   >
-                    Start Pro
+                    Start Instabels Pro
                   </Link>
                 </div>
               </div>
@@ -468,7 +468,7 @@ export default function HomePage() {
                   Common questions before you get started
                 </h2>
                 <p className="mt-4 text-lg leading-8 text-slate-600">
-                  Everything you need to know before bringing the platform into
+                  Everything you need to know before bringing Instabels into
                   your workflow.
                 </p>
               </div>
@@ -502,7 +502,7 @@ export default function HomePage() {
                   Ready to launch faster?
                 </p>
                 <h2 className="mt-4 text-4xl font-black tracking-tight md:text-5xl">
-                  Start building beautiful buffet labels today.
+                  Start building beautiful buffet labels with Instabels.
                 </h2>
                 <p className="mt-4 text-lg leading-8 text-slate-300">
                   Create your account, save your sheets, and print professional
@@ -515,7 +515,7 @@ export default function HomePage() {
                   href="/signup"
                   className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-base font-semibold text-slate-950 transition hover:bg-slate-100"
                 >
-                  Create account
+                  Create Instabels account
                 </Link>
 
                 <Link
@@ -532,7 +532,7 @@ export default function HomePage() {
 
       <footer className="border-t border-slate-200 bg-white text-slate-500">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm md:flex-row md:items-center md:justify-between lg:px-8">
-          <p>© 2026 Buffet Label Generator. All rights reserved.</p>
+          <p>© 2026 Instabels. All rights reserved.</p>
 
           <div className="flex items-center gap-5">
             <a href="#" className="transition hover:text-slate-900">
