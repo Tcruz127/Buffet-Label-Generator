@@ -543,7 +543,114 @@ button:hover{
   opacity:.45;
   cursor:not-allowed;
 }
+.diet-dropdown{
+  position:relative;
+  margin-top:6px;
+}
 
+.diet-dropdown-toggle{
+  width:100%;
+  padding:11px 12px;
+  margin-top:0;
+  font:inherit;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  text-align:left;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  box-shadow:none;
+}
+
+.diet-dropdown-toggle:hover{
+  background:#fff;
+  border-color:var(--border-strong);
+}
+
+.diet-dropdown-toggle.open{
+  border-color:rgba(6,182,212,.55);
+  box-shadow:0 0 0 4px rgba(6,182,212,.10);
+}
+
+.diet-dropdown-label{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-weight:500;
+}
+
+.diet-dropdown-caret{
+  flex:0 0 auto;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.diet-dropdown-menu{
+  display:none;
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  right:0;
+  z-index:12;
+  max-height:220px;
+  overflow:auto;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  box-shadow:var(--shadow-md);
+}
+
+.diet-dropdown.open .diet-dropdown-menu{
+  display:block;
+}
+
+.diet-option{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  margin:0;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:500;
+  color:var(--text);
+}
+
+.diet-option:hover{
+  background:var(--surface-2);
+}
+
+.diet-option input[type="checkbox"]{
+  width:16px;
+  height:16px;
+  margin:0;
+  padding:0;
+  accent-color:var(--cyan);
+  flex:0 0 auto;
+}
+
+.diet-option-text{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+
+.diet-option-icon{
+  flex:0 0 auto;
+}
+
+.diet-option-name{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 @media print{
   @page{
     size: Letter portrait;
@@ -991,8 +1098,8 @@ button:hover{
 
         <label>Menu Items & Dietary Tags</label>
         <div class="help">
-          Each label has its own dietary dropdown. Hold Ctrl (or Cmd on Mac) to select multiple items.
-        </div>
+  Each label has its own dietary dropdown. Open the menu and check or uncheck the dietary notes you want.
+</div>
       </div>
 
       <div id="foodInputs" class="food-grid controls-block"></div>
@@ -1239,22 +1346,152 @@ function syncRibbonFields(){
   document.getElementById("logoSizeValueRibbon").textContent=s;
 }
 
-function createFoodEditorCard(i,prefix){
-  const w=document.createElement("div");
-  w.className="food-item";
-  w.innerHTML='<h4>Label '+i+'</h4><input placeholder="Food name" id="'+prefix+'food'+i+'"><label class="inline-label">Dietary dropdown</label><select id="'+prefix+'diet'+i+'" multiple size="5"></select><div class="help">Select one or more dietary notes for this label.</div>';
+function createFoodEditorCard(i, prefix) {
+  const w = document.createElement("div");
+  w.className = "food-item";
+  w.innerHTML =
+    '<h4>Label ' + i + '</h4>' +
+    '<input placeholder="Food name" id="' + prefix + 'food' + i + '">' +
+    '<label class="inline-label">Dietary dropdown</label>' +
+    '<div class="diet-dropdown" id="' + prefix + 'dietDropdown' + i + '">' +
+      '<button type="button" class="diet-dropdown-toggle" id="' + prefix + 'dietToggle' + i + '">' +
+        '<span class="diet-dropdown-label" id="' + prefix + 'dietLabel' + i + '">Select dietary notes</span>' +
+        '<span class="diet-dropdown-caret">▼</span>' +
+      '</button>' +
+      '<div class="diet-dropdown-menu" id="' + prefix + 'dietMenu' + i + '"></div>' +
+    '</div>' +
+    '<select id="' + prefix + 'diet' + i + '" multiple style="display:none;"></select>' +
+    '<div class="help">Select one or more dietary notes for this label.</div>';
   return w;
 }
-function attachFoodEvents(i,prefix,isRibbon){
-  const food=document.getElementById(prefix+"food"+i);
-  const diet=document.getElementById(prefix+"diet"+i);
-  DIET_OPTIONS.forEach(opt=>{const o=document.createElement("option");o.value=opt.value;o.textContent=opt.icon+" "+opt.value;diet.appendChild(o)});
-  if(isRibbon){
-    food.addEventListener("input",()=>{document.getElementById("food"+i).value=food.value; generateLabels();});
-    diet.addEventListener("change",()=>{syncRibbonDietToMain(i); generateLabels();});
+
+function getDietLabelText(values) {
+  if (!values || values.length === 0) return "Select dietary notes";
+  if (values.length === 1) return "1 selected";
+  return values.length + " selected";
+}
+
+function updateDietDropdownLabel(prefix, i) {
+  const select = document.getElementById(prefix + "diet" + i);
+  const label = document.getElementById(prefix + "dietLabel" + i);
+  if (!select || !label) return;
+
+  const values = Array.from(select.selectedOptions).map(opt => opt.value);
+  label.textContent = getDietLabelText(values);
+}
+
+function buildDietCheckboxMenu(prefix, i) {
+  const select = document.getElementById(prefix + "diet" + i);
+  const menu = document.getElementById(prefix + "dietMenu" + i);
+  const toggle = document.getElementById(prefix + "dietToggle" + i);
+  const dropdown = document.getElementById(prefix + "dietDropdown" + i);
+
+  if (!select || !menu || !toggle || !dropdown) return;
+
+  menu.innerHTML = "";
+
+  DIET_OPTIONS.forEach((opt, idx) => {
+    const row = document.createElement("label");
+    row.className = "diet-option";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = opt.value;
+    checkbox.checked = Array.from(select.options).some(
+      o => o.value === opt.value && o.selected
+    );
+
+    checkbox.addEventListener("change", () => {
+      Array.from(select.options).forEach(option => {
+        if (option.value === opt.value) {
+          option.selected = checkbox.checked;
+        }
+      });
+
+      updateDietDropdownLabel(prefix, i);
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    const text = document.createElement("span");
+    text.className = "diet-option-text";
+    text.innerHTML =
+      '<span class="diet-option-icon">' + opt.icon + '</span>' +
+      '<span class="diet-option-name">' + opt.value + '</span>';
+
+    row.appendChild(checkbox);
+    row.appendChild(text);
+    menu.appendChild(row);
+  });
+
+  toggle.onclick = function (e) {
+    e.stopPropagation();
+
+    const isOpen = dropdown.classList.contains("open");
+
+    document.querySelectorAll(".diet-dropdown.open").forEach(el => {
+      el.classList.remove("open");
+      const btn = el.querySelector(".diet-dropdown-toggle");
+      if (btn) btn.classList.remove("open");
+    });
+
+    if (!isOpen) {
+      dropdown.classList.add("open");
+      toggle.classList.add("open");
+    } else {
+      dropdown.classList.remove("open");
+      toggle.classList.remove("open");
+    }
+  };
+
+  updateDietDropdownLabel(prefix, i);
+}
+
+document.addEventListener("click", function (e) {
+  document.querySelectorAll(".diet-dropdown.open").forEach(el => {
+    if (!el.contains(e.target)) {
+      el.classList.remove("open");
+      const btn = el.querySelector(".diet-dropdown-toggle");
+      if (btn) btn.classList.remove("open");
+    }
+  });
+});
+
+function attachFoodEvents(i, prefix, isRibbon) {
+  const food = document.getElementById(prefix + "food" + i);
+  const diet = document.getElementById(prefix + "diet" + i);
+
+  DIET_OPTIONS.forEach(opt => {
+    const o = document.createElement("option");
+    o.value = opt.value;
+    o.textContent = opt.icon + " " + opt.value;
+    diet.appendChild(o);
+  });
+
+  buildDietCheckboxMenu(prefix, i);
+
+  if (isRibbon) {
+    food.addEventListener("input", () => {
+      document.getElementById("food" + i).value = food.value;
+      generateLabels();
+    });
+
+    diet.addEventListener("change", () => {
+      syncRibbonDietToMain(i);
+      updateDietDropdownLabel("", i);
+      generateLabels();
+    });
   } else {
-    food.addEventListener("input",()=>{const rf=document.getElementById("r_food"+i); if(rf) rf.value=food.value; generateLabels();});
-    diet.addEventListener("change",()=>{syncMainDietToRibbon(i); generateLabels();});
+    food.addEventListener("input", () => {
+      const rf = document.getElementById("r_food" + i);
+      if (rf) rf.value = food.value;
+      generateLabels();
+    });
+
+    diet.addEventListener("change", () => {
+      syncMainDietToRibbon(i);
+      updateDietDropdownLabel("r_", i);
+      generateLabels();
+    });
   }
 }
 function createFoodRows(){
@@ -1277,11 +1514,41 @@ function collectLabelData(){
   }
   return labels;
 }
-function restoreLabelData(data){
-  data.forEach((row,idx)=>{
-    const i=idx+1;
-    ["food"+i,"r_food"+i].forEach(id=>{const el=document.getElementById(id); if(el) el.value=row.food||"";});
-    ["diet"+i,"r_diet"+i].forEach(id=>{const el=document.getElementById(id); if(el) Array.from(el.options).forEach(opt=>{opt.selected=(row.diets||[]).includes(opt.value);});});
+function restoreLabelData(data) {
+  data.forEach((row, idx) => {
+    const i = idx + 1;
+
+    ["food" + i, "r_food" + i].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = row.food || "";
+    });
+
+    ["diet" + i, "r_diet" + i].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        Array.from(el.options).forEach(opt => {
+          opt.selected = (row.diets || []).includes(opt.value);
+        });
+      }
+    });
+
+    updateDietDropdownLabel("", i);
+    updateDietDropdownLabel("r_", i);
+
+    const mainMenu = document.getElementById("dietMenu" + i);
+    const ribbonMenu = document.getElementById("r_dietMenu" + i);
+
+    if (mainMenu) {
+      Array.from(mainMenu.querySelectorAll('input[type="checkbox"]')).forEach(input => {
+        input.checked = (row.diets || []).includes(input.value);
+      });
+    }
+
+    if (ribbonMenu) {
+      Array.from(ribbonMenu.querySelectorAll('input[type="checkbox"]')).forEach(input => {
+        input.checked = (row.diets || []).includes(input.value);
+      });
+    }
   });
 }
 function syncRibbonDietToMain(i){
