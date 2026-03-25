@@ -18,6 +18,7 @@ type SheetSettings = {
   allergenFont?: string;
   allergenSize?: string | number;
   allergenColor?: string;
+  descSize?: string | number;
   bgColor?: string;
   logoSettings?: {
     x: number;
@@ -116,13 +117,18 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
 
   const latestEditorPayloadRef = useRef<{
     eventName?: string;
-    labels?: unknown[];
+    labels?: Array<{
+      food?: string;
+      description?: string;
+      diets?: string[];
+    }>;
     settings?: unknown;
     logoData?: string | null;
   }>({
     eventName: normalizedSheetPayload.eventName,
     labels: normalizedSheetPayload.labels.map((label) => ({
       food: label.title ?? "",
+      description: label.description ?? "",
       diets: label.diets ?? [],
     })),
     settings: normalizedSheetPayload.settings,
@@ -187,8 +193,6 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     }
   };
 
-  // Only load/reload the iframe when the actual sheet changes,
-  // not on every autosave/state update while typing.
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
@@ -209,7 +213,6 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     };
   }, [sheet]);
 
-  // Keep one stable message listener so autosave doesn't remount/reload the iframe.
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
@@ -225,8 +228,6 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
         const nextSettings = event.data.payload?.settings ?? null;
         const nextLogoData = event.data.payload?.logoData ?? null;
 
-        // Keep local sheet data updated for non-focus-sensitive actions,
-        // but do not push LOAD_SHEET back into the iframe.
         setCurrentSheet((prev) => ({
           ...prev,
           name: titleRef.current.trim() || "Untitled Sheet",
@@ -246,7 +247,12 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
                 : typeof label?.title === "string"
                 ? label.title
                 : "",
-            description: "",
+            description:
+              typeof label?.description === "string"
+                ? label.description
+                : typeof label?.ingredients === "string"
+                ? label.ingredients
+                : "",
             diets: Array.isArray(label?.diets) ? label.diets : [],
           })),
         }));
@@ -254,7 +260,21 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
         await saveToDatabase({
           title: titleRef.current.trim() || "Untitled Sheet",
           eventName: nextEventName,
-          labels: nextLabels,
+          labels: nextLabels.map((label: any) => ({
+            food:
+              typeof label?.food === "string"
+                ? label.food
+                : typeof label?.title === "string"
+                ? label.title
+                : "",
+            description:
+              typeof label?.description === "string"
+                ? label.description
+                : typeof label?.ingredients === "string"
+                ? label.ingredients
+                : "",
+            diets: Array.isArray(label?.diets) ? label.diets : [],
+          })),
           settings: nextSettings,
           logoData: nextLogoData,
         });
@@ -276,9 +296,6 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
         const nextSettings = event.data.payload?.settings ?? null;
         const nextLogoData = event.data.payload?.logoData ?? null;
 
-        // IMPORTANT:
-        // Save in the background without reloading the iframe or replacing
-        // the editor's in-progress DOM tree, which was causing focus loss.
         setCurrentSheet((prev) => ({
           ...prev,
           name: titleRef.current.trim() || "Untitled Sheet",
@@ -298,7 +315,12 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
                 : typeof label?.title === "string"
                 ? label.title
                 : "",
-            description: "",
+            description:
+              typeof label?.description === "string"
+                ? label.description
+                : typeof label?.ingredients === "string"
+                ? label.ingredients
+                : "",
             diets: Array.isArray(label?.diets) ? label.diets : [],
           })),
         }));
@@ -306,7 +328,21 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
         await saveToDatabase({
           title: titleRef.current.trim() || "Untitled Sheet",
           eventName: nextEventName,
-          labels: nextLabels,
+          labels: nextLabels.map((label: any) => ({
+            food:
+              typeof label?.food === "string"
+                ? label.food
+                : typeof label?.title === "string"
+                ? label.title
+                : "",
+            description:
+              typeof label?.description === "string"
+                ? label.description
+                : typeof label?.ingredients === "string"
+                ? label.ingredients
+                : "",
+            diets: Array.isArray(label?.diets) ? label.diets : [],
+          })),
           settings: nextSettings,
           logoData: nextLogoData,
         });
@@ -459,6 +495,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       eventName: nextPayload.eventName,
       labels: nextLabels.map((label) => ({
         food: label.title,
+        description: label.description,
         diets: label.diets,
       })),
       settings: nextPayload.settings,
@@ -470,6 +507,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       eventName: nextPayload.eventName,
       labels: nextLabels.map((label) => ({
         food: label.title,
+        description: label.description,
         diets: label.diets,
       })),
       settings: nextPayload.settings,

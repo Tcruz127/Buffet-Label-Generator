@@ -43,6 +43,7 @@ model LabelItem {
   sheetId       String
   positionIndex Int
   foodName      String?
+  description   String?
   diets         Json?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt

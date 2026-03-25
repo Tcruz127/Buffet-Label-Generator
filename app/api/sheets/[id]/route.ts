@@ -3,10 +3,7 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import {
-  FREE_PLAN_MAX_LABELS,
-  isProUser,
-} from "@/lib/plan";
+import { FREE_PLAN_MAX_LABELS, isProUser } from "@/lib/plan";
 
 type RouteContext = {
   params: Promise<{
@@ -21,6 +18,8 @@ type IncomingLabel = {
   title?: string;
   name?: string;
   foodName?: string;
+  description?: string;
+  ingredients?: string;
   diets?: unknown;
 };
 
@@ -44,6 +43,12 @@ function normalizeFoodName(label: IncomingLabel): string {
   if (typeof label.food === "string") return label.food;
   if (typeof label.title === "string") return label.title;
   if (typeof label.name === "string") return label.name;
+  return "";
+}
+
+function normalizeDescription(label: IncomingLabel): string {
+  if (typeof label.description === "string") return label.description;
+  if (typeof label.ingredients === "string") return label.ingredients;
   return "";
 }
 
@@ -151,6 +156,7 @@ export async function PUT(req: Request, context: RouteContext) {
               ? label.positionIndex
               : index,
           foodName: normalizeFoodName(label),
+          description: normalizeDescription(label),
           diets: normalizeDiets(label.diets),
         }))
       : [];

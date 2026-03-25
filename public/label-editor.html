@@ -804,6 +804,55 @@ button:hover{
     print-color-adjust:exact !important;
   }
 }
+.section-title{
+  margin-bottom:12px;
+  font-size:14px;
+  font-weight:900;
+  color:var(--text);
+  letter-spacing:.01em;
+}
+
+.type-grid{
+  display:grid;
+  gap:12px;
+}
+
+.type-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 84px 56px;
+  gap:10px;
+  align-items:end;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:linear-gradient(to bottom,#ffffff,#f8fbff);
+}
+
+.type-row input[type="number"]{
+  width:84px;
+  min-width:84px;
+  text-align:center;
+}
+
+.type-row-title{
+  grid-column:1 / -1;
+  font-size:12px;
+  font-weight:800;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.type-row select,
+.type-row input{
+  margin-top:0;
+}
+
+.type-row input[type="color"]{
+  width:56px;
+  min-width:56px;
+  padding:4px;
+}
 </style>
 </head>
 <body>
@@ -909,6 +958,9 @@ button:hover{
 
           <div class="ribbon-group">
             <label>Allergen Font</label>
+            <label>Ingredients Size</label>
+<input id="descSizeRibbon" type="number" value="12" min="8" max="30"
+  oninput="syncField('descSizeRibbon','descSize'); generateLabels();" />
             <select id="allergenFontRibbon" onchange="syncField('allergenFontRibbon','allergenFont'); generateLabels();">
               <option>Arial</option>
               <option>Times New Roman</option>
@@ -1054,39 +1106,52 @@ button:hover{
 </div>
 
       <div class="controls-block">
-        <label>Main Font</label>
-        <select id="fontSelect">
-          <option>Arial</option>
-          <option>Times New Roman</option>
-          <option>Helvetica</option>
-          <option>Georgia</option>
-          <option>Verdana</option>
-        </select>
+  <div class="section-title">Typography</div>
 
-        <label>Main Font Size</label>
-        <input id="fontSize" type="number" value="20" min="8" max="48" />
+  <div class="type-grid">
+    <div class="type-row">
+      <div class="type-row-title">Main dish</div>
+      <select id="fontSelect">
+        <option>Arial</option>
+        <option>Times New Roman</option>
+        <option>Helvetica</option>
+        <option>Georgia</option>
+        <option>Verdana</option>
+      </select>
+      <input id="fontSize" type="number" value="20" min="8" max="48" />
+      <input id="textColor" type="color" value="#000000" />
+    </div>
 
-        <label>Main Font Color</label>
-        <input id="textColor" type="color" value="#000000" />
+    <div class="type-row">
+      <div class="type-row-title">Ingredients</div>
+      <select id="descFont">
+        <option>Arial</option>
+        <option>Times New Roman</option>
+        <option>Helvetica</option>
+        <option>Georgia</option>
+        <option>Verdana</option>
+      </select>
+      <input id="descSize" type="number" value="12" min="8" max="30" />
+      <input id="descColor" type="color" value="#555555" />
+    </div>
 
-        <label>Allergen Font</label>
-        <select id="allergenFont">
-          <option>Arial</option>
-          <option>Times New Roman</option>
-          <option>Helvetica</option>
-          <option>Georgia</option>
-          <option>Verdana</option>
-        </select>
+    <div class="type-row">
+      <div class="type-row-title">Allergens</div>
+      <select id="allergenFont">
+        <option>Arial</option>
+        <option>Times New Roman</option>
+        <option>Helvetica</option>
+        <option>Georgia</option>
+        <option>Verdana</option>
+      </select>
+      <input id="allergenSize" type="number" value="12" min="8" max="30" />
+      <input id="allergenColor" type="color" value="#000000" />
+    </div>
+  </div>
 
-        <label>Allergen Font Size</label>
-        <input id="allergenSize" type="number" value="12" min="8" max="30" />
-
-        <label>Allergen Font Color</label>
-        <input id="allergenColor" type="color" value="#000000" />
-
-        <label>Label Background</label>
-        <input id="bgColor" type="color" value="#ffffff" />
-      </div>
+  <label>Label Background</label>
+  <input id="bgColor" type="color" value="#ffffff" />
+</div>
 
       <div class="controls-block">
         <label>Paste Menu (auto fill labels)</label>
@@ -1130,6 +1195,9 @@ function getDefaultTemplateSettings() {
     accentColor: "#444444",
     fontFamily: "Arial",
     foodNameSize: 20,
+    descFont: "Arial",
+    descColor: "#555555",
+    descSize: 12,
     dietTextSize: 12,
     align: "center",
     padding: 8,
@@ -1180,7 +1248,11 @@ function normalizeTemplateSettings(raw) {
           size: Number(safe.logoSettings.size ?? 55)
         }
       : defaults.logoSettings,
-    viewMode: safe.viewMode || defaults.viewMode
+    viewMode: safe.viewMode || defaults.viewMode,
+    descFont: safe.descFont || defaults.descFont,
+    descColor: safe.descColor || defaults.descColor,
+    descSize: Number(safe.descSize ?? defaults.descSize),
+
   };
 }
 
@@ -1200,7 +1272,10 @@ function getMergedRenderSettings() {
       ...logoSettings,
       size: Number(logoSettings.size ?? normalizedAdvanced.logoSettings.size ?? 55)
     },
-    viewMode
+    viewMode,
+    descFont: document.getElementById("descFont")?.value || normalizedAdvanced.descFont,
+    descColor: document.getElementById("descColor")?.value || normalizedAdvanced.descColor,
+    descSize: Number(document.getElementById("descSize")?.value || normalizedAdvanced.descSize || 12),
   };
 }
 
@@ -1327,7 +1402,7 @@ document.getElementById("logoUpload").addEventListener("change", function(e){
 document.getElementById("sheetFileInput").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const data=JSON.parse(ev.target.result);applySheetData(data);currentSaveName=f.name;hasBrowserSave=false;updateCurrentFileName();alert("Sheet opened successfully.");closeSidebar()}catch(err){alert("That file could not be loaded. Please choose a valid saved sheet file.")}};r.readAsText(f)});
 document.getElementById("logoSize").addEventListener("input",e=>{syncLogoSize(e.target.value)});
 document.getElementById("eventName").addEventListener("input",()=>{syncRibbonFields();generateLabels()});
-["fontSelect","fontSize","textColor","allergenFont","allergenSize","allergenColor","bgColor","menuPaste"].forEach(id=>{
+["fontSelect","fontSize","textColor","descFont","descSize","descColor","allergenFont","allergenSize","allergenColor","bgColor","menuPaste"].forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener("input",()=>{syncRibbonFields();generateLabels()});
   el.addEventListener("change",()=>{syncRibbonFields();generateLabels()});
@@ -1337,7 +1412,7 @@ const foodContainer=document.getElementById("foodInputs");
 const foodRibbon=document.getElementById("foodInputsRibbon");
 
 function syncRibbonFields(){
-  const map=[["eventName","eventNameRibbon"],["fontSelect","fontSelectRibbon"],["fontSize","fontSizeRibbon"],["textColor","textColorRibbon"],["allergenFont","allergenFontRibbon"],["allergenSize","allergenSizeRibbon"],["allergenColor","allergenColorRibbon"],["bgColor","bgColorRibbon"],["menuPaste","menuPasteRibbon"]];
+  const map=[["eventName","eventNameRibbon"],["fontSelect","fontSelectRibbon"],["fontSize","fontSizeRibbon"],["textColor","textColorRibbon"],["allergenFont","allergenFontRibbon"],["allergenSize","allergenSizeRibbon"],["allergenColor","allergenColorRibbon"],["bgColor","bgColorRibbon"],["menuPaste","menuPasteRibbon"],["descSize","descSizeRibbon"]];
   map.forEach(([a,b])=>{const ea=document.getElementById(a),eb=document.getElementById(b); if(ea&&eb) eb.value=ea.value;});
   const s=logoSettings.size;
   document.getElementById("logoSize").value=s;
@@ -1351,8 +1426,15 @@ function createFoodEditorCard(i, prefix) {
   w.className = "food-item";
   w.innerHTML =
     '<h4>Label ' + i + '</h4>' +
-    '<input placeholder="Food name" id="' + prefix + 'food' + i + '">' +
+
+    '<label class="inline-label">Main Dish</label>' +
+    '<input placeholder="Chicken Marsala" id="' + prefix + 'food' + i + '">' +
+
+    '<label class="inline-label">What’s in the dish</label>' +
+    '<input placeholder="With roasted potatoes and vegetables" id="' + prefix + 'desc' + i + '">' +
+
     '<label class="inline-label">Dietary dropdown</label>' +
+
     '<div class="diet-dropdown" id="' + prefix + 'dietDropdown' + i + '">' +
       '<button type="button" class="diet-dropdown-toggle" id="' + prefix + 'dietToggle' + i + '">' +
         '<span class="diet-dropdown-label" id="' + prefix + 'dietLabel' + i + '">Select dietary notes</span>' +
@@ -1360,8 +1442,11 @@ function createFoodEditorCard(i, prefix) {
       '</button>' +
       '<div class="diet-dropdown-menu" id="' + prefix + 'dietMenu' + i + '"></div>' +
     '</div>' +
+
     '<select id="' + prefix + 'diet' + i + '" multiple style="display:none;"></select>' +
+
     '<div class="help">Select one or more dietary notes for this label.</div>';
+
   return w;
 }
 
@@ -1458,6 +1543,7 @@ document.addEventListener("click", function (e) {
 
 function attachFoodEvents(i, prefix, isRibbon) {
   const food = document.getElementById(prefix + "food" + i);
+  const desc = document.getElementById(prefix + "desc" + i);
   const diet = document.getElementById(prefix + "diet" + i);
 
   DIET_OPTIONS.forEach(opt => {
@@ -1475,6 +1561,11 @@ function attachFoodEvents(i, prefix, isRibbon) {
       generateLabels();
     });
 
+    desc.addEventListener("input", () => {
+      document.getElementById("desc" + i).value = desc.value;
+      generateLabels();
+    });
+
     diet.addEventListener("change", () => {
       syncRibbonDietToMain(i);
       updateDietDropdownLabel("", i);
@@ -1484,6 +1575,12 @@ function attachFoodEvents(i, prefix, isRibbon) {
     food.addEventListener("input", () => {
       const rf = document.getElementById("r_food" + i);
       if (rf) rf.value = food.value;
+      generateLabels();
+    });
+
+    desc.addEventListener("input", () => {
+      const rd = document.getElementById("r_desc" + i);
+      if (rd) rd.value = desc.value;
       generateLabels();
     });
 
@@ -1509,8 +1606,15 @@ function createFoodRows(){
 function collectLabelData(){
   const labels=[];
   for(let i=1;i<=totalLabels;i++){
-    const foodEl=document.getElementById("food"+i),dietEl=document.getElementById("diet"+i);
-    labels.push({food:foodEl?foodEl.value:"",diets:dietEl?Array.from(dietEl.selectedOptions).map(opt=>opt.value):[]});
+    const foodEl=document.getElementById("food"+i);
+    const descEl=document.getElementById("desc"+i);
+    const dietEl=document.getElementById("diet"+i);
+
+    labels.push({
+      food: foodEl ? foodEl.value : "",
+      description: descEl ? descEl.value : "",
+      diets: dietEl ? Array.from(dietEl.selectedOptions).map(opt => opt.value) : []
+    });
   }
   return labels;
 }
@@ -1519,9 +1623,13 @@ function restoreLabelData(data) {
     const i = idx + 1;
 
     ["food" + i, "r_food" + i].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = row.food || "";
-    });
+  const el = document.getElementById(id);
+  if (el) el.value = row.food || "";
+}); 
+    ["desc" + i, "r_desc" + i].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.value = row.description || "";
+});
 
     ["diet" + i, "r_diet" + i].forEach(id => {
       const el = document.getElementById(id);
@@ -1847,7 +1955,9 @@ function applySheetData(data){
   advancedTemplateSettings = normalizedSettings;
 
   document.getElementById("eventName").value = data.eventName || "";
-
+  document.getElementById("descFont").value = normalizedSettings.descFont || "Arial";
+  document.getElementById("descSize").value = normalizedSettings.descSize || 12;
+  document.getElementById("descColor").value = normalizedSettings.descColor || "#555555";
   document.getElementById("fontSelect").value = normalizedSettings.fontFamily || "Arial";
   document.getElementById("fontSize").value = normalizedSettings.foodNameSize || 20;
   document.getElementById("textColor").value = normalizedSettings.textColor || "#000000";
@@ -2004,6 +2114,7 @@ function generateLabels(){
       if(i > totalLabels) break;
 
       const food = document.getElementById("food" + i).value.trim() || "Food Name";
+      const desc = document.getElementById("desc" + i)?.value.trim() || "";
       const diets = getSelectedDietForLabel(i);
 
       const div = document.createElement("div");
@@ -2064,6 +2175,17 @@ function generateLabels(){
       title.style.fontWeight = "bold";
       title.style.width = "100%";
       content.appendChild(title);
+      if(desc){
+  const descLine = document.createElement("div");
+  descLine.className = "description-line";
+  descLine.textContent = desc;
+ descLine.style.fontFamily = settings.descFont || "Arial";
+descLine.style.fontSize = (settings.descSize || document.getElementById("descSize")?.value || 12) + "px";
+descLine.style.marginTop = "4px";
+descLine.style.color = settings.descColor || "#555555";
+descLine.style.width = "100%";
+  content.appendChild(descLine);
+}
 
       if(diets.length > 0){
         addDividerToContent(content, settings);
@@ -2107,7 +2229,7 @@ function loadSheetFromApp(sheet) {
     ? sheet.items
     : [];
 
-  const convertedLabels = incoming.map((label) => ({
+      const convertedLabels = incoming.map((label) => ({
     food:
       typeof label?.food === "string"
         ? label.food
@@ -2117,6 +2239,12 @@ function loadSheetFromApp(sheet) {
         ? label.title
         : typeof label?.name === "string"
         ? label.name
+        : "",
+    description:
+      typeof label?.description === "string"
+        ? label.description
+        : typeof label?.ingredients === "string"
+        ? label.ingredients
         : "",
     diets: Array.isArray(label?.diets) ? label.diets : []
   }));
@@ -2143,6 +2271,7 @@ function buildSavePayload() {
   const cleanLabels = Array.isArray(data.labels)
     ? data.labels.map((label) => ({
         food: typeof label.food === "string" ? label.food : "",
+        description: typeof label.description === "string" ? label.description : "",
         diets: Array.isArray(label.diets) ? label.diets : []
       }))
     : [];
