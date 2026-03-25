@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const features = [
@@ -75,38 +76,34 @@ export default function HomePage() {
 
       <section className="relative">
         <div className="mx-auto max-w-7xl px-6 pt-6 lg:px-8">
-          <header className="mb-16 flex items-center justify-between rounded-full border border-white/10 bg-white/5 px-5 py-3 shadow-2xl shadow-cyan-500/5 backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 text-sm font-bold text-white shadow-lg shadow-cyan-500/30">
-                IB
-              </div>
+          <header className="mb-16 flex items-center justify-between rounded-full border border-white/10 bg-white/5 px-8 py-4 shadow-2xl shadow-cyan-500/5 backdrop-blur-xl">
+  <Link href="/" className="flex items-center gap-4">
+    <Image
+      src="/logo-light.svg"
+      alt="Instabels"
+      width={220}
+      height={56}
+      priority
+      className="block h-12 w-auto"
+    />
+  </Link>
 
-              <div>
-                <p className="text-sm font-semibold tracking-wide text-white">
-                  Instabels
-                </p>
-                <p className="text-xs text-slate-300">
-                  Premium buffet label software
-                </p>
-              </div>
-            </div>
+  <nav className="flex items-center gap-3">
+    <Link
+      href="/login"
+      className="rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
+    >
+      Sign in
+    </Link>
 
-            <nav className="flex items-center gap-3">
-              <Link
-                href="/login"
-                className="rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
-              >
-                Sign in
-              </Link>
-
-              <Link
-                href="/signup"
-                className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-slate-100"
-              >
-                Start free
-              </Link>
-            </nav>
-          </header>
+    <Link
+      href="/signup"
+      className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-slate-100"
+    >
+      Start free
+    </Link>
+  </nav>
+</header>
 
           <div className="grid items-center gap-16 pb-20 lg:grid-cols-[1.08fr_.92fr]">
             <div>
@@ -416,7 +413,7 @@ export default function HomePage() {
                 <h3 className="text-2xl font-bold">For active teams</h3>
 
                 <div className="mt-4 flex items-end gap-2">
-                  <span className="text-5xl font-black tracking-tight">$12</span>
+                  <span className="text-5xl font-black tracking-tight">$19.99</span>
                   <span className="pb-1 text-sm text-slate-300">/ month</span>
                 </div>
 
