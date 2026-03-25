@@ -66,17 +66,37 @@ type NormalizedSheetPayload = {
   labels: NormalizedLabel[];
 };
 
+function normalizeSheetPayload(sheet: SheetData): NormalizedSheetPayload {
+  const normalizedLabels: LabelData[] = sheet.labels ?? sheet.items ?? [];
+
+  return {
+    id: sheet.id,
+    name: sheet.name ?? sheet.title ?? "Untitled Sheet",
+    title: sheet.title ?? sheet.name ?? "Untitled Sheet",
+    eventName: sheet.eventName ?? "",
+    totalLabels: sheet.totalLabels ?? 10,
+    settings: sheet.settings ?? {},
+    logoData: sheet.logoData ?? sheet.logoUrl ?? null,
+    labels: normalizedLabels.map((label) => ({
+      id: label.id,
+      title: label.title ?? label.foodName ?? "",
+      description: label.description ?? "",
+      diets: Array.isArray(label.diets) ? label.diets : [],
+    })),
+  };
+}
+
 export default function EditorFrame({ sheet }: { sheet: SheetData }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuFileInputRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef(sheet.name ?? sheet.title ?? "Untitled Sheet");
 
   const [saveStatus, setSaveStatus] = useState("Ready");
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [title, setTitle] = useState(
     sheet.name ?? sheet.title ?? "Untitled Sheet"
   );
-
   const [currentSheet, setCurrentSheet] = useState<SheetData>(sheet);
 
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
@@ -89,26 +109,10 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
   const [selectedMenuItems, setSelectedMenuItems] = useState<string[]>([]);
   const [parsedMenuRawText, setParsedMenuRawText] = useState("");
 
-  const normalizedSheetPayload = useMemo<NormalizedSheetPayload>(() => {
-    const normalizedLabels: LabelData[] =
-      currentSheet.labels ?? currentSheet.items ?? [];
-
-    return {
-      ...currentSheet,
-      name: currentSheet.name ?? currentSheet.title ?? "Untitled Sheet",
-      title: currentSheet.title ?? currentSheet.name ?? "Untitled Sheet",
-      eventName: currentSheet.eventName ?? "",
-      totalLabels: currentSheet.totalLabels ?? 10,
-      settings: currentSheet.settings ?? {},
-      logoData: currentSheet.logoData ?? currentSheet.logoUrl ?? null,
-      labels: normalizedLabels.map((label) => ({
-        id: label.id,
-        title: label.title ?? label.foodName ?? "",
-        description: label.description ?? "",
-        diets: Array.isArray(label.diets) ? label.diets : [],
-      })),
-    };
-  }, [currentSheet]);
+  const normalizedSheetPayload = useMemo(
+    () => normalizeSheetPayload(currentSheet),
+    [currentSheet]
+  );
 
   const latestEditorPayloadRef = useRef<{
     eventName?: string;
@@ -127,8 +131,14 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
 
   useEffect(() => {
     setCurrentSheet(sheet);
-    setTitle(sheet.name ?? sheet.title ?? "Untitled Sheet");
+    const nextTitle = sheet.name ?? sheet.title ?? "Untitled Sheet";
+    setTitle(nextTitle);
+    titleRef.current = nextTitle;
   }, [sheet]);
+
+  useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
 
   const formatSavedTime = () => {
     return new Date().toLocaleTimeString([], {
@@ -157,7 +167,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     try {
       setSaveStatus("Saving...");
 
-      const response = await fetch(`/api/sheets/${normalizedSheetPayload.id}`, {
+      const response = await fetch(`/api/sheets/${sheet.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -177,14 +187,30 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     }
   };
 
+  // Only load/reload the iframe when the actual sheet changes,
+  // not on every autosave/state update while typing.
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
+    const payloadForLoad = normalizeSheetPayload(sheet);
+
     const sendSheet = () => {
-      sendSheetToIframe(normalizedSheetPayload);
+      sendSheetToIframe(payloadForLoad);
     };
 
+    const timer = setTimeout(sendSheet, 300);
+
+    iframe.addEventListener("load", sendSheet);
+
+    return () => {
+      clearTimeout(timer);
+      iframe.removeEventListener("load", sendSheet);
+    };
+  }, [sheet]);
+
+  // Keep one stable message listener so autosave doesn't remount/reload the iframe.
+  useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       if (!event.data) return;
@@ -199,10 +225,12 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
         const nextSettings = event.data.payload?.settings ?? null;
         const nextLogoData = event.data.payload?.logoData ?? null;
 
+        // Keep local sheet data updated for non-focus-sensitive actions,
+        // but do not push LOAD_SHEET back into the iframe.
         setCurrentSheet((prev) => ({
           ...prev,
-          name: title.trim() || "Untitled Sheet",
-          title: title.trim() || "Untitled Sheet",
+          name: titleRef.current.trim() || "Untitled Sheet",
+          title: titleRef.current.trim() || "Untitled Sheet",
           eventName: nextEventName,
           totalLabels: Math.max(10, nextLabels.length || prev.totalLabels || 10),
           settings:
@@ -224,7 +252,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
         }));
 
         await saveToDatabase({
-          title: title.trim() || "Untitled Sheet",
+          title: titleRef.current.trim() || "Untitled Sheet",
           eventName: nextEventName,
           labels: nextLabels,
           settings: nextSettings,
@@ -248,10 +276,13 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
         const nextSettings = event.data.payload?.settings ?? null;
         const nextLogoData = event.data.payload?.logoData ?? null;
 
+        // IMPORTANT:
+        // Save in the background without reloading the iframe or replacing
+        // the editor's in-progress DOM tree, which was causing focus loss.
         setCurrentSheet((prev) => ({
           ...prev,
-          name: title.trim() || "Untitled Sheet",
-          title: title.trim() || "Untitled Sheet",
+          name: titleRef.current.trim() || "Untitled Sheet",
+          title: titleRef.current.trim() || "Untitled Sheet",
           eventName: nextEventName,
           totalLabels: Math.max(10, nextLabels.length || prev.totalLabels || 10),
           settings:
@@ -273,7 +304,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
         }));
 
         await saveToDatabase({
-          title: title.trim() || "Untitled Sheet",
+          title: titleRef.current.trim() || "Untitled Sheet",
           eventName: nextEventName,
           labels: nextLabels,
           settings: nextSettings,
@@ -282,17 +313,11 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       }
     };
 
-    const timer = setTimeout(sendSheet, 500);
-
-    iframe.addEventListener("load", sendSheet);
     window.addEventListener("message", handleMessage);
-
     return () => {
-      clearTimeout(timer);
-      iframe.removeEventListener("load", sendSheet);
       window.removeEventListener("message", handleMessage);
     };
-  }, [normalizedSheetPayload, title]);
+  }, [sheet.id]);
 
   const triggerTitleAutosave = (nextTitle: string) => {
     setSaveStatus("Editing...");
