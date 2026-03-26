@@ -853,6 +853,71 @@ button:hover{
   min-width:56px;
   padding:4px;
 }
+
+.dish-name[contenteditable="true"],
+.description-line[contenteditable="true"]{
+  outline:none;
+  border-radius:8px;
+  transition:box-shadow .18s ease, background .18s ease;
+}
+
+.dish-name[contenteditable="true"]:hover,
+.description-line[contenteditable="true"]:hover{
+  background:rgba(6,182,212,.06);
+}
+
+.dish-name[contenteditable="true"]:focus,
+.description-line[contenteditable="true"]:focus{
+  background:rgba(6,182,212,.08);
+  box-shadow:0 0 0 3px rgba(6,182,212,.14);
+}
+
+.description-line[contenteditable="true"]{
+  min-height:1.2em;
+}
+
+.description-line[contenteditable="true"]:empty::before{
+  content:attr(data-placeholder);
+  color:#94a3b8;
+  font-style:italic;
+}
+
+.style-toggles{
+  grid-column:1 / -1;
+  display:flex;
+  gap:8px;
+  margin-top:2px;
+}
+
+.style-btn{
+  width:36px;
+  height:36px;
+  min-width:36px;
+  padding:0;
+  margin-top:0;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:none;
+}
+
+.style-btn:hover{
+  background:var(--surface-2);
+  border-color:var(--border-strong);
+}
+
+.style-btn.active{
+  background:linear-gradient(135deg,var(--cyan),var(--violet));
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 8px 18px rgba(6,182,212,.18);
+}
+
 </style>
 </head>
 <body>
@@ -1120,6 +1185,11 @@ button:hover{
       </select>
       <input id="fontSize" type="number" value="20" min="8" max="48" />
       <input id="textColor" type="color" value="#000000" />
+      <div class="style-toggles">
+        <button type="button" class="style-btn" data-style-key="foodBold" onclick="toggleStyle('foodBold')">B</button>
+        <button type="button" class="style-btn" data-style-key="foodItalic" onclick="toggleStyle('foodItalic')"><em>I</em></button>
+        <button type="button" class="style-btn" data-style-key="foodUnderline" onclick="toggleStyle('foodUnderline')"><u>U</u></button>
+      </div>
     </div>
 
     <div class="type-row">
@@ -1133,6 +1203,11 @@ button:hover{
       </select>
       <input id="descSize" type="number" value="12" min="8" max="30" />
       <input id="descColor" type="color" value="#555555" />
+      <div class="style-toggles">
+        <button type="button" class="style-btn" data-style-key="descBold" onclick="toggleStyle('descBold')">B</button>
+        <button type="button" class="style-btn" data-style-key="descItalic" onclick="toggleStyle('descItalic')"><em>I</em></button>
+        <button type="button" class="style-btn" data-style-key="descUnderline" onclick="toggleStyle('descUnderline')"><u>U</u></button>
+      </div>
     </div>
 
     <div class="type-row">
@@ -1146,6 +1221,11 @@ button:hover{
       </select>
       <input id="allergenSize" type="number" value="12" min="8" max="30" />
       <input id="allergenColor" type="color" value="#000000" />
+      <div class="style-toggles">
+        <button type="button" class="style-btn" data-style-key="dietBold" onclick="toggleStyle('dietBold')">B</button>
+        <button type="button" class="style-btn" data-style-key="dietItalic" onclick="toggleStyle('dietItalic')"><em>I</em></button>
+        <button type="button" class="style-btn" data-style-key="dietUnderline" onclick="toggleStyle('dietUnderline')"><u>U</u></button>
+      </div>
     </div>
   </div>
 
@@ -1194,6 +1274,7 @@ function getDefaultTemplateSettings() {
     textColor: "#111111",
     accentColor: "#444444",
     fontFamily: "Arial",
+    allergenFont: "Arial",
     foodNameSize: 20,
     descFont: "Arial",
     descColor: "#555555",
@@ -1211,7 +1292,19 @@ function getDefaultTemplateSettings() {
     showLogo: true,
     logoPosition: "top",
     logoSettings: { x: 8, y: 8, size: 55 },
-    viewMode: "side"
+    viewMode: "side",
+
+    foodBold: true,
+    foodItalic: false,
+    foodUnderline: false,
+
+    descBold: false,
+    descItalic: false,
+    descUnderline: false,
+
+    dietBold: false,
+    dietItalic: false,
+    dietUnderline: false
   };
 }
 
@@ -1252,7 +1345,17 @@ function normalizeTemplateSettings(raw) {
     descFont: safe.descFont || defaults.descFont,
     descColor: safe.descColor || defaults.descColor,
     descSize: Number(safe.descSize ?? defaults.descSize),
+    foodBold: safe.foodBold ?? false,
+    foodItalic: safe.foodItalic ?? false,
+    foodUnderline: safe.foodUnderline ?? false,
 
+    descBold: safe.descBold ?? false,
+    descItalic: safe.descItalic ?? false,
+    descUnderline: safe.descUnderline ?? false,
+
+    dietBold: safe.dietBold ?? false,
+    dietItalic: safe.dietItalic ?? false,
+    dietUnderline: safe.dietUnderline ?? false,
   };
 }
 
@@ -1262,8 +1365,12 @@ function getMergedRenderSettings() {
   return {
     ...normalizedAdvanced,
     fontFamily: document.getElementById("fontSelect").value || normalizedAdvanced.fontFamily,
+    allergenFont: document.getElementById("allergenFont").value || normalizedAdvanced.allergenFont || normalizedAdvanced.fontFamily,
     foodNameSize: Number(document.getElementById("fontSize").value || normalizedAdvanced.foodNameSize),
     textColor: document.getElementById("textColor").value || normalizedAdvanced.textColor,
+    descFont: document.getElementById("descFont")?.value || normalizedAdvanced.descFont,
+    descColor: document.getElementById("descColor")?.value || normalizedAdvanced.descColor,
+    descSize: Number(document.getElementById("descSize")?.value || normalizedAdvanced.descSize || 12),
     dietTextSize: Number(document.getElementById("allergenSize").value || normalizedAdvanced.dietTextSize),
     accentColor: document.getElementById("allergenColor").value || normalizedAdvanced.accentColor,
     backgroundColor: document.getElementById("bgColor").value || normalizedAdvanced.backgroundColor,
@@ -1272,10 +1379,7 @@ function getMergedRenderSettings() {
       ...logoSettings,
       size: Number(logoSettings.size ?? normalizedAdvanced.logoSettings.size ?? 55)
     },
-    viewMode,
-    descFont: document.getElementById("descFont")?.value || normalizedAdvanced.descFont,
-    descColor: document.getElementById("descColor")?.value || normalizedAdvanced.descColor,
-    descSize: Number(document.getElementById("descSize")?.value || normalizedAdvanced.descSize || 12),
+    viewMode
   };
 }
 
@@ -1985,6 +2089,7 @@ function applySheetData(data){
   createFoodRows();
   restoreLabelData(data.labels || []);
   syncRibbonFields();
+  updateStyleButtons(normalizedSettings);
   generateLabels();
 }
 function saveToBrowserSlot(slotName){localStorage.setItem("buffetSheetV15:"+slotName,JSON.stringify(getSheetData()))}
@@ -2078,10 +2183,86 @@ function makeLogoDraggable(img,label){
     }
   };
 }
+
+function bindPreviewEditable(el, inputId, mirrorInputId) {
+  if (!el) return;
+
+  const placeholder = el.getAttribute("data-placeholder") || "";
+
+  el.contentEditable = "true";
+  el.spellcheck = true;
+
+  el.addEventListener("focus", () => {
+    const currentText = (el.textContent || "").trim();
+
+    if (placeholder && currentText === placeholder) {
+      el.textContent = "";
+      el.style.color = "";
+      el.style.fontStyle = "normal";
+    }
+  });
+
+  el.addEventListener("input", () => {
+    const value = el.textContent || "";
+
+    const input = document.getElementById(inputId);
+    if (input) input.value = value;
+
+    const mirror = document.getElementById(mirrorInputId);
+    if (mirror) mirror.value = value;
+
+    if (typeof triggerAutosave === "function") {
+      triggerAutosave();
+    }
+  });
+
+  el.addEventListener("blur", () => {
+    const cleanedValue = (el.textContent || "").trim();
+
+    const finalValue =
+      placeholder && cleanedValue === placeholder ? "" : cleanedValue;
+
+    const input = document.getElementById(inputId);
+    if (input) input.value = finalValue;
+
+    const mirror = document.getElementById(mirrorInputId);
+    if (mirror) mirror.value = finalValue;
+
+    generateLabels();
+  });
+
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      el.blur();
+    }
+  });
+}
+
+function updateStyleButtons(settings = getMergedRenderSettings()) {
+  document.querySelectorAll(".style-btn[data-style-key]").forEach((btn) => {
+    const key = btn.getAttribute("data-style-key");
+    btn.classList.toggle("active", !!settings[key]);
+  });
+}
+
+function toggleStyle(key) {
+  const current = !!getMergedRenderSettings()[key];
+  advancedTemplateSettings[key] = !current;
+  updateStyleButtons();
+  generateLabels();
+
+  if (typeof triggerAutosave === "function") {
+    triggerAutosave();
+  }
+}
+
 function generateLabels(){
   syncRibbonFields();
 
   const settings = getMergedRenderSettings();
+  updateStyleButtons(settings);
+
   const eventName = document.getElementById("eventName").value.trim();
 
   document.getElementById("sheetEventNamePreview").textContent = eventName;
@@ -2168,36 +2349,53 @@ function generateLabels(){
 
       const title = document.createElement("div");
       title.className = "dish-name";
-      title.textContent = food;
+      title.textContent = food || "Food Name";
       title.style.fontFamily = settings.fontFamily || "Arial";
       title.style.fontSize = (settings.foodNameSize || 20) + "px";
       title.style.color = settings.textColor || "#111111";
-      title.style.fontWeight = "bold";
+      title.style.fontWeight = settings.foodBold ? "700" : "400";
+      title.style.fontStyle = settings.foodItalic ? "italic" : "normal";
+      title.style.textDecoration = settings.foodUnderline ? "underline" : "none";
       title.style.width = "100%";
-      content.appendChild(title);
-      if(desc){
-  const descLine = document.createElement("div");
-  descLine.className = "description-line";
-  descLine.textContent = desc;
- descLine.style.fontFamily = settings.descFont || "Arial";
-descLine.style.fontSize = (settings.descSize || document.getElementById("descSize")?.value || 12) + "px";
-descLine.style.marginTop = "4px";
-descLine.style.color = settings.descColor || "#555555";
-descLine.style.width = "100%";
-  content.appendChild(descLine);
-}
+      title.style.cursor = "text";
 
-      if(diets.length > 0){
+      bindPreviewEditable(title, "food" + i, "r_food" + i);
+      content.appendChild(title);
+
+      const descLine = document.createElement("div");
+      descLine.className = "description-line";
+      descLine.textContent = desc || "Add ingredients...";
+      descLine.style.fontFamily = settings.descFont || "Arial";
+      descLine.style.fontSize = (settings.descSize || 12) + "px";
+      descLine.style.marginTop = "4px";
+      descLine.style.color = desc ? (settings.descColor || "#555555") : "#94a3b8";
+      descLine.style.width = "100%";
+      descLine.style.cursor = "text";
+      descLine.style.fontWeight = settings.descBold ? "700" : "400";
+      descLine.style.fontStyle = desc
+        ? (settings.descItalic ? "italic" : "normal")
+        : "italic";
+      descLine.style.textDecoration = settings.descUnderline ? "underline" : "none";
+      descLine.setAttribute("data-placeholder", "Add ingredients...");
+
+      bindPreviewEditable(descLine, "desc" + i, "r_desc" + i);
+      content.appendChild(descLine);
+
+      if(diets.length){
         addDividerToContent(content, settings);
 
-        const line = document.createElement("div");
-        line.className = "allergen-line";
-        line.style.fontFamily = settings.fontFamily || "Arial";
-        line.style.fontSize = (settings.dietTextSize || 12) + "px";
-        line.style.color = settings.accentColor || settings.textColor || "#444444";
-        line.style.width = "100%";
-        line.textContent = diets.map(d => d.icon + " " + d.value).join(" • ");
-        content.appendChild(line);
+        const dietDiv = document.createElement("div");
+        dietDiv.className = "allergen-line";
+        dietDiv.textContent = diets.map(d => d.icon + " " + d.value).join(" • ");
+        dietDiv.style.fontFamily = settings.allergenFont || settings.fontFamily || "Arial";
+        dietDiv.style.fontSize = (settings.dietTextSize || 12) + "px";
+        dietDiv.style.marginTop = "4px";
+        dietDiv.style.color = settings.accentColor || "#444";
+        dietDiv.style.fontWeight = settings.dietBold ? "700" : "400";
+        dietDiv.style.fontStyle = settings.dietItalic ? "italic" : "normal";
+        dietDiv.style.textDecoration = settings.dietUnderline ? "underline" : "none";
+        dietDiv.style.width = "100%";
+        content.appendChild(dietDiv);
       }
 
       div.appendChild(content);
