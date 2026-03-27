@@ -16,7 +16,8 @@ model User {
   stripeSubscriptionId String?     @unique
   subscriptionStatus   String?
   subscriptionPriceId  String?
-
+  cancelAtPeriodEnd Boolean   @default(false)
+  currentPeriodEnd  DateTime?
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
