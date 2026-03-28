@@ -413,7 +413,7 @@ export default function HomePage() {
                 <h3 className="text-2xl font-bold">For active teams</h3>
 
                 <div className="mt-4 flex items-end gap-2">
-                  <span className="text-5xl font-black tracking-tight">$19.99</span>
+                  <span className="text-5xl font-black tracking-tight">$49.99</span>
                   <span className="pb-1 text-sm text-slate-300">/ month</span>
                 </div>
 
@@ -527,23 +527,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 bg-white text-slate-500">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm md:flex-row md:items-center md:justify-between lg:px-8">
-          <p>© 2026 Instabels. All rights reserved.</p>
+<footer className="border-t border-slate-200 bg-white text-slate-500">
+  <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm md:flex-row md:items-center md:justify-between lg:px-8">
+    
+    <p>© 2026 Instabels. All rights reserved.</p>
 
-          <div className="flex items-center gap-5">
-            <a href="#" className="transition hover:text-slate-900">
-              Terms
-            </a>
-            <a href="#" className="transition hover:text-slate-900">
-              Privacy
-            </a>
-            <a href="#" className="transition hover:text-slate-900">
-              Contact
-            </a>
-          </div>
-        </div>
-      </footer>
+    <div className="flex items-center gap-5">
+      <Link href="/terms" className="transition hover:text-slate-900">
+        Terms
+      </Link>
+
+      <Link href="/privacy" className="transition hover:text-slate-900">
+        Privacy
+      </Link>
+
+      <Link href="/contact" className="transition hover:text-slate-900">
+        Contact
+      </Link>
+    </div>
+
+  </div>
+</footer>
     </main>
   );
 }
