@@ -918,10 +918,49 @@ button:hover{
   box-shadow:0 8px 18px rgba(6,182,212,.18);
 }
 
+.diet-group-heading{
+  padding:8px 10px 6px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.diet-group-divider{
+  height:1px;
+  margin:6px 0;
+  background:var(--border);
+}
+
+.icon-toggle-group{
+  display:grid;
+  gap:8px;
+  margin-top:8px;
+}
+
+.icon-toggle-option{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:0;
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+}
+
+.icon-toggle-option input[type="checkbox"]{
+  width:16px;
+  height:16px;
+  margin:0;
+  padding:0;
+  accent-color:var(--cyan);
+  flex:0 0 auto;
+}
+
 </style>
 </head>
 <body>
-<div class="topbar">
  <div class="topbar">
   <button class="hamburger" onclick="toggleSidebar()">☰</button>
 </div>
@@ -1191,7 +1230,6 @@ button:hover{
         <button type="button" class="style-btn" data-style-key="foodUnderline" onclick="toggleStyle('foodUnderline')"><u>U</u></button>
       </div>
     </div>
-
     <div class="type-row">
       <div class="type-row-title">Ingredients</div>
       <select id="descFont">
@@ -1229,6 +1267,20 @@ button:hover{
     </div>
   </div>
 
+  <label class="inline-label">Allergen Icons</label>
+  <div class="helper-text">Toggle icons on labels</div>
+<div class="icon-toggle-group">
+  <label class="icon-toggle-option">
+    <input type="checkbox" id="showDietIcons" checked />
+    <span>Free Of Allergen</span>
+  </label>
+
+  <label class="icon-toggle-option">
+    <input type="checkbox" id="showContainsIcons" checked />
+    <span>Contains Allergen</span>
+  </label>
+</div>
+
   <label>Label Background</label>
   <input id="bgColor" type="color" value="#ffffff" />
 </div>
@@ -1250,7 +1302,6 @@ button:hover{
       <div id="foodInputs" class="food-grid controls-block"></div>
     </div>
   </div>
-
   <div class="panel preview-panel">
     <h3>Live Preview</h3>
     <div id="sheetEventNamePreview" class="sheet-event-name"></div>
@@ -1263,7 +1314,29 @@ button:hover{
 
 <script>
 let logoData=null,logoSettings={x:8,y:8,size:55},currentSaveName="",hasBrowserSave=false,totalLabels=10,viewMode="side",advancedTemplateSettings={};
-const LABEL_WIDTH=336,LABEL_HEIGHT=192,DIET_OPTIONS=[{value:"Gluten Free",icon:"🌾"},{value:"Dairy Free",icon:"🥛"},{value:"Egg Free",icon:"🥚"},{value:"Soy Free",icon:"🫘"},{value:"Nut Free",icon:"🥜"},{value:"Shellfish Free",icon:"🦐"},{value:"Sesame Free",icon:"🫓"},{value:"Vegan",icon:"🌱"},{value:"Vegetarian",icon:"🥬"}];
+const LABEL_WIDTH = 336,
+  LABEL_HEIGHT = 192,
+  DIET_OPTIONS = [
+    { group: "Dietary Notes", value: "Gluten Free", icon: "🌾"},
+    { group: "Dietary Notes", value: "Dairy Free", icon: "🥛" },
+    { group: "Dietary Notes", value: "Egg Free", icon: "🥚" },
+    { group: "Dietary Notes", value: "Soy Free", icon: "🫘" },
+    { group: "Dietary Notes", value: "Nut Free", icon: "🥜" },
+    { group: "Dietary Notes", value: "Shellfish Free", icon: "🦐" },
+    { group: "Dietary Notes", value: "Sesame Free", icon: "🫓" },
+    { group: "Dietary Notes", value: "Vegan", icon: "🌱" },
+    { group: "Dietary Notes", value: "Vegetarian", icon: "🥬" },
+
+    { group: "Contains", value: "Contains Gluten", icon: "🌾" },
+    { group: "Contains", value: "Contains Dairy", icon: "🥛" },
+    { group: "Contains", value: "Contains Eggs", icon: "🥚" },
+    { group: "Contains", value: "Contains Soy", icon: "🫘" },
+    { group: "Contains", value: "Contains Nuts", icon: "🥜" },
+    { group: "Contains", value: "Contains Shellfish", icon: "🦐" },
+    { group: "Contains", value: "Contains Sesame", icon: "🫓" }
+  ];
+
+  
 
 function getDefaultTemplateSettings() {
   return {
@@ -1280,6 +1353,8 @@ function getDefaultTemplateSettings() {
     descColor: "#555555",
     descSize: 12,
     dietTextSize: 12,
+    showDietIcons: true,
+    showContainsIcons: true,
     align: "center",
     padding: 8,
     cardGap: 0,
@@ -1356,6 +1431,8 @@ function normalizeTemplateSettings(raw) {
     dietBold: safe.dietBold ?? false,
     dietItalic: safe.dietItalic ?? false,
     dietUnderline: safe.dietUnderline ?? false,
+    showDietIcons: typeof safe.showDietIcons === "boolean" ? safe.showDietIcons : defaults.showDietIcons,
+    showContainsIcons: typeof safe.showContainsIcons === "boolean" ? safe.showContainsIcons : defaults.showContainsIcons,
   };
 }
 
@@ -1379,6 +1456,8 @@ function getMergedRenderSettings() {
       ...logoSettings,
       size: Number(logoSettings.size ?? normalizedAdvanced.logoSettings.size ?? 55)
     },
+    showDietIcons: document.getElementById("showDietIcons")?.checked ?? normalizedAdvanced.showDietIcons,
+    showContainsIcons: document.getElementById("showContainsIcons")?.checked ?? normalizedAdvanced.showContainsIcons,
     viewMode
   };
 }
@@ -1506,11 +1585,21 @@ document.getElementById("logoUpload").addEventListener("change", function(e){
 document.getElementById("sheetFileInput").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const data=JSON.parse(ev.target.result);applySheetData(data);currentSaveName=f.name;hasBrowserSave=false;updateCurrentFileName();alert("Sheet opened successfully.");closeSidebar()}catch(err){alert("That file could not be loaded. Please choose a valid saved sheet file.")}};r.readAsText(f)});
 document.getElementById("logoSize").addEventListener("input",e=>{syncLogoSize(e.target.value)});
 document.getElementById("eventName").addEventListener("input",()=>{syncRibbonFields();generateLabels()});
-["fontSelect","fontSize","textColor","descFont","descSize","descColor","allergenFont","allergenSize","allergenColor","bgColor","menuPaste"].forEach(id=>{
-  const el=document.getElementById(id);
-  el.addEventListener("input",()=>{syncRibbonFields();generateLabels()});
-  el.addEventListener("change",()=>{syncRibbonFields();generateLabels()});
+["fontSelect","fontSize","textColor","descFont","descSize","descColor","allergenFont","allergenSize","allergenColor","showDietIcons","showContainsIcons","bgColor","menuPaste"].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.addEventListener("input", () => {
+    syncRibbonFields();
+    generateLabels();
+  });
+
+  el.addEventListener("change", () => {
+    syncRibbonFields();
+    generateLabels();
+  });
 });
+
 
 const foodContainer=document.getElementById("foodInputs");
 const foodRibbon=document.getElementById("foodInputsRibbon");
@@ -1579,37 +1668,54 @@ function buildDietCheckboxMenu(prefix, i) {
 
   menu.innerHTML = "";
 
-  DIET_OPTIONS.forEach((opt, idx) => {
-    const row = document.createElement("label");
-    row.className = "diet-option";
+  const groups = [...new Set(DIET_OPTIONS.map(opt => opt.group))];
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.value = opt.value;
-    checkbox.checked = Array.from(select.options).some(
-      o => o.value === opt.value && o.selected
-    );
+  groups.forEach((groupName, groupIndex) => {
+    const heading = document.createElement("div");
+    heading.className = "diet-group-heading";
+    heading.textContent = groupName;
+    menu.appendChild(heading);
 
-    checkbox.addEventListener("change", () => {
-      Array.from(select.options).forEach(option => {
-        if (option.value === opt.value) {
-          option.selected = checkbox.checked;
-        }
+    const optionsInGroup = DIET_OPTIONS.filter(opt => opt.group === groupName);
+
+    optionsInGroup.forEach((opt) => {
+      const row = document.createElement("label");
+      row.className = "diet-option";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = opt.value;
+      checkbox.checked = Array.from(select.options).some(
+        o => o.value === opt.value && o.selected
+      );
+
+      checkbox.addEventListener("change", () => {
+        Array.from(select.options).forEach(option => {
+          if (option.value === opt.value) {
+            option.selected = checkbox.checked;
+          }
+        });
+
+        updateDietDropdownLabel(prefix, i);
+        select.dispatchEvent(new Event("change", { bubbles: true }));
       });
 
-      updateDietDropdownLabel(prefix, i);
-      select.dispatchEvent(new Event("change", { bubbles: true }));
+      const text = document.createElement("span");
+      text.className = "diet-option-text";
+      text.innerHTML =
+        '<span class="diet-option-icon">' + opt.icon + '</span>' +
+        '<span class="diet-option-name">' + opt.value + '</span>';
+
+      row.appendChild(checkbox);
+      row.appendChild(text);
+      menu.appendChild(row);
     });
 
-    const text = document.createElement("span");
-    text.className = "diet-option-text";
-    text.innerHTML =
-      '<span class="diet-option-icon">' + opt.icon + '</span>' +
-      '<span class="diet-option-name">' + opt.value + '</span>';
-
-    row.appendChild(checkbox);
-    row.appendChild(text);
-    menu.appendChild(row);
+    if (groupIndex < groups.length - 1) {
+      const divider = document.createElement("div");
+      divider.className = "diet-group-divider";
+      menu.appendChild(divider);
+    }
   });
 
   toggle.onclick = function (e) {
@@ -2071,7 +2177,11 @@ function applySheetData(data){
   document.getElementById("allergenColor").value = normalizedSettings.accentColor || "#000000";
 
   document.getElementById("bgColor").value = normalizedSettings.backgroundColor || "#ffffff";
+document.getElementById("showDietIcons").checked =
+  normalizedSettings.showDietIcons ?? true;
 
+document.getElementById("showContainsIcons").checked =
+  normalizedSettings.showContainsIcons ?? true;
   logoSettings = {
     x: Number(normalizedSettings.logoSettings?.x ?? 8),
     y: Number(normalizedSettings.logoSettings?.y ?? 8),
@@ -2386,7 +2496,14 @@ function generateLabels(){
 
         const dietDiv = document.createElement("div");
         dietDiv.className = "allergen-line";
-        dietDiv.textContent = diets.map(d => d.icon + " " + d.value).join(" • ");
+        dietDiv.textContent = diets.map(d => {
+  const isContains = d.group === "Contains";
+  const shouldShowIcon = isContains
+    ? settings.showContainsIcons
+    : settings.showDietIcons;
+
+  return shouldShowIcon ? (d.icon + " " + d.value) : d.value;
+}).join(" • ");
         dietDiv.style.fontFamily = settings.allergenFont || settings.fontFamily || "Arial";
         dietDiv.style.fontSize = (settings.dietTextSize || 12) + "px";
         dietDiv.style.marginTop = "4px";
