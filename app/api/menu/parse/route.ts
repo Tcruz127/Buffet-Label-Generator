@@ -4,11 +4,17 @@ import mammoth from "mammoth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+type ParsedMenuItem = {
+  title: string;
+  description: string;
+  raw: string;
+};
+
 type ParsedMenuResponse = {
   success: boolean;
   fileName?: string;
   rawText?: string;
-  items?: string[];
+  items?: ParsedMenuItem[];
   error?: string;
 };
 
@@ -41,6 +47,15 @@ const SECTION_HEADER_PATTERNS = [
   /^plated dinner$/i,
   /^family style$/i,
   /^passed hors d'oeuvres?$/i,
+
+  /^seasonal table$/i,
+  /^freshly baked$/i,
+  /^seafood and raw bar$/i,
+  /^hot egg station$/i,
+  /^hot buffet$/i,
+  /^live carving station$/i,
+  /^dessert$/i,
+  /^signature pastries display including:?$/i,
 ];
 
 const IGNORE_LINE_PATTERNS = [
@@ -63,6 +78,16 @@ const IGNORE_LINE_PATTERNS = [
   /^add(itional)? /i,
   /^upgrade /i,
   /^optional /i,
+
+  /^adults\b/i,
+  /^ages\b/i,
+  /^\d+\s+and under\b/i,
+  /^reservations are required/i,
+  /^space is limited/i,
+  /^sunday,\s/i,
+  /^emerald ballroom\b/i,
+  /^easter brunch$/i,
+  /^\{all prices/i,
 ];
 
 const DESCRIPTION_HINTS = [
@@ -158,26 +183,18 @@ function looksLikeDescription(line: string): boolean {
   return false;
 }
 
-function looksLikeDishName(line: string): boolean {
-  if (!line) return false;
-  if (looksLikePriceOrJunk(line)) return false;
-  if (isSectionHeader(line)) return false;
-  if (looksLikeDescription(line)) return false;
+function toTitleCase(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
-  const trimmed = line.replace(/[:•·-]+$/g, "").trim();
-
-  if (trimmed.length < 2) return false;
-  if (trimmed.length > 60) return false;
-
-  const words = trimmed.split(/\s+/);
-  if (words.length > 8) return false;
-
-  if (/^[0-9]/.test(trimmed)) return false;
-  if (/^(choice of|includes|served with|add|optional)\b/i.test(trimmed)) {
-    return false;
-  }
-
-  return true;
+function cleanTextLine(line: string): string {
+  return line
+    .replace(/\uFFFD/g, " ")
+    .replace(/\s*[•·]\s*/g, "\n")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 function cleanDishName(line: string): string {
@@ -188,12 +205,51 @@ function cleanDishName(line: string): string {
     .trim();
 }
 
-function dedupePreserveOrder(items: string[]): string[] {
+function splitDishAndDescription(
+  line: string
+): { title: string; description: string } {
+  const withoutTags = line.replace(/\{[^}]+\}/g, "").trim();
+
+  const explicitSpecialCases: Array<[RegExp, string, string]> = [
+    [
+      /^OMELETTES\s+made to order with choice of assorted toppings/i,
+      "Omelettes",
+      "Made to order with choice of assorted toppings",
+    ],
+    [
+      /^EGGS BENEDICT\s+freshly poached eggs,\s*hollandaise sauce,\s*carved ham or smoked salmon/i,
+      "Eggs Benedict",
+      "Freshly poached eggs, hollandaise sauce, carved ham or smoked salmon",
+    ],
+  ];
+
+  for (const [pattern, title, description] of explicitSpecialCases) {
+    if (pattern.test(withoutTags)) {
+      return { title, description };
+    }
+  }
+
+  const match = withoutTags.match(/^([A-Z0-9&+/'(). -]{3,}?)(\s+[a-z].*)$/);
+
+  if (match) {
+    return {
+      title: toTitleCase(match[1].trim()),
+      description: match[2].trim(),
+    };
+  }
+
+  return {
+    title: toTitleCase(withoutTags),
+    description: "",
+  };
+}
+
+function dedupePreserveOrder(items: ParsedMenuItem[]): ParsedMenuItem[] {
   const seen = new Set<string>();
-  const result: string[] = [];
+  const result: ParsedMenuItem[] = [];
 
   for (const item of items) {
-    const key = item.toLowerCase();
+    const key = `${item.title.toLowerCase()}|${item.description.toLowerCase()}`;
     if (seen.has(key)) continue;
     seen.add(key);
     result.push(item);
@@ -202,32 +258,79 @@ function dedupePreserveOrder(items: string[]): string[] {
   return result;
 }
 
-function extractMenuItemsFromText(rawText: string): string[] {
-  const lines = splitIntoLines(rawText);
-  const candidates: string[] = [];
+function extractMenuItemsFromText(rawText: string): ParsedMenuItem[] {
+  const normalized = normalizeWhitespace(rawText)
+    .replace(/\uFFFD/g, " ")
+    .replace(/\s*[•·]\s*/g, "\n");
 
-  for (let i = 0; i < lines.length; i += 1) {
-    const line = cleanDishName(lines[i]);
+  let lines = splitIntoLines(normalized)
+    .map((line) => cleanTextLine(line))
+    .flatMap((line) => line.split("\n"))
+    .map((line) => cleanDishName(line))
+    .filter(Boolean);
 
-    if (!line) continue;
-    if (!looksLikeDishName(line)) continue;
+  lines = lines.filter((line) => {
+    if (looksLikePriceOrJunk(line)) return false;
+    if (isSectionHeader(line)) return false;
+    return true;
+  });
 
-    const nextLine = lines[i + 1]?.trim() ?? "";
-    const prevLine = lines[i - 1]?.trim() ?? "";
+  const merged: string[] = [];
 
-    if (isSectionHeader(prevLine) && looksLikeDescription(line)) {
-      continue;
+  function isContinuationLine(line: string): boolean {
+    const lower = line.toLowerCase();
+
+    if (!line) return false;
+    if (/^[a-z]/.test(line)) return true;
+
+    if (
+      lower.startsWith("whipped butter") ||
+      lower.startsWith("cream cheese") ||
+      lower.startsWith("jams") ||
+      lower.startsWith("cocktail sauce") ||
+      lower.startsWith("horseradish") ||
+      lower.startsWith("mignonette") ||
+      lower.startsWith("lemon wedges")
+    ) {
+      return true;
     }
 
-    if (looksLikeDescription(nextLine) || isSectionHeader(nextLine)) {
-      candidates.push(line);
-      continue;
-    }
+    if (/^or\s+/i.test(line)) return true;
 
-    candidates.push(line);
+    return false;
   }
 
-  return dedupePreserveOrder(candidates).slice(0, 200);
+  for (const line of lines) {
+    if (!merged.length) {
+      merged.push(line);
+      continue;
+    }
+
+    if (isContinuationLine(line)) {
+      merged[merged.length - 1] += " " + line;
+      continue;
+    }
+
+    merged.push(line);
+  }
+
+  const items: ParsedMenuItem[] = [];
+
+  for (const entry of merged) {
+    const cleaned = entry.replace(/\s{2,}/g, " ").trim();
+    if (!cleaned) continue;
+
+    const { title, description } = splitDishAndDescription(cleaned);
+    if (!title) continue;
+
+    items.push({
+      title,
+      description,
+      raw: cleaned,
+    });
+  }
+
+  return dedupePreserveOrder(items).slice(0, 200);
 }
 
 async function extractTextFromTxt(fileBuffer: Buffer): Promise<string> {

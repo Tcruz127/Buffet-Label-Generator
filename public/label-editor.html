@@ -612,6 +612,7 @@ button:hover{
   display:flex;
   align-items:center;
   gap:10px;
+  width:100%;
   padding:8px 10px;
   margin:0;
   border-radius:10px;
@@ -626,23 +627,27 @@ button:hover{
 }
 
 .diet-option input[type="checkbox"]{
-  width:16px;
-  height:16px;
-  margin:0;
-  padding:0;
+  width:16px !important;
+  height:16px !important;
+  margin:0 !important;
+  padding:0 !important;
   accent-color:var(--cyan);
   flex:0 0 auto;
+  display:block;
 }
 
-.diet-option-text{
+.diet-option-left{
   display:flex;
   align-items:center;
   gap:8px;
   min-width:0;
+  flex:1;
 }
 
 .diet-option-icon{
   flex:0 0 auto;
+  width:18px;
+  text-align:center;
 }
 
 .diet-option-name{
@@ -1680,35 +1685,35 @@ function buildDietCheckboxMenu(prefix, i) {
 
     optionsInGroup.forEach((opt) => {
       const row = document.createElement("label");
-      row.className = "diet-option";
+row.className = "diet-option";
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.value = opt.value;
-      checkbox.checked = Array.from(select.options).some(
-        o => o.value === opt.value && o.selected
-      );
+const checkbox = document.createElement("input");
+checkbox.type = "checkbox";
+checkbox.value = opt.value;
+checkbox.checked = Array.from(select.options).some(
+  o => o.value === opt.value && o.selected
+);
 
-      checkbox.addEventListener("change", () => {
-        Array.from(select.options).forEach(option => {
-          if (option.value === opt.value) {
-            option.selected = checkbox.checked;
-          }
-        });
+checkbox.addEventListener("change", () => {
+  Array.from(select.options).forEach(option => {
+    if (option.value === opt.value) {
+      option.selected = checkbox.checked;
+    }
+  });
 
-        updateDietDropdownLabel(prefix, i);
-        select.dispatchEvent(new Event("change", { bubbles: true }));
-      });
+  updateDietDropdownLabel(prefix, i);
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+});
 
-      const text = document.createElement("span");
-      text.className = "diet-option-text";
-      text.innerHTML =
-        '<span class="diet-option-icon">' + opt.icon + '</span>' +
-        '<span class="diet-option-name">' + opt.value + '</span>';
+const left = document.createElement("div");
+left.className = "diet-option-left";
+left.innerHTML =
+  '<span class="diet-option-icon">' + (opt.icon || "") + '</span>' +
+  '<span class="diet-option-name">' + opt.value + '</span>';
 
-      row.appendChild(checkbox);
-      row.appendChild(text);
-      menu.appendChild(row);
+row.appendChild(checkbox);
+row.appendChild(left);
+menu.appendChild(row);
     });
 
     if (groupIndex < groups.length - 1) {
@@ -1887,15 +1892,114 @@ function setTotalLabels(newCount){
 }
 function addTenLabels(){setTotalLabels(totalLabels+10)}
 function removeTenLabels(){setTotalLabels(Math.max(10,totalLabels-10))}
-function autoFillMenu(){
-  const text=document.getElementById("menuPaste").value.trim(),items=text?text.split("\n").map(x=>x.trim()):[];
-  if(items.length>totalLabels){setTotalLabels(items.length);}
-  for(let i=1;i<=totalLabels;i++){
-    const v=items[i-1]||"";
-    document.getElementById("food"+i).value=v;
-    const rf=document.getElementById("r_food"+i); if(rf) rf.value=v;
+function autoFillMenu() {
+  const raw = document.getElementById("menuPaste").value;
+  if (!raw) return;
+
+  // STEP 1 — normalize text
+  let lines = raw
+    .replace(/[•●]/g, "\n") // split bullets into new lines
+    .replace(/�/g, "") // remove weird chars
+    .split("\n")
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+
+  // STEP 2 — remove obvious junk
+  const ignorePatterns = [
+    /^seasonal/i,
+    /^freshly/i,
+    /^seafood/i,
+    /^hot /i,
+    /^live /i,
+    /^dessert/i,
+    /^signature/i,
+    /^adults/i,
+    /^reservations/i,
+    /^easter/i,
+    /^\d/,
+    /^\$/ 
+  ];
+
+  lines = lines.filter(line => {
+    return !ignorePatterns.some(pattern => pattern.test(line));
+  });
+
+  // STEP 3 — combine continuation lines
+  const items = [];
+
+  lines.forEach(line => {
+    const isLikelyNewDish =
+      line === line.toUpperCase() || // ALL CAPS dish
+      /^[A-Z]/.test(line); // starts capitalized
+
+    if (!items.length) {
+      items.push(line);
+      return;
+    }
+
+    if (isLikelyNewDish) {
+      items.push(line);
+    } else {
+      // attach to previous item
+      items[items.length - 1] += " " + line;
+    }
+  });
+
+  // STEP 4 — split into food + description
+  const parsed = items.map(item => {
+    let food = item;
+    let description = "";
+
+    // split by first lowercase word (heuristic)
+    const match = item.match(/^([A-Z\s]+)(.*)$/);
+
+    if (match && match[2]) {
+      food = match[1].trim();
+      description = match[2].trim();
+    }
+
+    // fallback split by first comma
+    if (!description && item.includes(",")) {
+      const parts = item.split(",");
+      food = parts[0];
+      description = parts.slice(1).join(",").trim();
+    }
+
+    return {
+      food: toTitleCase(food),
+      description: description
+    };
+  });
+
+  // STEP 5 — apply to UI safely
+  if (parsed.length > totalLabels) {
+    setTotalLabels(parsed.length);
   }
+
+  for (let i = 1; i <= totalLabels; i++) {
+    const item = parsed[i - 1] || { food: "", description: "" };
+
+    const foodEl = document.getElementById("food" + i);
+    const descEl = document.getElementById("desc" + i);
+
+    if (foodEl) foodEl.value = item.food;
+    if (descEl) descEl.value = item.description;
+
+    const rf = document.getElementById("r_food" + i);
+    const rd = document.getElementById("r_desc" + i);
+
+    if (rf) rf.value = item.food;
+    if (rd) rd.value = item.description;
+  }
+
   generateLabels();
+}
+
+// helper
+function toTitleCase(str) {
+  return str
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase());
 }
 function clearFoods(){
   document.getElementById("menuPaste").value="";

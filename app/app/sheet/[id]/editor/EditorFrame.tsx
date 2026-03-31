@@ -41,11 +41,17 @@ type SheetData = {
   items?: LabelData[];
 };
 
+type ParsedMenuItem = {
+  title: string;
+  description: string;
+  raw: string;
+};
+
 type ParsedMenuResponse = {
   success: boolean;
   fileName?: string;
   rawText?: string;
-  items?: string[];
+  items?: ParsedMenuItem[];
   error?: string;
 };
 
@@ -87,6 +93,10 @@ function normalizeSheetPayload(sheet: SheetData): NormalizedSheetPayload {
   };
 }
 
+function getParsedMenuItemKey(item: ParsedMenuItem): string {
+  return `${item.title}||${item.description}||${item.raw}`;
+}
+
 export default function EditorFrame({ sheet }: { sheet: SheetData }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -106,8 +116,10 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
   const [parsedMenuFileName, setParsedMenuFileName] = useState<string | null>(
     null
   );
-  const [parsedMenuItems, setParsedMenuItems] = useState<string[]>([]);
-  const [selectedMenuItems, setSelectedMenuItems] = useState<string[]>([]);
+  const [parsedMenuItems, setParsedMenuItems] = useState<ParsedMenuItem[]>([]);
+  const [selectedMenuItemKeys, setSelectedMenuItemKeys] = useState<string[]>(
+    []
+  );
   const [parsedMenuRawText, setParsedMenuRawText] = useState("");
 
   const normalizedSheetPayload = useMemo(
@@ -380,22 +392,24 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     menuFileInputRef.current?.click();
   };
 
-  const toggleMenuItemSelection = (item: string) => {
-    setSelectedMenuItems((prev) => {
-      const exists = prev.includes(item);
+  const toggleMenuItemSelection = (item: ParsedMenuItem) => {
+    const key = getParsedMenuItemKey(item);
+
+    setSelectedMenuItemKeys((prev) => {
+      const exists = prev.includes(key);
       if (exists) {
-        return prev.filter((entry) => entry !== item);
+        return prev.filter((entry) => entry !== key);
       }
-      return [...prev, item];
+      return [...prev, key];
     });
   };
 
   const selectAllMenuItems = () => {
-    setSelectedMenuItems(parsedMenuItems);
+    setSelectedMenuItemKeys(parsedMenuItems.map(getParsedMenuItemKey));
   };
 
   const clearAllMenuItems = () => {
-    setSelectedMenuItems([]);
+    setSelectedMenuItemKeys([]);
   };
 
   const handleMenuFileChange = async (
@@ -411,7 +425,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     setMenuParseError(null);
     setParsedMenuFileName(file.name);
     setParsedMenuItems([]);
-    setSelectedMenuItems([]);
+    setSelectedMenuItemKeys([]);
     setParsedMenuRawText("");
 
     try {
@@ -430,10 +444,11 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
       }
 
       const items = Array.isArray(result.items) ? result.items : [];
+      const itemKeys = items.map(getParsedMenuItemKey);
 
       setParsedMenuFileName(result.fileName ?? file.name);
       setParsedMenuItems(items);
-      setSelectedMenuItems(items);
+      setSelectedMenuItemKeys(itemKeys);
       setParsedMenuRawText(result.rawText ?? "");
 
       if (items.length === 0) {
@@ -454,20 +469,23 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
   };
 
   const importParsedMenuItems = async () => {
-    const cleanedItems = selectedMenuItems
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const selectedItems = parsedMenuItems.filter((item) =>
+      selectedMenuItemKeys.includes(getParsedMenuItemKey(item))
+    );
 
-    if (cleanedItems.length === 0) {
+    if (selectedItems.length === 0) {
       setMenuParseError("Select at least one menu item to import.");
       return;
     }
 
-    const nextTotalLabels = Math.max(10, Math.ceil(cleanedItems.length / 10) * 10);
+    const nextTotalLabels = Math.max(
+      10,
+      Math.ceil(selectedItems.length / 10) * 10
+    );
 
-    const nextLabels: NormalizedLabel[] = cleanedItems.map((item) => ({
-      title: item,
-      description: "",
+    const nextLabels: NormalizedLabel[] = selectedItems.map((item) => ({
+      title: item.title.trim(),
+      description: item.description.trim(),
       diets: [],
     }));
 
@@ -624,8 +642,8 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
                   </h2>
                   <p className="mt-2 text-sm text-slate-600">
                     Choose which items should become labels. Headers and
-                    description lines are filtered automatically, but you can
-                    review everything before importing.
+                    irrelevant lines are filtered automatically, and dish names
+                    are separated from ingredient lines when possible.
                   </p>
                   {parsedMenuFileName ? (
                     <p className="mt-2 text-sm font-medium text-slate-500">
@@ -675,7 +693,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
                         <p className="text-sm text-slate-500">
                           {parsedMenuItems.length} item
                           {parsedMenuItems.length === 1 ? "" : "s"} found •{" "}
-                          {selectedMenuItems.length} selected
+                          {selectedMenuItemKeys.length} selected
                         </p>
                       </div>
 
@@ -691,7 +709,7 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
                         <button
                           type="button"
                           onClick={clearAllMenuItems}
-                          disabled={selectedMenuItems.length === 0}
+                          disabled={selectedMenuItemKeys.length === 0}
                           className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Clear All
@@ -713,11 +731,13 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
                       ) : (
                         <div className="grid grid-cols-1 gap-2">
                           {parsedMenuItems.map((item, index) => {
-                            const isSelected = selectedMenuItems.includes(item);
+                            const itemKey = getParsedMenuItemKey(item);
+                            const isSelected =
+                              selectedMenuItemKeys.includes(itemKey);
 
                             return (
                               <label
-                                key={`${item}-${index}`}
+                                key={`${itemKey}-${index}`}
                                 className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 transition ${
                                   isSelected
                                     ? "border-violet-300 bg-violet-50"
@@ -732,8 +752,14 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
                                 />
                                 <div className="min-w-0">
                                   <div className="break-words text-sm font-semibold text-slate-900">
-                                    {item}
+                                    {item.title}
                                   </div>
+
+                                  {item.description ? (
+                                    <div className="mt-1 break-words text-sm text-slate-500">
+                                      {item.description}
+                                    </div>
+                                  ) : null}
                                 </div>
                               </label>
                             );
@@ -762,18 +788,19 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
 
                   <div className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-5">
                     <div className="text-sm text-slate-600">
-                      Importing will replace the current label names in this
-                      sheet with the selected menu items.
+                      Importing will replace the current label names and
+                      ingredient lines in this sheet with the selected menu
+                      items.
                     </div>
 
                     <button
                       type="button"
                       onClick={importParsedMenuItems}
-                      disabled={isParsingMenu || selectedMenuItems.length === 0}
+                      disabled={isParsingMenu || selectedMenuItemKeys.length === 0}
                       className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Import {selectedMenuItems.length} Item
-                      {selectedMenuItems.length === 1 ? "" : "s"} Into Labels
+                      Import {selectedMenuItemKeys.length} Item
+                      {selectedMenuItemKeys.length === 1 ? "" : "s"} Into Labels
                     </button>
                   </div>
                 </div>
