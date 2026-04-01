@@ -64,6 +64,9 @@ export default async function AppDashboardPage() {
     0
   );
   const recentSheet = user.sheets[0];
+  const recentUpdatedLabel = recentSheet
+    ? formatUpdatedAt(recentSheet.updatedAt)
+    : "No recent activity";
 
   return (
     <main className="min-h-screen bg-[linear-gradient(to_bottom,#f8fbff_0%,#f6f8fc_45%,#ffffff_100%)] text-slate-900">
@@ -166,6 +169,83 @@ export default async function AppDashboardPage() {
                       {isPro ? "Pro Plan" : "Free Plan"}
                     </span>
                   </div>
+                </div>
+
+                <div className="border-b border-slate-100 px-4 py-4">
+                  <div className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                    Account
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
+                      <div className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
+                        Name
+                      </div>
+                      <div className="mt-1 truncate text-sm font-semibold text-slate-900">
+                        {displayName}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
+                      <div className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
+                        Email
+                      </div>
+                      <div className="mt-1 truncate text-sm font-semibold text-slate-900">
+                        {user.email}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-b border-slate-100 px-4 py-4">
+                  <div className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                    Usage
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/70 px-3 py-3">
+                      <div className="text-xs font-medium uppercase tracking-[0.14em] text-cyan-700">
+                        Sheets
+                      </div>
+                      <div className="mt-1 text-lg font-black text-slate-950">
+                        {totalSheets}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-violet-100 bg-violet-50/70 px-3 py-3">
+                      <div className="text-xs font-medium uppercase tracking-[0.14em] text-violet-700">
+                        Labels
+                      </div>
+                      <div className="mt-1 text-lg font-black text-slate-950">
+                        {totalLabels}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
+                    <div className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
+                      Recent Activity
+                    </div>
+                    <div className="mt-1 truncate text-sm font-semibold text-slate-900">
+                      {recentSheet?.title || "No sheets yet"}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {recentUpdatedLabel}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-b border-slate-100 px-4 py-4">
+                  <div className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                    Support
+                  </div>
+
+                  <Link
+                    href="/contact"
+                    className="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-sm transition hover:bg-slate-50"
+                  >
+                    Contact Support
+                  </Link>
                 </div>
 
                 <div className="space-y-3 p-4">

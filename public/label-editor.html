@@ -698,14 +698,17 @@ button:hover{
   .preview-panel,
   #previewSheets,
   .sheet-preview,
-  .labels,
-  .label,
-  .label-content{
+  .labels{
     background:white !important;
     border:none !important;
     outline:none !important;
     box-shadow:none !important;
     border-radius:0 !important;
+  }
+
+  .label,
+  .label-content{
+    outline:none !important;
   }
 
   .container,
@@ -2172,14 +2175,12 @@ function openPrintWindow() {
     overflow: hidden !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    background: white !important;
-    border: none !important;
     outline: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
     position: static !important;
     left: auto !important;
     margin: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .label:nth-child(even) {
@@ -2201,9 +2202,7 @@ function openPrintWindow() {
     padding-bottom: 10px !important;
     padding-left: 16px !important;
     padding-right: 12px !important;
-    border: none !important;
     outline: none !important;
-    box-shadow: none !important;
   }
 
   .dish-name,
@@ -2576,21 +2575,19 @@ function generateLabels(){
       bindPreviewEditable(title, "food" + i, "r_food" + i);
       content.appendChild(title);
 
-      const descLine = document.createElement("div");
-      descLine.className = "description-line";
-      descLine.textContent = desc || "Add ingredients...";
-      descLine.style.fontFamily = settings.descFont || "Arial";
-      descLine.style.fontSize = (settings.descSize || 12) + "px";
-      descLine.style.marginTop = "4px";
-      descLine.style.color = desc ? (settings.descColor || "#555555") : "#94a3b8";
-      descLine.style.width = "100%";
-      descLine.style.cursor = "text";
-      descLine.style.fontWeight = settings.descBold ? "700" : "400";
-      descLine.style.fontStyle = desc
-        ? (settings.descItalic ? "italic" : "normal")
-        : "italic";
-      descLine.style.textDecoration = settings.descUnderline ? "underline" : "none";
-      descLine.setAttribute("data-placeholder", "Add ingredients...");
+     const descLine = document.createElement("div");
+descLine.className = "description-line";
+descLine.textContent = desc || "";
+descLine.style.fontFamily = settings.descFont || "Arial";
+descLine.style.fontSize = (settings.descSize || 12) + "px";
+descLine.style.marginTop = "4px";
+descLine.style.color = settings.descColor || "#555555";
+descLine.style.width = "100%";
+descLine.style.cursor = "text";
+descLine.style.fontWeight = settings.descBold ? "700" : "400";
+descLine.style.fontStyle = settings.descItalic ? "italic" : "normal";
+descLine.style.textDecoration = settings.descUnderline ? "underline" : "none";
+descLine.setAttribute("data-placeholder", "Add ingredients...");
 
       bindPreviewEditable(descLine, "desc" + i, "r_desc" + i);
       content.appendChild(descLine);
