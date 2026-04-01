@@ -56,6 +56,16 @@ const SECTION_HEADER_PATTERNS = [
   /^live carving station$/i,
   /^dessert$/i,
   /^signature pastries display including:?$/i,
+
+  /^cold station$/i,
+  /^hot station$/i,
+  /^soup \+ salad$/i,
+  /^salads? \+ sides$/i,
+  /^beverages? & smoothies$/i,
+  /^for the kids.*$/i,
+  /^dessert.*$/i,
+  /^entre[ée]s$/i,
+  /^vinaigrette$/i,
 ];
 
 const IGNORE_LINE_PATTERNS = [
@@ -79,6 +89,14 @@ const IGNORE_LINE_PATTERNS = [
   /^upgrade /i,
   /^optional /i,
 
+  /^whipped butter\b/i,
+  /^cream cheese\b/i,
+  /^jams\b/i,
+  /^cocktail sauce\b/i,
+  /^horseradish\b/i,
+  /^mignonette sauce\b/i,
+  /^lemon wedges\b/i,
+
   /^adults\b/i,
   /^ages\b/i,
   /^\d+\s+and under\b/i,
@@ -88,6 +106,51 @@ const IGNORE_LINE_PATTERNS = [
   /^emerald ballroom\b/i,
   /^easter brunch$/i,
   /^\{all prices/i,
+
+  /^banquet event order$/i,
+  /^this beo was printed/i,
+  /^beo #/i,
+  /^event location:/i,
+  /^event date:/i,
+  /^beo name:/i,
+  /^address:/i,
+  /^booked by:/i,
+  /^fax:/i,
+  /^on-site contact:/i,
+  /^email:/i,
+  /^folio #:/i,
+  /^room rental:/i,
+  /^date time room function setup gtd set$/i,
+  /^account:/i,
+  /^contact:/i,
+  /^phone:/i,
+  /^audio visual$/i,
+  /^beverage menu$/i,
+  /^setup info \/ other info$/i,
+  /^special instructions$/i,
+  /^food menu$/i,
+
+  /^\d+\s+serving$/i,
+  /^\d+\s*@\s*\$?\s*\d/i,
+  /^at \d{1,2}:\d{2}\s*(am|pm)\b/i,
+  /^at \d{1,2}:\d{2}(am|pm)\b/i,
+  /^please /i,
+  /^golf fees$/i,
+  /^bartender fee$/i,
+  /^golf merchandise$/i,
+  /^call cash bar$/i,
+  /^setup:$/i,
+  /^today'?s entertainment:/i,
+  /^tonight'?s entertainment:/i,
+  /^===+$/,
+  /^-stage$/i,
+  /^-mic$/i,
+  /^-speaker$/i,
+  /^-mixer$/i,
+  /^- or .* -$/i,
+  /^1 @ n\/c$/i,
+  /^\*\*.*\*\*$/i,
+  /^\*\* pricing is prior to discount \*\*$/i,
 ];
 
 const DESCRIPTION_HINTS = [
@@ -105,6 +168,24 @@ const DESCRIPTION_HINTS = [
   "with ",
   " and ",
   " on ",
+];
+
+const BEO_SECTION_MARKERS = [
+  /^food menu$/i,
+  /^audio visual$/i,
+  /^beverage menu$/i,
+  /^setup info \/ other info$/i,
+  /^special instructions$/i,
+];
+
+const BEO_BACKWARD_STOP_MARKERS = [
+  /^date time room function setup gtd set$/i,
+  /^folio #:/i,
+  /^account:/i,
+  /^phone:/i,
+  /^banquet event order$/i,
+  /^beo #/i,
+  /^event location:/i,
 ];
 
 function normalizeWhitespace(input: string): string {
@@ -125,10 +206,10 @@ function splitIntoLines(text: string): string[] {
 }
 
 function isMostlyUppercase(line: string): boolean {
-  const letters = line.replace(/[^a-zA-Z]/g, "");
+  const letters = line.replace(/[^a-zA-ZÀ-ÿ]/g, "");
   if (!letters) return false;
 
-  const upper = letters.replace(/[^A-Z]/g, "").length;
+  const upper = letters.replace(/[^A-ZÀ-Þ]/g, "").length;
   return upper / letters.length > 0.8;
 }
 
@@ -143,7 +224,7 @@ function isSectionHeader(line: string): boolean {
   if (
     isMostlyUppercase(normalized) &&
     normalized.split(/\s+/).length <= 4 &&
-    normalized.length <= 28
+    normalized.length <= 32
   ) {
     return true;
   }
@@ -157,7 +238,7 @@ function looksLikePriceOrJunk(line: string): boolean {
 
   if (/^\(?[0-9]+\)?$/.test(line)) return true;
   if (/^\$+\s*\d/.test(line)) return true;
-  if (/^[•·\-–—]+$/.test(line)) return true;
+  if (/^[•·\-–—=]+$/.test(line)) return true;
 
   return false;
 }
@@ -191,14 +272,20 @@ function toTitleCase(value: string): string {
 
 function cleanTextLine(line: string): string {
   return line
-    .replace(/\uFFFD/g, " ")
+    .replace(/\s*\uFFFD\s*/g, "\n")
     .replace(/\s*[•·]\s*/g, "\n")
+    .replace(/\s*\|\s*/g, " | ")
+    .replace(/â€“/g, "-")
+    .replace(/Ã©/g, "é")
+    .replace(/Ã/g, "")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
 
 function cleanDishName(line: string): string {
   return line
+    .replace(/^\*+|\*+$/g, "")
+    .replace(/^=+|=+$/g, "")
     .replace(/\s{2,}/g, " ")
     .replace(/[•·]/g, "")
     .replace(/[:;,.-]+$/g, "")
@@ -208,7 +295,10 @@ function cleanDishName(line: string): string {
 function splitDishAndDescription(
   line: string
 ): { title: string; description: string } {
-  const withoutTags = line.replace(/\{[^}]+\}/g, "").trim();
+  const withoutTags = line
+    .replace(/\{[^}]+\}/g, "")
+    .replace(/^\*+|\*+$/g, "")
+    .trim();
 
   const explicitSpecialCases: Array<[RegExp, string, string]> = [
     [
@@ -217,9 +307,19 @@ function splitDishAndDescription(
       "Made to order with choice of assorted toppings",
     ],
     [
-      /^EGGS BENEDICT\s+freshly poached eggs,\s*hollandaise sauce,\s*carved ham or smoked salmon/i,
+      /^EGGS BENEDICT\s+freshly poached eggs[\s|,]+carved ham or smoke?d salmon[\s|,]+lemon/i,
       "Eggs Benedict",
-      "Freshly poached eggs, hollandaise sauce, carved ham or smoked salmon",
+      "Freshly poached eggs, carved ham or smoked salmon, lemon hollandaise sauce",
+    ],
+    [
+      /^BELGIAN WAFFLES AND PANCAKES\s*\(CHEF ATTENDED\)/i,
+      "Belgian Waffles And Pancakes",
+      "Chef attended",
+    ],
+    [
+      /^HUEVOS RANCHEROS\s*\(CHEF ATTENDED\)/i,
+      "Huevos Rancheros",
+      "Chef attended",
     ],
   ];
 
@@ -229,13 +329,53 @@ function splitDishAndDescription(
     }
   }
 
-  const match = withoutTags.match(/^([A-Z0-9&+/'(). -]{3,}?)(\s+[a-z].*)$/);
+  const unicodeUppercaseMatch = withoutTags.match(
+    /^([\p{Lu}0-9&+/'(). -]{3,}?)(\s+[\p{Ll}].*)$/u
+  );
 
-  if (match) {
+  if (unicodeUppercaseMatch) {
     return {
-      title: toTitleCase(match[1].trim()),
-      description: match[2].trim(),
+      title: toTitleCase(unicodeUppercaseMatch[1].trim()),
+      description: unicodeUppercaseMatch[2].trim(),
     };
+  }
+
+  const pipeOrCommaSplit = withoutTags.match(
+    /^(.{3,60}?)\s+(?:\||,)\s*(.+)$/
+  );
+
+  if (pipeOrCommaSplit) {
+    return {
+      title: toTitleCase(pipeOrCommaSplit[1].trim()),
+      description: pipeOrCommaSplit[2].trim(),
+    };
+  }
+
+  const tokens = withoutTags.split(/\s+/);
+  const firstLowercaseIndex = tokens.findIndex((token) =>
+    /^[\p{Ll}]/u.test(token)
+  );
+
+  if (firstLowercaseIndex > 0) {
+    const titleCandidate = tokens.slice(0, firstLowercaseIndex).join(" ").trim();
+    const descriptionCandidate = tokens
+      .slice(firstLowercaseIndex)
+      .join(" ")
+      .trim();
+
+    if (
+      titleCandidate &&
+      descriptionCandidate &&
+      titleCandidate.split(/\s+/).length <= 6 &&
+      (descriptionCandidate.includes(",") ||
+        descriptionCandidate.includes("|") ||
+        descriptionCandidate.split(/\s+/).length >= 3)
+    ) {
+      return {
+        title: toTitleCase(titleCandidate),
+        description: descriptionCandidate,
+      };
+    }
   }
 
   return {
@@ -258,8 +398,86 @@ function dedupePreserveOrder(items: ParsedMenuItem[]): ParsedMenuItem[] {
   return result;
 }
 
+function looksLikeBeoDocument(rawText: string): boolean {
+  return (
+    /banquet event order/i.test(rawText) &&
+    /food menu/i.test(rawText) &&
+    /(audio visual|beverage menu|setup info \/ other info|special instructions)/i.test(
+      rawText
+    )
+  );
+}
+
+function isBeoSectionMarker(line: string): boolean {
+  return BEO_SECTION_MARKERS.some((pattern) => pattern.test(line));
+}
+
+function isBeoBackwardStopMarker(line: string): boolean {
+  return BEO_BACKWARD_STOP_MARKERS.some((pattern) => pattern.test(line));
+}
+
+function isLikelyBeoNoise(line: string): boolean {
+  return (
+    looksLikePriceOrJunk(line) ||
+    /^at \d{1,2}:\d{2}\s*(am|pm)\b/i.test(line) ||
+    /^at \d{1,2}:\d{2}(am|pm)\b/i.test(line) ||
+    /^account:/i.test(line) ||
+    /^folio #:/i.test(line) ||
+    /^phone:/i.test(line) ||
+    /^\d+\s+serving$/i.test(line) ||
+    /^\d+\s*@\s*\$?\s*\d/i.test(line)
+  );
+}
+
+function extractBeoFoodMenuText(rawText: string): string {
+  const lines = splitIntoLines(rawText);
+  const collectedBlocks: string[] = [];
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+
+    if (!/^food menu$/i.test(line)) continue;
+
+    const beforeBlock: string[] = [];
+    for (let j = i - 1; j >= 0 && i - j <= 120; j -= 1) {
+      const current = lines[j].trim();
+      if (!current) continue;
+      if (isBeoSectionMarker(current)) break;
+      if (isBeoBackwardStopMarker(current)) break;
+      beforeBlock.unshift(current);
+    }
+
+    const afterBlock: string[] = [];
+    for (let j = i + 1; j < lines.length && j - i <= 120; j += 1) {
+      const current = lines[j].trim();
+      if (!current) continue;
+      if (j !== i + 1 && isBeoSectionMarker(current)) break;
+      if (/^account:/i.test(current)) break;
+      if (/^folio #:/i.test(current)) break;
+      if (/^phone:/i.test(current)) break;
+
+      afterBlock.push(current);
+    }
+
+    const combined = [...beforeBlock, ...afterBlock]
+      .filter((entry) => !isLikelyBeoNoise(entry))
+      .join("\n")
+      .trim();
+
+    if (combined) {
+      collectedBlocks.push(combined);
+    }
+  }
+
+  return collectedBlocks.join("\n\n").trim();
+}
+
 function extractMenuItemsFromText(rawText: string): ParsedMenuItem[] {
-  const normalized = normalizeWhitespace(rawText)
+  const menuSource = looksLikeBeoDocument(rawText)
+    ? extractBeoFoodMenuText(rawText) || rawText
+    : rawText;
+
+  const normalized = normalizeWhitespace(menuSource)
     .replace(/\uFFFD/g, " ")
     .replace(/\s*[•·]\s*/g, "\n");
 
@@ -278,25 +496,10 @@ function extractMenuItemsFromText(rawText: string): ParsedMenuItem[] {
   const merged: string[] = [];
 
   function isContinuationLine(line: string): boolean {
-    const lower = line.toLowerCase();
-
     if (!line) return false;
     if (/^[a-z]/.test(line)) return true;
-
-    if (
-      lower.startsWith("whipped butter") ||
-      lower.startsWith("cream cheese") ||
-      lower.startsWith("jams") ||
-      lower.startsWith("cocktail sauce") ||
-      lower.startsWith("horseradish") ||
-      lower.startsWith("mignonette") ||
-      lower.startsWith("lemon wedges")
-    ) {
-      return true;
-    }
-
     if (/^or\s+/i.test(line)) return true;
-
+    if (/^\|/.test(line)) return true;
     return false;
   }
 
