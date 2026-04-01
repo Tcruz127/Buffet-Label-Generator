@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { signIn } from "@/auth";
 import { hashPassword } from "../../lib/password";
 import { signUpSchema } from "../../lib/validations/auth";
 
@@ -45,5 +46,9 @@ export async function signUpAction(formData: FormData) {
     },
   });
 
-  redirect("/login");
+  await signIn("credentials", {
+    email,
+    password,
+    redirectTo: "/app",
+  });
 }
