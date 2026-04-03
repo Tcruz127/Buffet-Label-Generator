@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-   provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model User {
@@ -16,8 +16,8 @@ model User {
   stripeSubscriptionId String?     @unique
   subscriptionStatus   String?
   subscriptionPriceId  String?
-  cancelAtPeriodEnd Boolean   @default(false)
-  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd    Boolean     @default(false)
+  currentPeriodEnd     DateTime?
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
@@ -25,31 +25,91 @@ model User {
 }
 
 model LabelSheet {
-  id          String      @id @default(cuid())
-  userId      String
-  title       String
-  eventName   String?
-  totalLabels Int         @default(10)
-  settings    Json?
-  logoUrl     String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String         @id @default(cuid())
+  userId        String
+  title         String
+  eventName     String?
+  totalLabels   Int            @default(10)
+  settings      Json?
+  logoUrl       String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  user        User        @relation(fields: [userId], references: [id])
-  items       LabelItem[]
+  user          User           @relation(fields: [userId], references: [id])
+  items         LabelItem[]
+  dishAnalyses  DishAnalysis[]
 }
 
 model LabelItem {
-  id            String     @id @default(cuid())
+  id            String         @id @default(cuid())
   sheetId       String
   positionIndex Int
   foodName      String?
   description   String?
   diets         Json?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  sheet         LabelSheet @relation(fields: [sheetId], references: [id])
+  sheet         LabelSheet     @relation(fields: [sheetId], references: [id])
+  analyses      DishAnalysis[]
 
   @@unique([sheetId, positionIndex])
+}
+
+model IngredientRule {
+  id                 String    @id @default(cuid())
+  ingredientName     String
+  normalizedName     String    @unique
+
+  containsGluten     Boolean   @default(false)
+  containsDairy      Boolean   @default(false)
+  containsEgg        Boolean   @default(false)
+  containsSoy        Boolean   @default(false)
+  containsNuts       Boolean   @default(false)
+  containsShellfish  Boolean   @default(false)
+  containsSesame     Boolean   @default(false)
+
+  isVegetarian       Boolean?
+  isVegan            Boolean?
+
+  confidence         String?   // low | medium | high
+  notes              String?
+  source             String?   // manual | chef_bot | imported
+  verified           Boolean   @default(false)
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model DishAnalysis {
+  id                    String      @id @default(cuid())
+  sheetId               String
+  labelItemId           String?
+
+  foodName              String?
+  description           String?
+
+  matchedIngredients    Json?
+  suggestedDiets        Json?
+  possibleDiets         Json?
+  cannotVerify          Json?
+
+  confidence            String?     // low | medium | high
+  reasoning             String?
+  warnings              String?
+
+  status                String      @default("unreviewed")
+  // unreviewed | suggested | verified | needs_clarification
+
+  reviewedBy            String?
+  reviewedAt            DateTime?
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  sheet                 LabelSheet  @relation(fields: [sheetId], references: [id])
+  labelItem             LabelItem?  @relation(fields: [labelItemId], references: [id])
+
+  @@index([sheetId])
+  @@index([labelItemId])
 }

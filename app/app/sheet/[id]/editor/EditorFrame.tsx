@@ -55,6 +55,35 @@ type ParsedMenuResponse = {
   error?: string;
 };
 
+type ChefBotAnalyzeResponse = {
+  success: boolean;
+  matchedIngredients?: string[];
+  suggestedDiets?: string[];
+  possibleDiets?: string[];
+  cannotVerify?: string[];
+  confidence?: "low" | "medium" | "high";
+  reasoning?: string;
+  warnings?: string;
+  analysisId?: string;
+  error?: string;
+};
+
+type ChefBotLabelAnalysis = {
+  index: number;
+  labelId?: string;
+  title: string;
+  description: string;
+  matchedIngredients: string[];
+  suggestedDiets: string[];
+  possibleDiets: string[];
+  cannotVerify: string[];
+  confidence: "low" | "medium" | "high";
+  reasoning: string;
+  warnings: string;
+  analysisId?: string;
+  error?: string;
+};
+
 type NormalizedLabel = {
   id?: string;
   title: string;
@@ -97,6 +126,22 @@ function getParsedMenuItemKey(item: ParsedMenuItem): string {
   return `${item.title}||${item.description}||${item.raw}`;
 }
 
+function getConfidenceTone(confidence: "low" | "medium" | "high") {
+  if (confidence === "high") {
+    return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  }
+
+  if (confidence === "medium") {
+    return "bg-amber-100 text-amber-700 border-amber-200";
+  }
+
+  return "bg-slate-100 text-slate-700 border-slate-200";
+}
+
+function uniqueStrings(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
 export default function EditorFrame({ sheet }: { sheet: SheetData }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -121,6 +166,13 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     []
   );
   const [parsedMenuRawText, setParsedMenuRawText] = useState("");
+
+  const [isChefBotModalOpen, setIsChefBotModalOpen] = useState(false);
+  const [isChefBotAnalyzing, setIsChefBotAnalyzing] = useState(false);
+  const [chefBotError, setChefBotError] = useState<string | null>(null);
+  const [chefBotAnalyses, setChefBotAnalyses] = useState<ChefBotLabelAnalysis[]>(
+    []
+  );
 
   const normalizedSheetPayload = useMemo(
     () => normalizeSheetPayload(currentSheet),
@@ -535,6 +587,185 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     setIsMenuModalOpen(false);
   };
 
+  const openChefBot = async () => {
+    const labels = normalizedSheetPayload.labels;
+
+    if (!labels.length) {
+      setChefBotError("There are no labels to analyze.");
+      setIsChefBotModalOpen(true);
+      return;
+    }
+
+    setIsChefBotModalOpen(true);
+    setIsChefBotAnalyzing(true);
+    setChefBotError(null);
+    setChefBotAnalyses([]);
+
+    try {
+      const results = await Promise.all(
+        labels.map(async (label, index) => {
+          try {
+            const response = await fetch("/api/chef-bot/analyze", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                foodName: label.title,
+                description: label.description,
+                sheetId: normalizedSheetPayload.id,
+                labelItemId: label.id,
+              }),
+            });
+
+            const result =
+              (await response.json()) as ChefBotAnalyzeResponse;
+
+            if (!response.ok || !result.success) {
+              return {
+                index,
+                labelId: label.id,
+                title: label.title,
+                description: label.description,
+                matchedIngredients: [],
+                suggestedDiets: [],
+                possibleDiets: [],
+                cannotVerify: [],
+                confidence: "low" as const,
+                reasoning: "",
+                warnings: "",
+                error: result.error || "Chef Bot analysis failed.",
+              };
+            }
+
+            return {
+              index,
+              labelId: label.id,
+              title: label.title,
+              description: label.description,
+              matchedIngredients: result.matchedIngredients ?? [],
+              suggestedDiets: result.suggestedDiets ?? [],
+              possibleDiets: result.possibleDiets ?? [],
+              cannotVerify: result.cannotVerify ?? [],
+              confidence: result.confidence ?? "low",
+              reasoning: result.reasoning ?? "",
+              warnings: result.warnings ?? "",
+              analysisId: result.analysisId,
+            };
+          } catch (error) {
+            return {
+              index,
+              labelId: label.id,
+              title: label.title,
+              description: label.description,
+              matchedIngredients: [],
+              suggestedDiets: [],
+              possibleDiets: [],
+              cannotVerify: [],
+              confidence: "low" as const,
+              reasoning: "",
+              warnings: "",
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Chef Bot analysis failed.",
+            };
+          }
+        })
+      );
+
+      setChefBotAnalyses(results);
+    } catch (error) {
+      console.error("Chef Bot batch analyze failed:", error);
+      setChefBotError(
+        error instanceof Error
+          ? error.message
+          : "Chef Bot analysis failed. Please try again."
+      );
+    } finally {
+      setIsChefBotAnalyzing(false);
+    }
+  };
+
+  const applyChefBotSuggestions = async () => {
+    const baseLabels = normalizedSheetPayload.labels;
+
+    if (!baseLabels.length) {
+      setChefBotError("There are no labels to update.");
+      return;
+    }
+
+    const nextLabels: NormalizedLabel[] = baseLabels.map((label, index) => {
+      const analysis = chefBotAnalyses.find((entry) => entry.index === index);
+      const existingDiets = Array.isArray(label.diets) ? label.diets : [];
+
+      if (!analysis) {
+        return {
+          ...label,
+          diets: existingDiets,
+        };
+      }
+
+      const mergedDiets = uniqueStrings([
+        ...existingDiets,
+        ...(analysis.suggestedDiets ?? []),
+      ]);
+
+      return {
+        ...label,
+        diets: mergedDiets,
+      };
+    });
+
+    const nextSheet: SheetData = {
+      ...currentSheet,
+      name: title.trim() || "Untitled Sheet",
+      title: title.trim() || "Untitled Sheet",
+      totalLabels: Math.max(10, nextLabels.length || currentSheet.totalLabels || 10),
+      labels: nextLabels,
+    };
+
+    setCurrentSheet(nextSheet);
+
+    const nextPayload: NormalizedSheetPayload = {
+      ...normalizedSheetPayload,
+      name: title.trim() || "Untitled Sheet",
+      title: title.trim() || "Untitled Sheet",
+      labels: nextLabels,
+      totalLabels: Math.max(
+        10,
+        nextLabels.length || normalizedSheetPayload.totalLabels || 10
+      ),
+    };
+
+    sendSheetToIframe(nextPayload);
+
+    latestEditorPayloadRef.current = {
+      eventName: nextPayload.eventName,
+      labels: nextLabels.map((label) => ({
+        food: label.title,
+        description: label.description,
+        diets: label.diets,
+      })),
+      settings: nextPayload.settings,
+      logoData: nextPayload.logoData,
+    };
+
+    await saveToDatabase({
+      title: title.trim() || "Untitled Sheet",
+      eventName: nextPayload.eventName,
+      labels: nextLabels.map((label) => ({
+        food: label.title,
+        description: label.description,
+        diets: label.diets,
+      })),
+      settings: nextPayload.settings,
+      logoData: nextPayload.logoData,
+    });
+
+    setIsChefBotModalOpen(false);
+  };
+
   const statusText =
     saveStatus === "Saved" && lastSavedAt
       ? `Saved at ${lastSavedAt}`
@@ -586,6 +817,14 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
                   className="inline-flex items-center justify-center rounded-full border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-800 shadow-sm transition hover:bg-violet-100"
                 >
                   Upload Menu
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openChefBot}
+                  className="inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition hover:bg-amber-100"
+                >
+                  Analyze with Chef Bot
                 </button>
 
                 <div
@@ -796,13 +1035,262 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
                     <button
                       type="button"
                       onClick={importParsedMenuItems}
-                      disabled={isParsingMenu || selectedMenuItemKeys.length === 0}
+                      disabled={
+                        isParsingMenu || selectedMenuItemKeys.length === 0
+                      }
                       className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Import {selectedMenuItemKeys.length} Item
                       {selectedMenuItemKeys.length === 1 ? "" : "s"} Into Labels
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isChefBotModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
+            <div className="border-b border-slate-200 px-6 py-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="mb-2 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-700">
+                    Chef Bot
+                  </div>
+                  <h2 className="text-2xl font-black tracking-tight text-slate-950">
+                    Review dietary suggestions
+                  </h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Chef Bot uses your dietary database to suggest likely
+                    contains-tags. Review suggestions before applying them to
+                    labels.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsChefBotModalOpen(false)}
+                    className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-auto p-6">
+              {isChefBotAnalyzing ? (
+                <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 px-6 text-center">
+                  <div className="mb-3 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-amber-500" />
+                  <div className="text-lg font-bold text-slate-900">
+                    Chef Bot is analyzing your labels...
+                  </div>
+                  <div className="mt-2 text-sm text-slate-600">
+                    Checking ingredients against your dietary database.
+                  </div>
+                </div>
+              ) : (
+                <div className="flex min-h-0 flex-col">
+                  {chefBotError ? (
+                    <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                      {chefBotError}
+                    </div>
+                  ) : null}
+
+                  {chefBotAnalyses.length === 0 && !chefBotError ? (
+                    <div className="flex min-h-[240px] items-center justify-center rounded-[1.5rem] border border-slate-200 bg-slate-50 text-center text-sm text-slate-500">
+                      No Chef Bot analyses to show yet.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {chefBotAnalyses.map((analysis) => (
+                        <div
+                          key={`${analysis.index}-${analysis.labelId ?? analysis.title}`}
+                          className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5"
+                        >
+                          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="min-w-0">
+                              <div className="text-lg font-bold text-slate-950">
+                                {analysis.title || "Untitled Label"}
+                              </div>
+                              {analysis.description ? (
+                                <div className="mt-1 text-sm text-slate-500">
+                                  {analysis.description}
+                                </div>
+                              ) : (
+                                <div className="mt-1 text-sm italic text-slate-400">
+                                  No ingredient line provided
+                                </div>
+                              )}
+                            </div>
+
+                            <span
+                              className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${getConfidenceTone(
+                                analysis.confidence
+                              )}`}
+                            >
+                              {analysis.confidence} confidence
+                            </span>
+                          </div>
+
+                          {analysis.error ? (
+                            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                              {analysis.error}
+                            </div>
+                          ) : (
+                            <div className="grid gap-4 lg:grid-cols-2">
+                              <div className="space-y-4">
+                                <div>
+                                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                                    Matched Ingredients
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {analysis.matchedIngredients.length ? (
+                                      analysis.matchedIngredients.map((item) => (
+                                        <span
+                                          key={item}
+                                          className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-700"
+                                        >
+                                          {item}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="text-sm text-slate-500">
+                                        None matched
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                                    Suggested Diet Tags
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {analysis.suggestedDiets.length ? (
+                                      analysis.suggestedDiets.map((item) => (
+                                        <span
+                                          key={item}
+                                          className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700"
+                                        >
+                                          {item}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="text-sm text-slate-500">
+                                        No direct suggestions
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                                    Possible Diet Tags
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {analysis.possibleDiets.length ? (
+                                      analysis.possibleDiets.map((item) => (
+                                        <span
+                                          key={item}
+                                          className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700"
+                                        >
+                                          {item}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="text-sm text-slate-500">
+                                        None
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-4">
+                                <div>
+                                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                                    Cannot Verify
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {analysis.cannotVerify.length ? (
+                                      analysis.cannotVerify.map((item) => (
+                                        <span
+                                          key={item}
+                                          className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700"
+                                        >
+                                          {item}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="text-sm text-slate-500">
+                                        No verification warnings
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                                    Reasoning
+                                  </div>
+                                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                                    {analysis.reasoning || "No reasoning available."}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+                                    Warnings
+                                  </div>
+                                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                                    {analysis.warnings || "No warnings."}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-slate-200 px-6 py-5">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="text-sm text-slate-600">
+                  Applying suggestions will add Chef Bot’s direct suggested
+                  contains-tags to your labels. Possible tags are shown for
+                  review but are not auto-applied.
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsChefBotModalOpen(false)}
+                    className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyChefBotSuggestions}
+                    disabled={
+                      isChefBotAnalyzing ||
+                      chefBotAnalyses.every(
+                        (entry) => (entry.suggestedDiets ?? []).length === 0
+                      )
+                    }
+                    className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Apply Suggested Diets
+                  </button>
                 </div>
               </div>
             </div>

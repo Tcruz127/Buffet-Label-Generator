@@ -661,7 +661,9 @@ button:hover{
     size: Letter portrait;
     margin: 0;
   }
-
+.label-divider {
+  display: none !important;
+}
   html,body{
     background:white !important;
     margin:0 !important;
@@ -762,7 +764,6 @@ button:hover{
   }
 
   .labels{
-     .labels {
   display: grid;
   grid-template-columns: repeat(2, 3.5in);
   grid-template-rows: repeat(5, 2in);
@@ -811,7 +812,7 @@ button:hover{
     -webkit-print-color-adjust:exact !important;
     print-color-adjust:exact !important;
   }
-}
+  
 .section-title{
   margin-bottom:12px;
   font-size:14px;
@@ -1489,6 +1490,7 @@ function addDividerToContent(content, settings) {
   if (!settings.divider || settings.divider === "none") return;
 
   const divider = document.createElement("div");
+  divider.className = "label-divider"; 
   divider.style.width = "80%";
   divider.style.marginTop = "8px";
   divider.style.marginBottom = "6px";
