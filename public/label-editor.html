@@ -813,6 +813,10 @@ button:hover{
     print-color-adjust:exact !important;
   }
   
+.label-divider {
+  display: none !important;
+}
+
 .section-title{
   margin-bottom:12px;
   font-size:14px;
@@ -2240,13 +2244,15 @@ function openPrintWindow() {
   </div>
 
   <script>
-    window.onload = function () {
-      setTimeout(function () {
-        window.focus();
-        window.print();
-      }, 250);
-    };
-  <\/script>
+  window.onload = function () {
+    document.querySelectorAll(".label-divider").forEach((el) => el.remove());
+
+    setTimeout(function () {
+      window.focus();
+      window.print();
+    }, 250);
+  };
+<\/script>
 </body>
 </html>
 `;
