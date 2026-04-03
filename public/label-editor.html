@@ -661,9 +661,7 @@ button:hover{
     size: Letter portrait;
     margin: 0;
   }
-.label-divider {
-  display: none !important;
-}
+
   html,body{
     background:white !important;
     margin:0 !important;
@@ -764,30 +762,45 @@ button:hover{
   }
 
   .labels{
-  display: grid;
-  grid-template-columns: repeat(2, 3.5in);
-  grid-template-rows: repeat(5, 2in);
-  column-gap: 0.25in;
-  row-gap: 0;
-  justify-content: start;
-  align-content: start;
-  width: 7.25in;
-  height: 10in;
-  margin-right: 0;
-  padding: 0;
-}
+    display: grid;
+    grid-template-columns: repeat(2, 3.5in);
+    grid-template-rows: repeat(5, 2in);
+    column-gap: 0.25in;
+    row-gap: 0;
+    justify-content: start;
+    align-content: start;
+    width: 7.25in;
+    height: 10in;
+    margin-right: 0;
+    padding: 0;
   }
 
-  .label{
-    display:block !important;
-    width:3.5in !important;
-    height:2in !important;
-    overflow:hidden !important;
-    break-inside:avoid !important;
-    page-break-inside:avoid !important;
-    box-sizing:border-box !important;
+    .label {
+    width: 3.5in !important;
+    height: 2in !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    outline: none !important;
+    position: static !important;
+    left: auto !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-image: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
+    .label,
+  .sheet-preview,
+  .labels,
+  .label-content {
+    box-shadow: none !important;
+    outline: none !important;
+  }
   .label *,
   .label::before,
   .label::after,
@@ -969,6 +982,7 @@ button:hover{
   padding:0;
   accent-color:var(--cyan);
   flex:0 0 auto;
+}
 }
 
 </style>
@@ -2172,6 +2186,9 @@ function openPrintWindow() {
     margin-left: auto !important;
     margin-right: auto !important;
     padding: 0 !important;
+    background: white !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   .label {
@@ -2185,6 +2202,11 @@ function openPrintWindow() {
     position: static !important;
     left: auto !important;
     margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    background-image: none !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -2208,7 +2230,19 @@ function openPrintWindow() {
     padding-bottom: 10px !important;
     padding-left: 16px !important;
     padding-right: 12px !important;
+    border: none !important;
     outline: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+
+  .dish-name,
+  .allergen-line,
+  .label-logo,
+  .label-divider {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .dish-name,
@@ -2225,16 +2259,6 @@ function openPrintWindow() {
   .label-content::after {
     box-shadow: none !important;
   }
-
-  .dish-name,
-  .allergen-line,
-  .label-logo {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-      .label-divider {
-    display: none !important;
-  }
-  }
 </style>
 </head>
 <body>
@@ -2244,15 +2268,36 @@ function openPrintWindow() {
   </div>
 
   <script>
-  window.onload = function () {
-    document.querySelectorAll(".label-divider").forEach((el) => el.remove());
+    window.onload = function () {
+      document.querySelectorAll(".label").forEach((el) => {
+        el.style.border = "none";
+        el.style.borderRadius = "0";
+        el.style.boxShadow = "none";
+        el.style.outline = "none";
+        el.style.backgroundImage = "none";
+      });
 
-    setTimeout(function () {
-      window.focus();
-      window.print();
-    }, 250);
-  };
-<\/script>
+      document.querySelectorAll(".label-content").forEach((el) => {
+        el.style.border = "none";
+        el.style.borderRadius = "0";
+        el.style.boxShadow = "none";
+        el.style.outline = "none";
+        el.style.background = "transparent";
+      });
+
+      document.querySelectorAll(".sheet-preview").forEach((el) => {
+        el.style.border = "none";
+        el.style.borderRadius = "0";
+        el.style.boxShadow = "none";
+        el.style.outline = "none";
+      });
+
+      setTimeout(function () {
+        window.focus();
+        window.print();
+      }, 250);
+    };
+  <\/script>
 </body>
 </html>
 `;
