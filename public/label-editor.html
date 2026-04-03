@@ -825,9 +825,6 @@ button:hover{
     -webkit-print-color-adjust:exact !important;
     print-color-adjust:exact !important;
   }
-  
-.label-divider {
-  display: none !important;
 }
 
 .section-title{
@@ -982,7 +979,6 @@ button:hover{
   padding:0;
   accent-color:var(--cyan);
   flex:0 0 auto;
-}
 }
 
 </style>
@@ -2268,36 +2264,46 @@ function openPrintWindow() {
   </div>
 
   <script>
-    window.onload = function () {
-      document.querySelectorAll(".label").forEach((el) => {
-        el.style.border = "none";
-        el.style.borderRadius = "0";
-        el.style.boxShadow = "none";
-        el.style.outline = "none";
-        el.style.backgroundImage = "none";
-      });
+  window.onload = function () {
+    document.querySelectorAll(".label").forEach((el) => {
+      el.style.border = "none";
+      el.style.borderRadius = "0";
+      el.style.boxShadow = "none";
+      el.style.outline = "none";
+      el.style.backgroundImage = "none";
+    });
 
-      document.querySelectorAll(".label-content").forEach((el) => {
-        el.style.border = "none";
-        el.style.borderRadius = "0";
-        el.style.boxShadow = "none";
-        el.style.outline = "none";
-        el.style.background = "transparent";
-      });
+    document.querySelectorAll(".label-content").forEach((el) => {
+      el.style.border = "none";
+      el.style.borderRadius = "0";
+      el.style.boxShadow = "none";
+      el.style.outline = "none";
+      el.style.background = "transparent";
+    });
 
-      document.querySelectorAll(".sheet-preview").forEach((el) => {
-        el.style.border = "none";
-        el.style.borderRadius = "0";
-        el.style.boxShadow = "none";
-        el.style.outline = "none";
-      });
+    document.querySelectorAll(".sheet-preview").forEach((el) => {
+      el.style.border = "none";
+      el.style.borderRadius = "0";
+      el.style.boxShadow = "none";
+      el.style.outline = "none";
+    });
 
-      setTimeout(function () {
-        window.focus();
-        window.print();
-      }, 250);
-    };
-  <\/script>
+    document.querySelectorAll(".description-line").forEach((el) => {
+      const text = (el.textContent || "").trim();
+      if (!text) {
+        el.style.display = "none";
+        el.style.marginTop = "0";
+        el.style.marginBottom = "0";
+        el.remove();
+      }
+    });
+
+    setTimeout(function () {
+      window.focus();
+      window.print();
+    }, 250);
+  };
+<\/script>
 </body>
 </html>
 `;
