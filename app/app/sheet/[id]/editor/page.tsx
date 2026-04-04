@@ -20,12 +20,30 @@ export default async function SheetEditorPage({ params }: PageProps) {
   const { id } = await params;
   const { prisma } = await import("@/lib/prisma");
 
-  const sheet = await prisma.labelSheet.findFirst({
+  const db = prisma as any;
+
+  // Find the user and their org membership so we can allow access to org sheets.
+  const currentUser = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { id: true },
+  });
+
+  if (!currentUser) {
+    redirect("/login");
+  }
+
+  const membership = await db.organizationMember.findFirst({
+    where: { userId: currentUser.id },
+    select: { organizationId: true },
+  });
+
+  const sheet = await db.labelSheet.findFirst({
     where: {
       id,
-      user: {
-        email: session.user.email,
-      },
+      OR: [
+        { userId: currentUser.id },
+        ...(membership ? [{ organizationId: membership.organizationId }] : []),
+      ],
     },
     include: {
       items: {

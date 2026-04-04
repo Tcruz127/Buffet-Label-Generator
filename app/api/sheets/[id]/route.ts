@@ -52,6 +52,14 @@ function normalizeDescription(label: IncomingLabel): string {
   return "";
 }
 
+async function getOrgId(prisma: any, userId: string): Promise<string | null> {
+  const membership = await prisma.organizationMember.findFirst({
+    where: { userId },
+    select: { organizationId: true },
+  });
+  return membership?.organizationId ?? null;
+}
+
 export async function GET(_req: Request, context: RouteContext) {
   const session = await auth();
 
@@ -60,15 +68,28 @@ export async function GET(_req: Request, context: RouteContext) {
   }
 
   const { prisma } = await import("@/lib/prisma");
+  const db = prisma as any;
   const { id } = await context.params;
 
   try {
-    const sheet = await prisma.labelSheet.findFirst({
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const orgId = await getOrgId(db, user.id);
+
+    const sheet = await db.labelSheet.findFirst({
       where: {
         id,
-        user: {
-          email: session.user.email,
-        },
+        OR: [
+          { userId: user.id },
+          ...(orgId ? [{ organizationId: orgId }] : []),
+        ],
       },
       include: {
         items: {
@@ -101,6 +122,7 @@ export async function PUT(req: Request, context: RouteContext) {
   }
 
   const { prisma } = await import("@/lib/prisma");
+  const db = prisma as any;
   const { id } = await context.params;
 
   try {
@@ -122,10 +144,15 @@ export async function PUT(req: Request, context: RouteContext) {
 
     const isPro = isProUser(user.subscriptionStatus);
 
-    const existingSheet = await prisma.labelSheet.findFirst({
+    const orgId = await getOrgId(db, user.id);
+
+    const existingSheet = await db.labelSheet.findFirst({
       where: {
         id,
-        userId: user.id,
+        OR: [
+          { userId: user.id },
+          ...(orgId ? [{ organizationId: orgId }] : []),
+        ],
       },
       include: {
         items: {
@@ -285,6 +312,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
   }
 
   const { prisma } = await import("@/lib/prisma");
+  const db = prisma as any;
   const { id } = await context.params;
 
   try {
@@ -301,10 +329,15 @@ export async function DELETE(_req: Request, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const sheet = await prisma.labelSheet.findFirst({
+    const orgId = await getOrgId(db, user.id);
+
+    const sheet = await db.labelSheet.findFirst({
       where: {
         id,
-        userId: user.id,
+        OR: [
+          { userId: user.id },
+          ...(orgId ? [{ organizationId: orgId }] : []),
+        ],
       },
       select: {
         id: true,

@@ -6,6 +6,8 @@ import { auth, signOut } from "@/auth";
 import UpgradeButton from "./UpgradeButton";
 import ManageBillingButton from "./ManageBillingButton";
 import SheetActionsMenu from "./SheetActionsMenu";
+import CreateOrgButton from "./CreateOrgButton";
+import { isOrgProUser } from "@/lib/plan";
 
 function getInitials(name?: string | null, email?: string | null) {
   const source = name?.trim() || email?.trim() || "A";
@@ -39,9 +41,7 @@ export default async function AppDashboardPage() {
     where: { email: session.user.email },
     include: {
       sheets: {
-        orderBy: {
-          updatedAt: "desc",
-        },
+        orderBy: { updatedAt: "desc" },
       },
     },
   });
@@ -50,20 +50,56 @@ export default async function AppDashboardPage() {
     redirect("/login");
   }
 
-  const isPro =
-    user.subscriptionStatus === "active" ||
-    user.subscriptionStatus === "trialing";
+  // Fetch org memberships separately using a cast so existing Prisma client
+  // types are unaffected by the new schema additions.
+  const db = prisma as any;
+
+  const memberships: {
+    role: string;
+    organization: {
+      id: string;
+      name: string;
+      members: { role: string; user: { subscriptionStatus: string | null } }[];
+    };
+  }[] = await db.organizationMember.findMany({
+    where: { userId: user.id },
+    include: {
+      organization: {
+        include: {
+          members: {
+            include: {
+              user: { select: { subscriptionStatus: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const isPro = isOrgProUser(user.subscriptionStatus, memberships);
+
+  const orgMembership = memberships[0] ?? null;
+  const org = orgMembership?.organization ?? null;
+  const isOrgOwner = orgMembership?.role === "owner";
+
+  // Org members share the org's sheet workspace.
+  const sheets: { id: string; title: string; eventName: string | null; totalLabels: number; updatedAt: Date }[] = org
+    ? await db.labelSheet.findMany({
+        where: { organizationId: org.id },
+        orderBy: { updatedAt: "desc" },
+      })
+    : user.sheets;
 
   const displayName =
     user.name?.trim() || user.email?.split("@")[0] || "Account";
 
   const initials = getInitials(user.name, user.email);
-  const totalSheets = user.sheets.length;
-  const totalLabels = user.sheets.reduce(
-    (sum, sheet) => sum + (sheet.totalLabels || 0),
+  const totalSheets = sheets.length;
+  const totalLabels = sheets.reduce(
+    (sum: number, sheet) => sum + (sheet.totalLabels || 0),
     0
   );
-  const recentSheet = user.sheets[0];
+  const recentSheet = sheets[0];
   const recentUpdatedLabel = recentSheet
     ? formatUpdatedAt(recentSheet.updatedAt)
     : "No recent activity";
@@ -104,6 +140,23 @@ export default async function AppDashboardPage() {
                 >
                   {isPro ? "Pro Plan" : "Free Plan"}
                 </span>
+
+                {org && (
+                  <span className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700">
+                    {org.name}
+                  </span>
+                )}
+
+                {isOrgOwner && (
+                  <Link
+                    href="/app/org/settings"
+                    className="inline-flex items-center rounded-full border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Manage Team
+                  </Link>
+                )}
+
+                {isPro && !org && <CreateOrgButton />}
               </div>
             </div>
 
@@ -311,15 +364,17 @@ export default async function AppDashboardPage() {
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black tracking-tight text-slate-950">
-              Your Sheets
+              {org ? `${org.name} Sheets` : "Your Sheets"}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Open and manage your saved buffet label projects.
+              {org
+                ? "Shared sheets visible to everyone on your team."
+                : "Open and manage your saved buffet label projects."}
             </p>
           </div>
         </div>
 
-        {user.sheets.length === 0 ? (
+        {sheets.length === 0 ? (
           <div className="rounded-[2rem] border border-slate-200 bg-white p-10 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-100 to-violet-100 text-slate-700">
               <svg
@@ -361,7 +416,7 @@ export default async function AppDashboardPage() {
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {user.sheets.map((sheet: any) => (
+            {sheets.map((sheet: any) => (
               <div
                 key={sheet.id}
                 className="group rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(34,211,238,0.12)]"

@@ -14,6 +14,7 @@ function getBaseUrl(host: string | null) {
         "NEXT_PUBLIC_APP_URL must start with http:// or https://"
       );
     }
+
     return envUrl.replace(/\/$/, "");
   }
 
@@ -29,13 +30,20 @@ function getBaseUrl(host: string | null) {
   return `${protocol}://${host}`;
 }
 
-export async function POST() {
+type CheckoutRequestBody = {
+  billingCycle?: "monthly" | "annual";
+};
+
+export async function POST(req: Request) {
   try {
     const session = await auth();
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const body = (await req.json().catch(() => ({}))) as CheckoutRequestBody;
+    const billingCycle = body.billingCycle === "annual" ? "annual" : "monthly";
 
     const [{ prisma }, { stripe }] = await Promise.all([
       import("@/lib/prisma"),
@@ -75,16 +83,27 @@ export async function POST() {
     const host = headersList.get("host");
     const baseUrl = getBaseUrl(host);
 
-    if (!process.env.STRIPE_PRICE_ID_MONTHLY) {
+    const monthlyPriceId = process.env.STRIPE_PRICE_ID_MONTHLY;
+    const annualPriceId = process.env.STRIPE_PRICE_ID_ANNUAL;
+
+    if (!monthlyPriceId) {
       throw new Error("STRIPE_PRICE_ID_MONTHLY is not set");
     }
+
+    if (!annualPriceId) {
+      throw new Error("STRIPE_PRICE_ID_ANNUAL is not set");
+    }
+
+    const selectedPriceId =
+      billingCycle === "annual" ? annualPriceId : monthlyPriceId;
 
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: stripeCustomerId,
+      client_reference_id: user.id,
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID_MONTHLY,
+          price: selectedPriceId,
           quantity: 1,
         },
       ],
@@ -93,10 +112,12 @@ export async function POST() {
       allow_promotion_codes: true,
       metadata: {
         userId: user.id,
+        billingCycle,
       },
       subscription_data: {
         metadata: {
           userId: user.id,
+          billingCycle,
         },
       },
     });
@@ -104,6 +125,7 @@ export async function POST() {
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
     console.error("Checkout error:", error);
+
     return NextResponse.json(
       {
         error:

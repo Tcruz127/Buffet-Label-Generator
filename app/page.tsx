@@ -349,15 +349,14 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-16 grid gap-6 lg:grid-cols-2">
+          <div className="mt-16 grid gap-6 lg:grid-cols-3">
+            {/* Free */}
             <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
               <div className="mb-5 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
                 Instabels
               </div>
 
-              <h3 className="text-2xl font-bold text-slate-950">
-                Start free
-              </h3>
+              <h3 className="text-2xl font-bold text-slate-950">Start free</h3>
 
               <div className="mt-4 flex items-end gap-2">
                 <span className="text-5xl font-black tracking-tight text-slate-950">
@@ -399,21 +398,24 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Pro Monthly */}
             <div className="relative overflow-hidden rounded-[2rem] border border-slate-900 bg-slate-950 p-8 text-white shadow-2xl">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.30),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(56,189,248,0.20),transparent_35%)]" />
               <div className="relative">
                 <div className="absolute right-0 top-0 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-100">
-                  Recommended
+                  Most Popular
                 </div>
 
                 <div className="mb-5 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-100">
                   Instabels Pro
                 </div>
 
-                <h3 className="text-2xl font-bold">For active teams</h3>
+                <h3 className="text-2xl font-bold">Pro Monthly</h3>
 
                 <div className="mt-4 flex items-end gap-2">
-                  <span className="text-5xl font-black tracking-tight">$49.99</span>
+                  <span className="text-5xl font-black tracking-tight">
+                    $49.99
+                  </span>
                   <span className="pb-1 text-sm text-slate-300">/ month</span>
                 </div>
 
@@ -444,7 +446,61 @@ export default function HomePage() {
                     href="/signup"
                     className="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
                   >
-                    Start Instabels Pro
+                    Get started monthly
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Pro Annual */}
+            <div className="relative overflow-hidden rounded-[2rem] border border-cyan-400 bg-slate-950 p-8 text-white shadow-2xl">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.25),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.20),transparent_35%)]" />
+              <div className="relative">
+                <div className="absolute right-0 top-0 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
+                  Save vs monthly
+                </div>
+
+                <div className="mb-5 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-100">
+                  Instabels Pro
+                </div>
+
+                <h3 className="text-2xl font-bold">Pro Annual</h3>
+
+                <div className="mt-4 flex items-end gap-2">
+                  <span className="text-5xl font-black tracking-tight">
+                    $550
+                  </span>
+                  <span className="pb-1 text-sm text-slate-300">/ year</span>
+                </div>
+
+                <p className="mt-4 text-sm leading-7 text-slate-300">
+                  Ideal for hotels, venues, and catering companies ready to
+                  commit for the year and simplify their billing.
+                </p>
+
+                <div className="mt-8 space-y-3">
+                  {[
+                    "Everything in Pro Monthly",
+                    "Simpler annual budgeting",
+                    "Better fit for business accounts",
+                    "Great for hotels, venues, and caterers",
+                    "Same full Pro access",
+                  ].map((feature) => (
+                    <div
+                      key={feature}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-slate-100"
+                    >
+                      {feature}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8">
+                  <Link
+                    href="/signup"
+                    className="inline-flex w-full items-center justify-center rounded-full bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+                  >
+                    Get started annually
                   </Link>
                 </div>
               </div>

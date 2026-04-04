@@ -22,22 +22,61 @@ model User {
   updatedAt            DateTime    @updatedAt
 
   sheets               LabelSheet[]
+  memberships          OrganizationMember[]
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   OrganizationMember[]
+  invites   OrganizationInvite[]
+  sheets    LabelSheet[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String       @default("member") // owner | member
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+}
+
+model OrganizationInvite {
+  id             String       @id @default(cuid())
+  organizationId String
+  email          String
+  role           String       @default("member")
+  token          String       @unique @default(cuid())
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
 model LabelSheet {
-  id            String         @id @default(cuid())
-  userId        String
-  title         String
-  eventName     String?
-  totalLabels   Int            @default(10)
-  settings      Json?
-  logoUrl       String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id             String        @id @default(cuid())
+  userId         String
+  organizationId String?
+  title          String
+  eventName      String?
+  totalLabels    Int           @default(10)
+  settings       Json?
+  logoUrl        String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
-  user          User           @relation(fields: [userId], references: [id])
-  items         LabelItem[]
-  dishAnalyses  DishAnalysis[]
+  user           User          @relation(fields: [userId], references: [id])
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  items          LabelItem[]
+  dishAnalyses   DishAnalysis[]
 }
 
 model LabelItem {

@@ -28,13 +28,25 @@ async function createSheet(formData: FormData) {
     redirect("/login");
   }
 
-  const isPro = isProUser(user.subscriptionStatus);
-
-  const sheetCount = await prisma.labelSheet.count({
-    where: {
-      userId: user.id,
-    },
+  // Check if the user belongs to an org.
+  const db = prisma as any;
+  const membership = await db.organizationMember.findFirst({
+    where: { userId: user.id },
+    select: { organizationId: true, organization: { select: { members: { select: { user: { select: { subscriptionStatus: true } }, role: true } } } } },
   });
+
+  const orgSubscriptionActive = membership?.organization?.members?.some(
+    (m: { role: string; user: { subscriptionStatus: string | null } }) =>
+      m.role === "owner" &&
+      (m.user.subscriptionStatus === "active" || m.user.subscriptionStatus === "trialing")
+  ) ?? false;
+
+  const isPro = isProUser(user.subscriptionStatus) || orgSubscriptionActive;
+
+  // Count sheets in the org workspace or the user's personal sheets.
+  const sheetCount = membership
+    ? await db.labelSheet.count({ where: { organizationId: membership.organizationId } })
+    : await prisma.labelSheet.count({ where: { userId: user.id } });
 
   if (!isPro && sheetCount >= FREE_PLAN_MAX_SHEETS) {
     redirect("/app?error=free-sheet-limit");
@@ -91,9 +103,10 @@ async function createSheet(formData: FormData) {
     ...(template.settings ?? {}),
   };
 
-  const sheet = await prisma.labelSheet.create({
+  const sheet = await db.labelSheet.create({
     data: {
       userId: user.id,
+      organizationId: membership?.organizationId ?? null,
       title: "Untitled Sheet",
       eventName: "",
       totalLabels: 10,
@@ -434,13 +447,23 @@ export default async function NewSheetPage({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const error = resolvedSearchParams?.error;
 
-  const isPro = isProUser(user.subscriptionStatus);
-
-  const sheetCount = await prisma.labelSheet.count({
-    where: {
-      userId: user.id,
-    },
+  const db = prisma as any;
+  const membership = await db.organizationMember.findFirst({
+    where: { userId: user.id },
+    select: { organizationId: true, organization: { select: { members: { select: { user: { select: { subscriptionStatus: true } }, role: true } } } } },
   });
+
+  const orgProActive = membership?.organization?.members?.some(
+    (m: { role: string; user: { subscriptionStatus: string | null } }) =>
+      m.role === "owner" &&
+      (m.user.subscriptionStatus === "active" || m.user.subscriptionStatus === "trialing")
+  ) ?? false;
+
+  const isPro = isProUser(user.subscriptionStatus) || orgProActive;
+
+  const sheetCount = membership
+    ? await db.labelSheet.count({ where: { organizationId: membership.organizationId } })
+    : await prisma.labelSheet.count({ where: { userId: user.id } });
 
   const freeLimitReached = !isPro && sheetCount >= FREE_PLAN_MAX_SHEETS;
 

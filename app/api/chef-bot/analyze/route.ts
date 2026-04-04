@@ -123,9 +123,28 @@ function normalizeText(value: string): string {
     .replace(/&/g, " and ")
     .replace(/[|/+]/g, " ")
     .replace(/-/g, " ")
+    .replace(/[()]/g, " ")
     .replace(/[^\w\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function singularize(word: string): string {
+  const value = normalizeText(word);
+
+  if (value.endsWith("ies") && value.length > 3) {
+    return value.slice(0, -3) + "y";
+  }
+
+  if (value.endsWith("es") && value.length > 3) {
+    return value.slice(0, -2);
+  }
+
+  if (value.endsWith("s") && value.length > 2) {
+    return value.slice(0, -1);
+  }
+
+  return value;
 }
 
 function uniq(values: string[]): string[] {
@@ -136,21 +155,40 @@ function tokenize(value: string): string[] {
   return normalizeText(value)
     .split(" ")
     .map((part) => part.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((part) => singularize(part));
 }
 
 function splitIngredientChunks(value: string): string[] {
   if (!value.trim()) return [];
 
-  return value
-    .split(/[,|/+]/g)
+  const normalized = value
+    .replace(/[|]/g, ",")
+    .replace(/[+]/g, ",")
+    .replace(/[;]/g, ",")
+    .replace(/[\/]/g, ",")
+    .replace(/\s+-\s+/g, ",")
+    .replace(/\s+\band\b\s+/gi, ",")
+    .split(",");
+
+  return normalized
     .map((part) => normalizeText(part))
     .filter(Boolean);
 }
 
 function containsPhrase(haystack: string, needle: string): boolean {
-  if (!needle) return false;
-  return haystack.includes(needle);
+  const h = normalizeText(haystack);
+  const n = normalizeText(needle);
+
+  if (!h || !n) return false;
+  if (h.includes(n)) return true;
+
+  const hTokens = tokenize(h);
+  const nTokens = tokenize(n);
+
+  if (!nTokens.length) return false;
+
+  return nTokens.every((token) => hTokens.includes(token));
 }
 
 function scoreRuleMatch(
@@ -161,24 +199,44 @@ function scoreRuleMatch(
   const normalizedRule = normalizeText(rule.normalizedName);
   if (!normalizedRule) return 0;
 
-  if (chunks.some((chunk) => chunk === normalizedRule)) {
+  const normalizedSearch = normalizeText(searchText);
+  const ruleTokens = tokenize(normalizedRule);
+
+  if (!ruleTokens.length) return 0;
+
+  const normalizedChunks = chunks.map((chunk) => normalizeText(chunk));
+
+  // strongest: exact chunk match
+  if (normalizedChunks.some((chunk) => chunk === normalizedRule)) {
+    return 5;
+  }
+
+  // very strong: whole phrase appears inside a chunk
+  if (normalizedChunks.some((chunk) => chunk.includes(normalizedRule))) {
     return 4;
   }
 
-  if (chunks.some((chunk) => containsPhrase(chunk, normalizedRule))) {
+  // strong: all tokens from the rule appear in a single chunk
+  if (
+    normalizedChunks.some((chunk) => {
+      const chunkTokens = tokenize(chunk);
+      return ruleTokens.every((token) => chunkTokens.includes(token));
+    })
+  ) {
     return 3;
   }
 
-  if (containsPhrase(searchText, normalizedRule)) {
+  // medium: phrase appears anywhere in full text
+  if (normalizedSearch.includes(normalizedRule)) {
     return 2;
   }
 
-  const ruleTokens = tokenize(normalizedRule);
-  if (!ruleTokens.length) return 0;
-
-  const allTokensPresent = ruleTokens.every((token) => searchText.includes(token));
-  if (allTokensPresent) {
-    return 1;
+  // weaker: all rule tokens appear somewhere in the full text
+  {
+    const searchTokens = tokenize(normalizedSearch);
+    if (ruleTokens.every((token) => searchTokens.includes(token))) {
+      return 1;
+    }
   }
 
   return 0;
@@ -308,21 +366,34 @@ async function runLocalRuleAnalysis(params: {
   const searchText = normalizeText([foodName, description].filter(Boolean).join(" "));
   const descriptionText = normalizeText(description);
   const foodNameText = normalizeText(foodName);
+
   const descriptionChunks = splitIngredientChunks(description);
+  const combinedChunks = uniq([
+    ...descriptionChunks,
+    ...splitIngredientChunks(foodName),
+    searchText,
+  ]);
 
   const scoredMatches = rules
     .map((rule) => ({
       rule,
-      score: scoreRuleMatch(rule, searchText, descriptionChunks),
+      score: scoreRuleMatch(rule, searchText, combinedChunks),
     }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score);
 
   const strongestMatchScore = scoredMatches[0]?.score ?? 0;
-  const matchedRules = scoredMatches.map((entry) => entry.rule);
+
+  const matchedRules = uniq(
+    scoredMatches.map((entry) => entry.rule.normalizedName)
+  ).map((normalizedName) =>
+    scoredMatches.find((entry) => entry.rule.normalizedName === normalizedName)!.rule
+  );
+
   const matchedIngredients = uniq(
     matchedRules.map((rule) => rule.ingredientName)
   );
+
   const suggestedDiets = uniq(
     matchedRules.flatMap((rule) => dietsFromRule(rule))
   );
@@ -343,7 +414,7 @@ async function runLocalRuleAnalysis(params: {
   }
 
   for (const rule of POSSIBLE_NAME_ONLY_RULES) {
-    if (containsPhrase(foodNameText, normalizeText(rule.term))) {
+    if (containsPhrase(foodNameText, rule.term)) {
       possibleDiets.push(...rule.possibleDiets);
       warningParts.push(rule.warning);
     }
@@ -352,7 +423,7 @@ async function runLocalRuleAnalysis(params: {
   for (const directRule of DIRECT_TAG_RULES) {
     if (
       directRule.terms.some((term) =>
-        containsPhrase(searchText, normalizeText(term))
+        containsPhrase(searchText, term)
       )
     ) {
       warningParts.push(directRule.note);
@@ -380,13 +451,34 @@ async function runLocalRuleAnalysis(params: {
     );
   }
 
+  // extra smart phrase boosts
+  if (containsPhrase(searchText, "flour tortilla")) {
+    if (!suggestedDiets.includes("Contains Gluten")) {
+      suggestedDiets.push("Contains Gluten");
+    }
+    reasoningParts.push("Flour tortilla: treated as gluten-containing.");
+  }
+
+  if (containsPhrase(searchText, "corn tortilla")) {
+    cannotVerify.push(
+      "Corn tortilla may still require brand/recipe verification for gluten-free claims."
+    );
+  }
+
+  if (containsPhrase(searchText, "mozzarella cheese")) {
+    if (!suggestedDiets.includes("Contains Dairy")) {
+      suggestedDiets.push("Contains Dairy");
+    }
+    reasoningParts.push("Mozzarella cheese: treated as dairy-containing.");
+  }
+
   return {
-    matchedIngredients,
-    suggestedDiets,
-    possibleDiets,
-    cannotVerify,
-    reasoningParts,
-    warningParts,
+    matchedIngredients: uniq(matchedIngredients),
+    suggestedDiets: uniq(suggestedDiets),
+    possibleDiets: uniq(possibleDiets),
+    cannotVerify: uniq(cannotVerify),
+    reasoningParts: uniq(reasoningParts),
+    warningParts: uniq(warningParts),
     strongestMatchScore,
   };
 }
