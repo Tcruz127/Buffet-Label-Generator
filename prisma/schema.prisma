@@ -73,8 +73,8 @@ model LabelSheet {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  user           User          @relation(fields: [userId], references: [id])
-  organization   Organization? @relation(fields: [organizationId], references: [id])
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   items          LabelItem[]
   dishAnalyses   DishAnalysis[]
 }
@@ -89,7 +89,7 @@ model LabelItem {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  sheet         LabelSheet     @relation(fields: [sheetId], references: [id])
+  sheet         LabelSheet     @relation(fields: [sheetId], references: [id], onDelete: Cascade)
   analyses      DishAnalysis[]
 
   @@unique([sheetId, positionIndex])
@@ -146,8 +146,8 @@ model DishAnalysis {
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
 
-  sheet                 LabelSheet  @relation(fields: [sheetId], references: [id])
-  labelItem             LabelItem?  @relation(fields: [labelItemId], references: [id])
+  sheet                 LabelSheet  @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  labelItem             LabelItem?  @relation(fields: [labelItemId], references: [id], onDelete: SetNull)
 
   @@index([sheetId])
   @@index([labelItemId])
