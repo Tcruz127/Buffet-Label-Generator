@@ -23,6 +23,7 @@ model User {
 
   sheets               LabelSheet[]
   memberships          OrganizationMember[]
+  folders              SheetFolder[]
 }
 
 model Organization {
@@ -34,6 +35,7 @@ model Organization {
   members   OrganizationMember[]
   invites   OrganizationInvite[]
   sheets    LabelSheet[]
+  folders   SheetFolder[]
 }
 
 model OrganizationMember {
@@ -61,10 +63,24 @@ model OrganizationInvite {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
+model SheetFolder {
+  id             String        @id @default(cuid())
+  name           String
+  userId         String
+  organizationId String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  sheets         LabelSheet[]
+}
+
 model LabelSheet {
   id             String        @id @default(cuid())
   userId         String
   organizationId String?
+  folderId       String?
   title          String
   eventName      String?
   totalLabels    Int           @default(10)
@@ -75,6 +91,7 @@ model LabelSheet {
 
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  folder         SheetFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
   items          LabelItem[]
   dishAnalyses   DishAnalysis[]
 }

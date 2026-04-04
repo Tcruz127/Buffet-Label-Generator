@@ -8,6 +8,7 @@ import UpgradeButton from "./UpgradeButton";
 import ManageBillingButton from "./ManageBillingButton";
 import SheetActionsMenu from "./SheetActionsMenu";
 import CreateOrgButton from "./CreateOrgButton";
+import FolderBar from "./FolderBar";
 import { isOrgProUser } from "@/lib/plan";
 
 function getInitials(name?: string | null, email?: string | null) {
@@ -29,7 +30,14 @@ function formatUpdatedAt(date: Date | string) {
   });
 }
 
-export default async function AppDashboardPage() {
+export default async function AppDashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ folder?: string }>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const selectedFolderId = resolvedSearchParams?.folder ?? null;
+
   const session = await auth();
 
   if (!session?.user?.email) {
@@ -40,10 +48,11 @@ export default async function AppDashboardPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    include: {
-      sheets: {
-        orderBy: { updatedAt: "desc" },
-      },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      subscriptionStatus: true,
     },
   });
 
@@ -83,24 +92,56 @@ export default async function AppDashboardPage() {
   const org = orgMembership?.organization ?? null;
   const isOrgOwner = orgMembership?.role === "owner";
 
+  // Fetch folders scoped to org or user
+  const folders: { id: string; name: string }[] = await db.sheetFolder.findMany({
+    where: org ? { organizationId: org.id } : { userId: user.id },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, name: true },
+  });
+
+  // Validate selectedFolderId belongs to this workspace
+  const activeFolderId =
+    selectedFolderId && folders.some((f: { id: string }) => f.id === selectedFolderId)
+      ? selectedFolderId
+      : null;
+
   // Org members share the org's sheet workspace.
-  const sheets: { id: string; title: string; eventName: string | null; totalLabels: number; updatedAt: Date }[] = org
-    ? await db.labelSheet.findMany({
-        where: { organizationId: org.id },
-        orderBy: { updatedAt: "desc" },
-      })
-    : user.sheets;
+  const sheetWhere = org
+    ? {
+        organizationId: org.id,
+        ...(activeFolderId ? { folderId: activeFolderId } : {}),
+      }
+    : {
+        userId: user.id,
+        ...(activeFolderId ? { folderId: activeFolderId } : {}),
+      };
+
+  const sheets: { id: string; title: string; eventName: string | null; totalLabels: number; updatedAt: Date; folderId: string | null }[] =
+    await db.labelSheet.findMany({
+      where: sheetWhere,
+      orderBy: { updatedAt: "desc" },
+      select: { id: true, title: true, eventName: true, totalLabels: true, updatedAt: true, folderId: true },
+    });
 
   const displayName =
     user.name?.trim() || user.email?.split("@")[0] || "Account";
 
   const initials = getInitials(user.name, user.email);
-  const totalSheets = sheets.length;
-  const totalLabels = sheets.reduce(
-    (sum: number, sheet) => sum + (sheet.totalLabels || 0),
+
+  // Stats always reflect full workspace (not filtered view)
+  const allSheets: { totalLabels: number; updatedAt: Date; title: string }[] =
+    await db.labelSheet.findMany({
+      where: org ? { organizationId: org.id } : { userId: user.id },
+      orderBy: { updatedAt: "desc" },
+      select: { totalLabels: true, updatedAt: true, title: true },
+    });
+
+  const totalSheets = allSheets.length;
+  const totalLabels = allSheets.reduce(
+    (sum: number, sheet: { totalLabels: number }) => sum + (sheet.totalLabels || 0),
     0
   );
-  const recentSheet = sheets[0];
+  const recentSheet = allSheets[0];
   const recentUpdatedLabel = recentSheet
     ? formatUpdatedAt(recentSheet.updatedAt)
     : "No recent activity";
@@ -375,6 +416,8 @@ export default async function AppDashboardPage() {
           </div>
         </div>
 
+        <FolderBar folders={folders} selectedFolderId={activeFolderId} />
+
         {sheets.length === 0 ? (
           <div className="rounded-[2rem] border border-slate-200 bg-white p-10 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-100 to-violet-100 text-slate-700">
@@ -441,6 +484,8 @@ export default async function AppDashboardPage() {
                     <SheetActionsMenu
                       sheetId={sheet.id}
                       sheetTitle={sheet.title}
+                      folderId={sheet.folderId}
+                      folders={folders}
                     />
                   </div>
                 </div>

@@ -2,20 +2,27 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { copySheet, deleteSheet, renameSheet } from "./actions";
+import { createPortal } from "react-dom";
+import { copySheet, deleteSheet, moveSheetToFolder, renameSheet } from "./actions";
 
-type ModalMode = "rename" | "copy" | "delete" | null;
+type Folder = { id: string; name: string };
+type ModalMode = "rename" | "copy" | "delete" | "move" | null;
 
 export default function SheetActionsMenu({
   sheetId,
   sheetTitle,
+  folderId,
+  folders,
 }: {
   sheetId: string;
   sheetTitle: string;
+  folderId?: string | null;
+  folders?: Folder[];
 }) {
   const [open, setOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
   const [draftTitle, setDraftTitle] = useState(sheetTitle);
+  const [selectedFolderId, setSelectedFolderId] = useState<string>(folderId ?? "");
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -35,6 +42,12 @@ export default function SheetActionsMenu({
 
   const openDeleteModal = () => {
     setModalMode("delete");
+    setOpen(false);
+  };
+
+  const openMoveModal = () => {
+    setSelectedFolderId(folderId ?? "");
+    setModalMode("move");
     setOpen(false);
   };
 
@@ -104,6 +117,16 @@ export default function SheetActionsMenu({
               Copy
             </button>
 
+            {folders && folders.length > 0 && (
+              <button
+                type="button"
+                onClick={openMoveModal}
+                className="flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Move to Folder
+              </button>
+            )}
+
             <button
               type="button"
               onClick={openDeleteModal}
@@ -115,7 +138,7 @@ export default function SheetActionsMenu({
         )}
       </div>
 
-      {modalMode && (
+      {modalMode && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[2rem] border border-slate-200 bg-white p-7 shadow-2xl">
             {modalMode === "rename" && (
@@ -128,11 +151,11 @@ export default function SheetActionsMenu({
                     Rename Sheet
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Update the name of this sheet so it’s easier to find later.
+                    Update the name of this sheet so it's easier to find later.
                   </p>
                 </div>
 
-                <form action={renameSheet} className="space-y-5">
+                <form action={renameSheet} onSubmit={closeModal} className="space-y-5">
                   <input type="hidden" name="sheetId" value={sheetId} />
 
                   <div>
@@ -183,7 +206,7 @@ export default function SheetActionsMenu({
                   </p>
                 </div>
 
-                <form action={copySheet} className="space-y-5">
+                <form action={copySheet} onSubmit={closeModal} className="space-y-5">
                   <input type="hidden" name="sheetId" value={sheetId} />
 
                   <div>
@@ -220,6 +243,78 @@ export default function SheetActionsMenu({
               </>
             )}
 
+            {modalMode === "move" && (
+              <>
+                <div className="mb-5">
+                  <div className="mb-3 inline-flex rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-violet-700">
+                    Organize
+                  </div>
+                  <h3 className="text-2xl font-bold tracking-tight text-slate-950">
+                    Move to Folder
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Choose which folder this sheet belongs in.
+                  </p>
+                </div>
+
+                <form action={moveSheetToFolder} onSubmit={closeModal} className="space-y-5">
+                  <input type="hidden" name="sheetId" value={sheetId} />
+
+                  <div className="space-y-2">
+                    {/* No folder option */}
+                    <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-slate-100">
+                      <input
+                        type="radio"
+                        name="folderId"
+                        value=""
+                        checked={selectedFolderId === ""}
+                        onChange={() => setSelectedFolderId("")}
+                        className="accent-slate-700"
+                      />
+                      <span className="text-sm font-medium text-slate-700">
+                        No folder (All Sheets)
+                      </span>
+                    </label>
+
+                    {folders?.map((folder) => (
+                      <label
+                        key={folder.id}
+                        className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:border-slate-300 hover:bg-slate-100"
+                      >
+                        <input
+                          type="radio"
+                          name="folderId"
+                          value={folder.id}
+                          checked={selectedFolderId === folder.id}
+                          onChange={() => setSelectedFolderId(folder.id)}
+                          className="accent-slate-700"
+                        />
+                        <span className="text-sm font-medium text-slate-700">
+                          {folder.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      Move Sheet
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+
             {modalMode === "delete" && (
               <>
                 <div className="mb-5">
@@ -238,7 +333,7 @@ export default function SheetActionsMenu({
                   </p>
                 </div>
 
-                <form action={deleteSheet}>
+                <form action={deleteSheet} onSubmit={closeModal}>
                   <input type="hidden" name="sheetId" value={sheetId} />
 
                   <div className="flex justify-end gap-3">
@@ -260,7 +355,8 @@ export default function SheetActionsMenu({
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
