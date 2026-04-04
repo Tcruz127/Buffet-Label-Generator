@@ -25,20 +25,24 @@ export default async function SheetEditorPage({ params }: PageProps) {
   // Find the user and their org membership so we can allow access to org sheets.
   const currentUser = await prisma.user.findUnique({
     where: { email: session.user.email },
+    select: { id: true, subscriptionStatus: true },
+  });
+
+  if (!currentUser) {
+    redirect("/login");
+  }
+
+  const memberships = await db.organizationMember.findMany({
+    where: { userId: currentUser.id },
     select: {
-      id: true,
-      subscriptionStatus: true,
-      memberships: {
+      role: true,
+      organizationId: true,
+      organization: {
         select: {
-          role: true,
-          organization: {
+          members: {
             select: {
-              members: {
-                select: {
-                  role: true,
-                  user: { select: { subscriptionStatus: true } },
-                },
-              },
+              role: true,
+              user: { select: { subscriptionStatus: true } },
             },
           },
         },
@@ -46,14 +50,10 @@ export default async function SheetEditorPage({ params }: PageProps) {
     },
   });
 
-  if (!currentUser) {
-    redirect("/login");
-  }
-
   const { isOrgProUser } = await import("@/lib/plan");
-  const isPro = isOrgProUser(currentUser.subscriptionStatus, currentUser.memberships);
+  const isPro = isOrgProUser(currentUser.subscriptionStatus, memberships);
 
-  const membership = currentUser.memberships[0] ?? null;
+  const membership = memberships[0] ?? null;
 
   const sheet = await db.labelSheet.findFirst({
     where: {
