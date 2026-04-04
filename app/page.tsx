@@ -530,37 +530,37 @@ export default function HomePage() {
 
       <section className="bg-slate-50">
         <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm md:p-12">
-            <div className="grid gap-10 lg:grid-cols-[1fr_.95fr] lg:items-start">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-600">
-                  Frequently asked
-                </p>
-                <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-                  Common questions before you get started
-                </h2>
-                <p className="mt-4 text-lg leading-8 text-slate-600">
-                  Everything you need to know before bringing Instabels into
-                  your workflow.
-                </p>
-              </div>
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-600">
+              Frequently asked
+            </p>
+            <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
+              Common questions before you get started
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-slate-600">
+              Everything you need to know before bringing Instabels into
+              your workflow.
+            </p>
+          </div>
 
-              <div className="space-y-4">
-                {faqItems.map((item) => (
-                  <div
-                    key={item.question}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
-                  >
-                    <h3 className="text-base font-semibold text-slate-900">
-                      {item.question}
-                    </h3>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">
-                      {item.answer}
-                    </p>
-                  </div>
-                ))}
+          <div className="mt-14 grid gap-5 md:grid-cols-2">
+            {faqItems.map((item, index) => (
+              <div
+                key={item.question}
+                className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-sm border-l-4 ${
+                  index % 2 === 0
+                    ? "border-l-cyan-400"
+                    : "border-l-violet-400"
+                }`}
+              >
+                <h3 className="text-base font-bold text-slate-900">
+                  {item.question}
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  {item.answer}
+                </p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
