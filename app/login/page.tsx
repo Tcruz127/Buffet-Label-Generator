@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
@@ -66,8 +67,14 @@ export default async function LoginPage({
             <div className="mx-auto w-full max-w-md rounded-[2rem] border border-white/10 bg-white/10 p-3 shadow-2xl shadow-cyan-500/10 backdrop-blur-2xl">
               <div className="rounded-[1.6rem] border border-white/10 bg-slate-950/75 p-8">
                 <div className="mb-8 text-center">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 text-lg font-bold text-white shadow-lg shadow-cyan-500/30">
-                    BL
+                  <div className="flex justify-center">
+                    <Image
+                      src="/logo-light.svg"
+                      alt="Instabels"
+                      width={160}
+                      height={30}
+                      priority
+                    />
                   </div>
 
                   <h1 className="mt-5 text-3xl font-black tracking-tight text-white">

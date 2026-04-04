@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import UpgradeModal from "@/app/app/UpgradeModal";
@@ -810,8 +811,8 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
           <div className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
             <div className="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-6">
               <div className="min-w-0 flex-1">
-                <div className="mb-2 inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-700">
-                  Editor Workspace
+                <div className="mb-2">
+                  <Image src="/logo-dark.svg" alt="Instabels" width={100} height={18} />
                 </div>
 
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center">

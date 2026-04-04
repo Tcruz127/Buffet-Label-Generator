@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
@@ -110,8 +111,8 @@ export default async function AppDashboardPage() {
         <div className="mb-8 rounded-[2rem] border border-slate-200/80 bg-white/85 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur xl:p-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div className="max-w-3xl">
-              <div className="mb-4 inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-sm font-medium text-cyan-700">
-                Buffet Label Generator Workspace
+              <div className="mb-4">
+                <Image src="/logo-dark.svg" alt="Instabels" width={200} height={37} />
               </div>
 
               <h1 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
