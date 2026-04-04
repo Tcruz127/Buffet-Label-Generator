@@ -25,17 +25,35 @@ export default async function SheetEditorPage({ params }: PageProps) {
   // Find the user and their org membership so we can allow access to org sheets.
   const currentUser = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { id: true },
+    select: {
+      id: true,
+      subscriptionStatus: true,
+      memberships: {
+        select: {
+          role: true,
+          organization: {
+            select: {
+              members: {
+                select: {
+                  role: true,
+                  user: { select: { subscriptionStatus: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!currentUser) {
     redirect("/login");
   }
 
-  const membership = await db.organizationMember.findFirst({
-    where: { userId: currentUser.id },
-    select: { organizationId: true },
-  });
+  const { isOrgProUser } = await import("@/lib/plan");
+  const isPro = isOrgProUser(currentUser.subscriptionStatus, currentUser.memberships);
+
+  const membership = currentUser.memberships[0] ?? null;
 
   const sheet = await db.labelSheet.findFirst({
     where: {
@@ -69,5 +87,5 @@ export default async function SheetEditorPage({ params }: PageProps) {
     })),
   } as any;
 
-  return <EditorFrame sheet={safeSheet} />;
+  return <EditorFrame sheet={safeSheet} isPro={isPro} />;
 }

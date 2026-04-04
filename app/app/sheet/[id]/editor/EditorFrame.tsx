@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import UpgradeModal from "@/app/app/UpgradeModal";
 
 type LabelData = {
   id?: string;
@@ -142,7 +143,7 @@ function uniqueStrings(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
-export default function EditorFrame({ sheet }: { sheet: SheetData }) {
+export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData; isPro?: boolean }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuFileInputRef = useRef<HTMLInputElement>(null);
@@ -166,6 +167,8 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     []
   );
   const [parsedMenuRawText, setParsedMenuRawText] = useState("");
+
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const [isChefBotModalOpen, setIsChefBotModalOpen] = useState(false);
   const [isChefBotAnalyzing, setIsChefBotAnalyzing] = useState(false);
@@ -833,18 +836,24 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={openMenuUpload}
+                  onClick={() => {
+                    if (!isPro) { setIsUpgradeModalOpen(true); return; }
+                    openMenuUpload();
+                  }}
                   className="inline-flex items-center justify-center rounded-full border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-800 shadow-sm transition hover:bg-violet-100"
                 >
-                  Upload Menu
+                  {!isPro && <span className="mr-1.5">🔒</span>}Upload Menu
                 </button>
 
                 <button
                   type="button"
-                  onClick={openChefBot}
+                  onClick={() => {
+                    if (!isPro) { setIsUpgradeModalOpen(true); return; }
+                    openChefBot();
+                  }}
                   className="inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition hover:bg-amber-100"
                 >
-                  Analyze with Chef Bot
+                  {!isPro && <span className="mr-1.5">🔒</span>}Analyze with Chef Bot
                 </button>
 
                 <div
@@ -1070,6 +1079,11 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
           </div>
         </div>
       ) : null}
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+      />
 
       {isChefBotModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
