@@ -26,6 +26,10 @@ export async function signUpAction(formData: FormData) {
 
   const password = parsed.data.password;
 
+  const raw = formData.get("callbackUrl");
+  const redirectTo =
+    typeof raw === "string" && raw.startsWith("/") ? raw : "/app";
+
   const { prisma } = await import("../../lib/prisma");
 
   const existing = await prisma.user.findUnique({
@@ -49,6 +53,6 @@ export async function signUpAction(formData: FormData) {
   await signIn("credentials", {
     email,
     password,
-    redirectTo: "/app",
+    redirectTo,
   });
 }

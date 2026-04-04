@@ -6,10 +6,12 @@ import { signIn, signOut } from "../../auth";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ error?: string }>;
+  searchParams?: Promise<{ error?: string; redirect?: string }>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const error = resolvedSearchParams?.error;
+  const rawRedirect = resolvedSearchParams?.redirect ?? "";
+  const callbackUrl = rawRedirect.startsWith("/") ? rawRedirect : "";
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
@@ -89,6 +91,9 @@ export default async function LoginPage({
 
     const email = formData.get("email");
     const password = formData.get("password");
+    const raw = formData.get("callbackUrl");
+    const redirectTo =
+      typeof raw === "string" && raw.startsWith("/") ? raw : "/app";
 
     await signOut({ redirect: false });
 
@@ -99,11 +104,14 @@ export default async function LoginPage({
         redirect: false,
       });
 
-      redirect("/app");
+      redirect(redirectTo);
     } catch (error) {
       if (error instanceof AuthError) {
         if (error.type === "CredentialsSignin") {
-          redirect("/login?error=invalid");
+          const errorRedirect = callbackUrl
+            ? `/login?error=invalid&redirect=${encodeURIComponent(callbackUrl)}`
+            : "/login?error=invalid";
+          redirect(errorRedirect);
         }
       }
 
@@ -139,6 +147,10 @@ export default async function LoginPage({
                     />
                   </div>
 
+                  {callbackUrl && (
+                    <input type="hidden" name="callbackUrl" value={callbackUrl} />
+                  )}
+
                   <button className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-cyan-500/25 transition hover:scale-[1.01]">
                     Sign in
                   </button>
@@ -147,7 +159,7 @@ export default async function LoginPage({
                 <p className="mt-6 text-center text-sm text-slate-300">
                   Don&apos;t have an account?{" "}
                   <Link
-                    href="/signup"
+                    href={callbackUrl ? `/signup?redirect=${encodeURIComponent(callbackUrl)}` : "/signup"}
                     className="font-semibold text-cyan-300 transition hover:text-cyan-200"
                   >
                     Create one

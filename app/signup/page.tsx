@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { signUpAction } from "./actions";
 
-export default function SignUpPage() {
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ redirect?: string }>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const rawRedirect = resolvedSearchParams?.redirect ?? "";
+  const callbackUrl = rawRedirect.startsWith("/") ? rawRedirect : "";
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <div className="absolute inset-0 -z-10">
@@ -106,6 +113,10 @@ export default function SignUpPage() {
                     />
                   </div>
 
+                  {callbackUrl && (
+                    <input type="hidden" name="callbackUrl" value={callbackUrl} />
+                  )}
+
                   <button className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-cyan-500/25 transition hover:scale-[1.01]">
                     Create account
                   </button>
@@ -114,7 +125,7 @@ export default function SignUpPage() {
                 <p className="mt-6 text-center text-sm text-slate-300">
                   Already have an account?{" "}
                   <Link
-                    href="/login"
+                    href={callbackUrl ? `/login?redirect=${encodeURIComponent(callbackUrl)}` : "/login"}
                     className="font-semibold text-cyan-300 transition hover:text-cyan-200"
                   >
                     Sign in
