@@ -481,6 +481,13 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
     setParsedMenuRawText("");
 
     try {
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error(
+          "File is too large. Please upload a file under 10MB."
+        );
+      }
+
       const formData = new FormData();
       formData.append("file", file);
 
@@ -489,7 +496,20 @@ export default function EditorFrame({ sheet }: { sheet: SheetData }) {
         body: formData,
       });
 
-      const result = (await response.json()) as ParsedMenuResponse;
+      let result: ParsedMenuResponse;
+      const responseText = await response.text();
+      try {
+        result = JSON.parse(responseText) as ParsedMenuResponse;
+      } catch {
+        if (response.status === 413) {
+          throw new Error(
+            "File is too large for the server to process. Please try a smaller file."
+          );
+        }
+        throw new Error(
+          `Unexpected server response (${response.status}). Please try again.`
+        );
+      }
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || "Menu parsing failed.");
