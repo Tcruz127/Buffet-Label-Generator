@@ -10,7 +10,7 @@ const features = [
   {
     title: "Save every sheet",
     description:
-      "Keep event setups organized and return to them anytime from your private Instabels Workspace.",
+      "Keep event setups organized and return to them anytime from your private Instabels workspace.",
   },
   {
     title: "Customize every detail",
@@ -23,14 +23,19 @@ const features = [
       "Use Avery-friendly layouts and PDF-friendly printing with confidence.",
   },
   {
-    title: "Made for real operations",
+    title: "Import menus instantly",
     description:
-      "Built for caterers, banquet teams, wedding venues, resorts, and hospitality groups.",
+      "Upload a PDF or Word document and Instabels extracts your menu items automatically — no manual re-typing.",
   },
   {
-    title: "Autosave built in",
+    title: "Chef Bot allergen analysis",
     description:
-      "Changes save in the background so your team can move quickly without losing work.",
+      "AI-powered ingredient scanning detects allergens and dietary flags across your entire sheet in seconds.",
+  },
+  {
+    title: "Team collaboration built in",
+    description:
+      "Create an organization, invite your team, and share label sheets across your entire operation.",
   },
 ];
 
@@ -45,6 +50,11 @@ const industries = [
 
 const faqItems = [
   {
+    question: "What are the limits on the free plan?",
+    answer:
+      "The free plan includes up to 3 saved label sheets with up to 20 labels per sheet. You can edit food names, allergens, dietary tags, and print or export to PDF at no cost.",
+  },
+  {
     question: "Can I save my label sheets and reopen them later?",
     answer:
       "Yes. Every sheet is saved to your account so you can reopen, edit, duplicate, and print it again whenever needed.",
@@ -52,12 +62,17 @@ const faqItems = [
   {
     question: "Can I add logos and branding?",
     answer:
-      "Yes. You can upload your logo, position it on the labels, and save that branding setup with the sheet.",
+      "Yes, on the Pro plan. You can upload your logo, position it on the labels, and save that branding setup with the sheet.",
   },
   {
     question: "Does it support allergens and dietary notes?",
     answer:
-      "Yes. Each label can include dietary and allergen information, and those selections are saved with the sheet.",
+      "Yes. Each label can include dietary and allergen information, and those selections are saved with the sheet. Pro users can also run Chef Bot to automatically scan and suggest allergen flags across an entire sheet.",
+  },
+  {
+    question: "Can my team share label sheets?",
+    answer:
+      "Yes, on the Pro plan. You can create an organization, invite team members by email, and share sheets across your entire team from one workspace.",
   },
   {
     question: "Can I print directly or save as PDF?",
@@ -119,9 +134,11 @@ export default function HomePage() {
               </h1>
 
               <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">
-                Create, save, edit, and print polished buffet labels from one
-                beautiful workspace. Instabels is built for hospitality teams
-                that need fast output without sacrificing presentation.
+                Create, save, and print polished buffet labels from one
+                beautiful workspace. Import menus from PDF or Word, detect
+                allergens instantly with Chef Bot, and share sheets across your
+                entire team — built for hospitality operations that can't afford
+                to slow down.
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -368,16 +385,16 @@ export default function HomePage() {
               </div>
 
               <p className="mt-4 text-sm leading-7 text-slate-600">
-                Explore the workflow, create label sheets, and experience the
-                editor before moving to a paid plan.
+                Get started at no cost and explore the full editor before
+                committing to a plan.
               </p>
 
               <div className="mt-8 space-y-3">
                 {[
-                  "Create and save buffet label sheets",
-                  "Edit titles, menu items, allergens, and styles",
-                  "Print and save as PDF",
-                  "Ideal for testing your workflow",
+                  "Up to 3 saved label sheets",
+                  "Up to 20 labels per sheet",
+                  "Edit food names, allergens & dietary tags",
+                  "Print-ready output & PDF export",
                 ].map((feature) => (
                   <div
                     key={feature}
@@ -426,11 +443,13 @@ export default function HomePage() {
 
                 <div className="mt-8 space-y-3">
                   {[
-                    "Everything in the free plan",
+                    "Everything in Free",
                     "Unlimited saved sheets",
-                    "Full editor workflow with autosave",
-                    "Logo, styling, allergen, and print support",
-                    "Ready for real hospitality operations",
+                    "Unlimited labels per sheet",
+                    "Upload Menu — import from PDF or Word",
+                    "Chef Bot — AI allergen & dietary analysis",
+                    "Custom logo upload & branding",
+                    "Team accounts with member invites",
                   ].map((feature) => (
                     <div
                       key={feature}
@@ -481,10 +500,10 @@ export default function HomePage() {
                 <div className="mt-8 space-y-3">
                   {[
                     "Everything in Pro Monthly",
-                    "Simpler annual budgeting",
-                    "Better fit for business accounts",
-                    "Great for hotels, venues, and caterers",
-                    "Same full Pro access",
+                    "~$50 savings vs monthly billing",
+                    "Simplified annual budgeting",
+                    "Perfect for business accounts & invoicing",
+                    "Ideal for hotels, venues & caterers",
                   ].map((feature) => (
                     <div
                       key={feature}
