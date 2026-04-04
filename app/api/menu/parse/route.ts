@@ -3,6 +3,7 @@ import mammoth from "mammoth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 type ParsedMenuItem = {
   title: string;
