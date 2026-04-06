@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import PricingSection from "./PricingSection";
 
 export default function UpgradeModal({
@@ -21,9 +22,9 @@ export default function UpgradeModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" />
@@ -42,6 +43,7 @@ export default function UpgradeModal({
 
         <PricingSection />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

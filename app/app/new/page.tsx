@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import UpgradeProButton from "./UpgradeProButton";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -528,12 +529,7 @@ export default async function NewSheetPage({
                       </p>
 
                       <div className="flex flex-wrap gap-3">
-                        <Link
-                          href="/app"
-                          className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
-                        >
-                          Upgrade to Pro
-                        </Link>
+                        <UpgradeProButton />
 
                         <Link
                           href="/app"

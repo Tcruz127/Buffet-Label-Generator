@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
-import UpgradeButton from "./UpgradeButton";
+import UpgradeModalButton from "./UpgradeModalButton";
 import ManageBillingButton from "./ManageBillingButton";
 import SheetActionsMenu from "./SheetActionsMenu";
 import CreateOrgButton from "./CreateOrgButton";
@@ -366,7 +366,7 @@ export default async function AppDashboardPage({
 
                 <div className="space-y-3 p-4">
                   <div className="[&_button]:w-full">
-                    {isPro ? <ManageBillingButton /> : <UpgradeButton />}
+                    {isPro ? <ManageBillingButton /> : <UpgradeModalButton />}
                   </div>
 
                   <form
