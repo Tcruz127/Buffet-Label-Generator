@@ -9,6 +9,7 @@ type ParsedMenuItem = {
   title: string;
   description: string;
   raw: string;
+  section?: string;
 };
 
 type ParsedMenuResponse = {
@@ -67,6 +68,45 @@ const SECTION_HEADER_PATTERNS = [
   /^dessert.*$/i,
   /^entre[ée]s$/i,
   /^vinaigrette$/i,
+
+  // Course numbers (fine dining tasting menus)
+  /^one$/i,
+  /^two$/i,
+  /^three$/i,
+  /^four$/i,
+  /^five$/i,
+  /^six$/i,
+  /^seven$/i,
+  /^eight$/i,
+
+  // Fine dining course names
+  /^caviar$/i,
+  /^chef'?s tasting menu$/i,
+  /^tasting menu$/i,
+  /^amuse(-| )?bouche$/i,
+  /^intermezzo$/i,
+  /^palate cleanser$/i,
+  /^pre-?fixe?$/i,
+  /^prix fixe$/i,
+  /^à la carte$/i,
+  /^a la carte$/i,
+  /^raw bar$/i,
+  /^charcuterie$/i,
+  /^cheese course$/i,
+  /^cheese$/i,
+  /^bread( service)?$/i,
+  /^starters?$/i,
+  /^first course$/i,
+  /^second course$/i,
+  /^third course$/i,
+  /^fourth course$/i,
+  /^fifth course$/i,
+  /^fish( course)?$/i,
+  /^meat( course)?$/i,
+  /^poultry$/i,
+  /^pasta$/i,
+  /^soup$/i,
+  /^salad$/i,
 ];
 
 const IGNORE_LINE_PATTERNS = [
@@ -107,6 +147,8 @@ const IGNORE_LINE_PATTERNS = [
   /^emerald ballroom\b/i,
   /^easter brunch$/i,
   /^\{all prices/i,
+
+  /^(executive chef|chef de cuisine|chef de partie|sous chef|pastry chef|sommelier|mâitre d'|maître d'|general manager|beverage director|bar manager|food and beverage)$/i,
 
   /^banquet event order$/i,
   /^this beo was printed/i,
@@ -341,8 +383,10 @@ function splitDishAndDescription(
     };
   }
 
+  // Match "Dish Name, description ingredients" — whitespace required AFTER the comma/pipe,
+  // not before (most menus write "Dish, ingredient" not "Dish , ingredient").
   const pipeOrCommaSplit = withoutTags.match(
-    /^(.{3,60}?)\s+(?:\||,)\s*(.+)$/
+    /^(.{3,45}?)(?:\||,)\s+(.{4,}.*)$/
   );
 
   if (pipeOrCommaSplit) {
@@ -488,40 +532,49 @@ function extractMenuItemsFromText(rawText: string): ParsedMenuItem[] {
     .map((line) => cleanDishName(line))
     .filter(Boolean);
 
-  lines = lines.filter((line) => {
-    if (looksLikePriceOrJunk(line)) return false;
-    if (isSectionHeader(line)) return false;
-    return true;
-  });
+  // Track sections while filtering instead of discarding headers entirely
+  const linesWithSections: Array<{ line: string; section: string }> = [];
+  let currentSection = "";
 
-  const merged: string[] = [];
+  for (const line of lines) {
+    if (looksLikePriceOrJunk(line)) continue;
+    if (isSectionHeader(line)) {
+      currentSection = toTitleCase(line.replace(/[:•·-]+$/g, "").trim());
+      continue;
+    }
+    linesWithSections.push({ line, section: currentSection });
+  }
 
   function isContinuationLine(line: string): boolean {
     if (!line) return false;
-    if (/^[a-z]/.test(line)) return true;
-    if (/^or\s+/i.test(line)) return true;
     if (/^\|/.test(line)) return true;
+    if (/^or\s+/i.test(line)) return true;
     return false;
   }
 
-  for (const line of lines) {
+  const merged: Array<{ line: string; section: string }> = [];
+
+  for (const entry of linesWithSections) {
     if (!merged.length) {
-      merged.push(line);
+      merged.push(entry);
       continue;
     }
 
-    if (isContinuationLine(line)) {
-      merged[merged.length - 1] += " " + line;
+    if (isContinuationLine(entry.line)) {
+      merged[merged.length - 1] = {
+        line: merged[merged.length - 1].line + " " + entry.line,
+        section: merged[merged.length - 1].section,
+      };
       continue;
     }
 
-    merged.push(line);
+    merged.push(entry);
   }
 
   const items: ParsedMenuItem[] = [];
 
   for (const entry of merged) {
-    const cleaned = entry.replace(/\s{2,}/g, " ").trim();
+    const cleaned = entry.line.replace(/\s{2,}/g, " ").trim();
     if (!cleaned) continue;
 
     const { title, description } = splitDishAndDescription(cleaned);
@@ -531,10 +584,11 @@ function extractMenuItemsFromText(rawText: string): ParsedMenuItem[] {
       title,
       description,
       raw: cleaned,
+      section: entry.section || undefined,
     });
   }
 
-  return dedupePreserveOrder(items).slice(0, 200);
+  return dedupePreserveOrder(items).slice(0, 500);
 }
 
 async function extractTextFromTxt(fileBuffer: Buffer): Promise<string> {
@@ -544,6 +598,71 @@ async function extractTextFromTxt(fileBuffer: Buffer): Promise<string> {
 async function extractTextFromDocx(fileBuffer: Buffer): Promise<string> {
   const result = await mammoth.extractRawText({ buffer: fileBuffer });
   return result.value || "";
+}
+
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === "," && !inQuotes) {
+      result.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+async function extractTextFromCsv(fileBuffer: Buffer): Promise<ParsedMenuItem[]> {
+  const text = fileBuffer.toString("utf-8");
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const items: ParsedMenuItem[] = [];
+  let currentSection = "";
+  let isFirstRow = true;
+
+  for (const line of lines) {
+    const columns = parseCsvLine(line);
+    if (!columns.length) continue;
+
+    const rawTitle = columns[0]?.trim() ?? "";
+    const rawDescription = columns[1]?.trim() ?? "";
+
+    if (!rawTitle) continue;
+
+    // Skip common header rows
+    if (isFirstRow && /^(name|item|dish|food|menu\s*item|title)$/i.test(rawTitle)) {
+      isFirstRow = false;
+      continue;
+    }
+    isFirstRow = false;
+
+    // Single-column lines that match section patterns become section headers
+    if (!rawDescription && isSectionHeader(rawTitle)) {
+      currentSection = toTitleCase(rawTitle.replace(/[:•·-]+$/g, "").trim());
+      continue;
+    }
+
+    items.push({
+      title: toTitleCase(rawTitle),
+      description: rawDescription,
+      raw: line,
+      section: currentSection || undefined,
+    });
+  }
+
+  return dedupePreserveOrder(items).slice(0, 500);
 }
 
 async function extractTextFromPdf(fileBuffer: Buffer): Promise<string> {
@@ -578,6 +697,17 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
+    // CSV is handled separately — items are parsed directly from structured columns
+    if (extension === "csv") {
+      const csvItems = await extractTextFromCsv(fileBuffer);
+      return NextResponse.json<ParsedMenuResponse>({
+        success: true,
+        fileName,
+        rawText: normalizeWhitespace(fileBuffer.toString("utf-8")),
+        items: csvItems,
+      });
+    }
+
     let rawText = "";
 
     if (extension === "txt") {
@@ -586,11 +716,21 @@ export async function POST(request: Request) {
       rawText = await extractTextFromDocx(fileBuffer);
     } else if (extension === "pdf") {
       rawText = await extractTextFromPdf(fileBuffer);
+      if (rawText.replace(/\s/g, "").length < 80) {
+        return NextResponse.json<ParsedMenuResponse>(
+          {
+            success: false,
+            error:
+              "This PDF appears to be scanned or image-based and couldn't be read as text. Please export a digital PDF from your word processor, or copy and paste the menu text into a .txt file.",
+          },
+          { status: 400 }
+        );
+      }
     } else {
       return NextResponse.json<ParsedMenuResponse>(
         {
           success: false,
-          error: "Unsupported file type. Please upload a PDF, DOCX, or TXT file.",
+          error: "Unsupported file type. Please upload a PDF, DOCX, TXT, or CSV file.",
         },
         { status: 400 }
       );

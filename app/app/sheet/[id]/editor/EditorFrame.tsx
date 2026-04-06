@@ -47,6 +47,7 @@ type ParsedMenuItem = {
   title: string;
   description: string;
   raw: string;
+  section?: string;
 };
 
 type ParsedMenuResponse = {
@@ -168,6 +169,9 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
     []
   );
   const [parsedMenuRawText, setParsedMenuRawText] = useState("");
+  const [editedItems, setEditedItems] = useState<Record<string, { title: string; description: string }>>({});
+  const [editingItemKey, setEditingItemKey] = useState<string | null>(null);
+  const [importMode, setImportMode] = useState<"replace" | "merge">("replace");
 
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
@@ -182,6 +186,20 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
     () => normalizeSheetPayload(currentSheet),
     [currentSheet]
   );
+
+  const groupedMenuItems = useMemo(() => {
+    const groups: Array<{ section: string; items: ParsedMenuItem[] }> = [];
+    for (const item of parsedMenuItems) {
+      const sectionName = item.section ?? "";
+      const lastGroup = groups[groups.length - 1];
+      if (lastGroup && lastGroup.section === sectionName) {
+        lastGroup.items.push(item);
+      } else {
+        groups.push({ section: sectionName, items: [item] });
+      }
+    }
+    return groups;
+  }, [parsedMenuItems]);
 
   const latestEditorPayloadRef = useRef<{
     eventName?: string;
@@ -483,6 +501,9 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
     setParsedMenuItems([]);
     setSelectedMenuItemKeys([]);
     setParsedMenuRawText("");
+    setEditedItems({});
+    setEditingItemKey(null);
+    setImportMode("replace");
 
     try {
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -554,16 +575,25 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
       return;
     }
 
+    const incomingLabels: NormalizedLabel[] = selectedItems.map((item) => {
+      const key = getParsedMenuItemKey(item);
+      const edited = editedItems[key];
+      return {
+        title: (edited?.title ?? item.title).trim(),
+        description: (edited?.description ?? item.description).trim(),
+        diets: [],
+      };
+    });
+
+    const existingLabels: NormalizedLabel[] =
+      importMode === "merge" ? (normalizedSheetPayload.labels ?? []) : [];
+
+    const nextLabels: NormalizedLabel[] = [...existingLabels, ...incomingLabels];
+
     const nextTotalLabels = Math.max(
       10,
-      Math.ceil(selectedItems.length / 10) * 10
+      Math.ceil(nextLabels.length / 10) * 10
     );
-
-    const nextLabels: NormalizedLabel[] = selectedItems.map((item) => ({
-      title: item.title.trim(),
-      description: item.description.trim(),
-      diets: [],
-    }));
 
     const nextSheet: SheetData = {
       ...currentSheet,
@@ -806,7 +836,7 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
 
   return (
     <>
-      <div className="flex h-screen flex-col overflow-hidden bg-[linear-gradient(to_bottom,#f8fbff_0%,#f4f7fb_55%,#ffffff_100%)]">
+<div className="flex h-screen flex-col overflow-hidden bg-[linear-gradient(to_bottom,#f8fbff_0%,#f4f7fb_55%,#ffffff_100%)]">
         <div className="shrink-0 px-4 pt-4 lg:px-6">
           <div className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
             <div className="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-6">
@@ -892,7 +922,7 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
       <input
         ref={menuFileInputRef}
         type="file"
-        accept=".pdf,.docx,.txt"
+        accept=".pdf,.docx,.txt,.csv"
         className="hidden"
         onChange={handleMenuFileChange}
       />
@@ -995,44 +1025,140 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                     <div className="min-h-0 flex-1 overflow-auto rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
                       {parsedMenuItems.length === 0 && !menuParseError ? (
                         <div className="flex h-full min-h-[240px] items-center justify-center text-center text-sm text-slate-500">
-                          Upload a PDF, DOCX, or TXT menu to extract dishes.
+                          Upload a PDF, DOCX, TXT, or CSV menu to extract dishes.
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 gap-2">
-                          {parsedMenuItems.map((item, index) => {
-                            const itemKey = getParsedMenuItemKey(item);
-                            const isSelected =
-                              selectedMenuItemKeys.includes(itemKey);
-
-                            return (
-                              <label
-                                key={`${itemKey}-${index}`}
-                                className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 transition ${
-                                  isSelected
-                                    ? "border-violet-300 bg-violet-50"
-                                    : "border-slate-200 bg-white hover:bg-slate-50"
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() => toggleMenuItemSelection(item)}
-                                  className="mt-1 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                                />
-                                <div className="min-w-0">
-                                  <div className="break-words text-sm font-semibold text-slate-900">
-                                    {item.title}
-                                  </div>
-
-                                  {item.description ? (
-                                    <div className="mt-1 break-words text-sm text-slate-500">
-                                      {item.description}
-                                    </div>
-                                  ) : null}
+                          {groupedMenuItems.map((group, groupIndex) => (
+                            <div key={`${group.section || "__unsectioned__"}-${groupIndex}`}>
+                              {group.section ? (
+                                <div className="mb-1 mt-3 px-1 text-xs font-bold uppercase tracking-widest text-slate-400 first:mt-0">
+                                  {group.section}
                                 </div>
-                              </label>
-                            );
-                          })}
+                              ) : null}
+                              {group.items.map((item, index) => {
+                                const itemKey = getParsedMenuItemKey(item);
+                                const isSelected = selectedMenuItemKeys.includes(itemKey);
+                                const isEditing = editingItemKey === itemKey;
+                                const edited = editedItems[itemKey];
+                                const displayTitle = edited?.title ?? item.title;
+                                const displayDescription = edited?.description ?? item.description;
+
+                                return (
+                                  <div
+                                    key={`${itemKey}-${index}`}
+                                    className={`mb-2 rounded-2xl border px-4 py-3 transition ${
+                                      isSelected
+                                        ? "border-violet-300 bg-violet-50"
+                                        : "border-slate-200 bg-white"
+                                    }`}
+                                  >
+                                    {isEditing ? (
+                                      <div className="flex flex-col gap-2">
+                                        <input
+                                          type="text"
+                                          value={editedItems[itemKey]?.title ?? item.title}
+                                          onChange={(e) =>
+                                            setEditedItems((prev) => ({
+                                              ...prev,
+                                              [itemKey]: {
+                                                title: e.target.value,
+                                                description: prev[itemKey]?.description ?? item.description,
+                                              },
+                                            }))
+                                          }
+                                          placeholder="Dish name"
+                                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                                        />
+                                        <input
+                                          type="text"
+                                          value={editedItems[itemKey]?.description ?? item.description}
+                                          onChange={(e) =>
+                                            setEditedItems((prev) => ({
+                                              ...prev,
+                                              [itemKey]: {
+                                                title: prev[itemKey]?.title ?? item.title,
+                                                description: e.target.value,
+                                              },
+                                            }))
+                                          }
+                                          placeholder="Description (optional)"
+                                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                                        />
+                                        <div className="flex gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditingItemKey(null)}
+                                            className="rounded-full bg-violet-600 px-3 py-1 text-xs font-semibold text-white hover:bg-violet-700"
+                                          >
+                                            Done
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditedItems((prev) => {
+                                                const next = { ...prev };
+                                                delete next[itemKey];
+                                                return next;
+                                              });
+                                              setEditingItemKey(null);
+                                            }}
+                                            className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                          >
+                                            Reset
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="flex cursor-pointer items-start gap-3" onClick={() => toggleMenuItemSelection(item)}>
+                                        <input
+                                          type="checkbox"
+                                          checked={isSelected}
+                                          onChange={() => toggleMenuItemSelection(item)}
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <div className="break-words text-sm font-semibold text-slate-900">
+                                              {displayTitle}
+                                              {edited ? (
+                                                <span className="ml-1.5 text-xs font-normal text-violet-500">(edited)</span>
+                                              ) : null}
+                                            </div>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (!editedItems[itemKey]) {
+                                                  setEditedItems((prev) => ({
+                                                    ...prev,
+                                                    [itemKey]: { title: item.title, description: item.description },
+                                                  }));
+                                                }
+                                                setEditingItemKey(itemKey);
+                                              }}
+                                              className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                              title="Edit this item"
+                                            >
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                              </svg>
+                                            </button>
+                                          </div>
+                                          {displayDescription ? (
+                                            <div className="mt-1 break-words text-sm text-slate-500">
+                                              {displayDescription}
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -1056,11 +1182,36 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                   </div>
 
                   <div className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-5">
-                    <div className="text-sm text-slate-600">
-                      Importing will replace the current label names and
-                      ingredient lines in this sheet with the selected menu
-                      items.
+                    <div className="flex gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1">
+                      <button
+                        type="button"
+                        onClick={() => setImportMode("replace")}
+                        className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                          importMode === "replace"
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        Replace all labels
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImportMode("merge")}
+                        className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                          importMode === "merge"
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        Add to existing labels
+                      </button>
                     </div>
+
+                    <p className="text-xs text-slate-500">
+                      {importMode === "replace"
+                        ? "Selected items will replace all current labels in this sheet."
+                        : "Selected items will be appended after the labels already in this sheet."}
+                    </p>
 
                     <button
                       type="button"
@@ -1070,7 +1221,8 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                       }
                       className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Import {selectedMenuItemKeys.length} Item
+                      {importMode === "replace" ? "Import" : "Add"}{" "}
+                      {selectedMenuItemKeys.length} Item
                       {selectedMenuItemKeys.length === 1 ? "" : "s"} Into Labels
                     </button>
                   </div>
