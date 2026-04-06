@@ -579,25 +579,22 @@ export default function HomePage() {
                 <p className="mt-4 max-w-xl text-lg leading-8 text-slate-600">
                   Whether you're evaluating Instabels for your team, need help
                   with billing, or have a question about a specific feature —
-                  we're happy to help. We typically respond within one business
-                  day.
+                  we're happy to help.
                 </p>
               </div>
 
-              <div className="flex shrink-0 flex-col gap-3 sm:flex-row lg:flex-col">
-                <a
-                  href="mailto:tbcbusiness127@gmail.com"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <div className="flex shrink-0 flex-col items-start gap-3 lg:items-center">
+                <div className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+                  <svg className="h-5 w-5 shrink-0 text-cyan-500" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
                     <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
                   </svg>
-                  Send us an email
-                </a>
-
-                <p className="text-center text-xs text-slate-400 lg:text-center">
-                  tbcbusiness127@gmail.com
+                  <span className="text-sm font-semibold text-slate-900 select-all">
+                    tbcbusiness127@gmail.com
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  We typically respond within one business day.
                 </p>
               </div>
             </div>
