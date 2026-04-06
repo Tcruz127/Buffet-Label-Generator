@@ -566,6 +566,46 @@ export default function HomePage() {
       </section>
 
       <section className="bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
+          <div className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-slate-50 p-10 md:p-14">
+            <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600">
+                  Get in touch
+                </p>
+                <h2 className="mt-3 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
+                  Have a question before you sign up?
+                </h2>
+                <p className="mt-4 max-w-xl text-lg leading-8 text-slate-600">
+                  Whether you're evaluating Instabels for your team, need help
+                  with billing, or have a question about a specific feature —
+                  we're happy to help. We typically respond within one business
+                  day.
+                </p>
+              </div>
+
+              <div className="flex shrink-0 flex-col gap-3 sm:flex-row lg:flex-col">
+                <a
+                  href="mailto:tbcbusiness127@gmail.com"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
+                    <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
+                  </svg>
+                  Send us an email
+                </a>
+
+                <p className="text-center text-xs text-slate-400 lg:text-center">
+                  tbcbusiness127@gmail.com
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white">
         <div className="mx-auto max-w-7xl px-6 pb-16 lg:px-8">
           <div className="overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-cyan-500 via-sky-500 to-violet-500 p-[1px] shadow-2xl shadow-cyan-500/20">
             <div className="rounded-[2.45rem] bg-slate-950 px-8 py-12 text-white md:px-12">
@@ -603,24 +643,41 @@ export default function HomePage() {
       </section>
 
 <footer className="border-t border-slate-200 bg-white text-slate-500">
-  <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm md:flex-row md:items-center md:justify-between lg:px-8">
-    
-    <p>© 2026 Instabels. All rights reserved.</p>
+  <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
+    <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
 
-    <div className="flex items-center gap-5">
-      <Link href="/terms" className="transition hover:text-slate-900">
-        Terms
-      </Link>
+      <div>
+        <Image src="/logo-dark.svg" alt="Instabels" width={130} height={24} />
+        <p className="mt-3 max-w-xs text-sm leading-6 text-slate-500">
+          Professional buffet labeling for hospitality teams.
+        </p>
+      </div>
 
-      <Link href="/privacy" className="transition hover:text-slate-900">
-        Privacy
-      </Link>
+      <div className="flex flex-wrap gap-10 text-sm">
+        <div className="flex flex-col gap-2">
+          <p className="font-semibold uppercase tracking-[0.14em] text-slate-400 text-xs">Product</p>
+          <Link href="/signup" className="transition hover:text-slate-900">Get started free</Link>
+          <Link href="/login" className="transition hover:text-slate-900">Sign in</Link>
+          <Link href="/#pricing" className="transition hover:text-slate-900">Pricing</Link>
+        </div>
 
-      <Link href="/contact" className="transition hover:text-slate-900">
-        Contact
-      </Link>
+        <div className="flex flex-col gap-2">
+          <p className="font-semibold uppercase tracking-[0.14em] text-slate-400 text-xs">Support</p>
+          <a href="mailto:tbcbusiness127@gmail.com" className="transition hover:text-slate-900">Contact us</a>
+          <Link href="/login" className="transition hover:text-slate-900">Dashboard</Link>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <p className="font-semibold uppercase tracking-[0.14em] text-slate-400 text-xs">Legal</p>
+          <Link href="/terms" className="transition hover:text-slate-900">Terms</Link>
+          <Link href="/privacy" className="transition hover:text-slate-900">Privacy</Link>
+        </div>
+      </div>
     </div>
 
+    <div className="mt-8 border-t border-slate-100 pt-6 text-xs text-slate-400">
+      © {new Date().getFullYear()} Instabels. All rights reserved.
+    </div>
   </div>
 </footer>
     </main>
