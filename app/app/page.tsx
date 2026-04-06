@@ -10,6 +10,7 @@ import SheetActionsMenu from "./SheetActionsMenu";
 import CreateOrgButton from "./CreateOrgButton";
 import FolderBar from "./FolderBar";
 import { isOrgProUser } from "@/lib/plan";
+import { resendVerificationEmail } from "./resendVerification";
 
 function getInitials(name?: string | null, email?: string | null) {
   const source = name?.trim() || email?.trim() || "A";
@@ -46,13 +47,14 @@ export default async function AppDashboardPage({
 
   const { prisma } = await import("@/lib/prisma");
 
-  const user = await prisma.user.findUnique({
+  const user = await (prisma as any).user.findUnique({
     where: { email: session.user.email },
     select: {
       id: true,
       name: true,
       email: true,
       subscriptionStatus: true,
+      emailVerified: true,
     },
   });
 
@@ -149,6 +151,24 @@ export default async function AppDashboardPage({
   return (
     <main className="min-h-screen bg-[linear-gradient(to_bottom,#f8fbff_0%,#f6f8fc_45%,#ffffff_100%)] text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+        {!user.emailVerified && (
+          <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3.5">
+            <div className="flex items-center gap-3">
+              <svg className="h-5 w-5 shrink-0 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+              </svg>
+              <p className="text-sm font-medium text-amber-800">
+                Please verify your email address to secure your account.
+              </p>
+            </div>
+            <form action={resendVerificationEmail}>
+              <button type="submit" className="shrink-0 rounded-full border border-amber-300 bg-white px-4 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-50">
+                Resend email
+              </button>
+            </form>
+          </div>
+        )}
+
         <div className="relative z-10 mb-8 rounded-[2rem] border border-slate-200/80 bg-white/85 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur xl:p-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div className="max-w-3xl">
