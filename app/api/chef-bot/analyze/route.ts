@@ -34,6 +34,7 @@ type IngredientRuleRecord = {
   containsNuts: boolean;
   containsShellfish: boolean;
   containsSesame: boolean;
+  containsFish: boolean;
   isVegetarian: boolean | null;
   isVegan: boolean | null;
   confidence: string | null;
@@ -63,38 +64,202 @@ const POSSIBLE_NAME_ONLY_RULES: Array<{
   {
     term: "pesto",
     possibleDiets: ["Contains Nuts", "Contains Dairy"],
-    warning:
-      "Pesto often contains nuts and parmesan, but recipe details should be confirmed.",
+    warning: "Pesto often contains nuts and parmesan; recipe details should be confirmed.",
   },
   {
     term: "aioli",
     possibleDiets: ["Contains Eggs"],
-    warning:
-      "Aioli typically contains egg, but recipe details should be confirmed.",
+    warning: "Aioli typically contains egg; recipe details should be confirmed.",
   },
   {
     term: "tempura",
     possibleDiets: ["Contains Gluten", "Contains Eggs"],
-    warning:
-      "Tempura batter often contains wheat and may contain egg; recipe details should be confirmed.",
+    warning: "Tempura batter often contains wheat and may contain egg; recipe details should be confirmed.",
   },
   {
     term: "teriyaki",
     possibleDiets: ["Contains Soy", "Contains Gluten"],
-    warning:
-      "Teriyaki sauce often contains soy sauce and may contain wheat.",
+    warning: "Teriyaki sauce often contains soy sauce and may contain wheat.",
   },
   {
     term: "pizza",
     possibleDiets: ["Contains Gluten"],
-    warning:
-      "Pizza crust typically contains wheat unless explicitly marked gluten free.",
+    warning: "Pizza crust typically contains wheat unless explicitly marked gluten-free.",
   },
   {
     term: "hollandaise",
     possibleDiets: ["Contains Eggs", "Contains Dairy"],
-    warning:
-      "Hollandaise usually contains egg and butter, but recipe details should be confirmed.",
+    warning: "Hollandaise usually contains egg and butter; recipe details should be confirmed.",
+  },
+  {
+    term: "caesar",
+    possibleDiets: ["Contains Eggs", "Contains Fish"],
+    warning: "Traditional Caesar dressing contains egg and anchovy; verify recipe.",
+  },
+  {
+    term: "bisque",
+    possibleDiets: ["Contains Dairy", "Contains Shellfish"],
+    warning: "Bisque is typically a cream-based shellfish soup; verify recipe.",
+  },
+  {
+    term: "bouillabaisse",
+    possibleDiets: ["Contains Shellfish", "Contains Fish"],
+    warning: "Bouillabaisse typically contains shellfish and fish; verify recipe.",
+  },
+  {
+    term: "soufflé",
+    possibleDiets: ["Contains Eggs", "Contains Dairy"],
+    warning: "Soufflé contains egg and dairy; recipe details should be confirmed.",
+  },
+  {
+    term: "souffle",
+    possibleDiets: ["Contains Eggs", "Contains Dairy"],
+    warning: "Soufflé contains egg and dairy; recipe details should be confirmed.",
+  },
+  {
+    term: "béarnaise",
+    possibleDiets: ["Contains Eggs", "Contains Dairy"],
+    warning: "Béarnaise sauce contains egg yolks and clarified butter.",
+  },
+  {
+    term: "bearnaise",
+    possibleDiets: ["Contains Eggs", "Contains Dairy"],
+    warning: "Béarnaise sauce contains egg yolks and clarified butter.",
+  },
+  {
+    term: "schnitzel",
+    possibleDiets: ["Contains Gluten", "Contains Eggs"],
+    warning: "Schnitzel is breaded in wheat breadcrumbs and egg wash; verify recipe.",
+  },
+  {
+    term: "katsu",
+    possibleDiets: ["Contains Gluten", "Contains Eggs"],
+    warning: "Katsu is breaded in panko and egg; verify recipe.",
+  },
+  {
+    term: "tonkatsu",
+    possibleDiets: ["Contains Gluten", "Contains Eggs"],
+    warning: "Tonkatsu is breaded in panko and egg; verify recipe.",
+  },
+  {
+    term: "pad thai",
+    possibleDiets: ["Contains Gluten", "Contains Eggs", "Contains Nuts"],
+    warning: "Pad thai often contains soy sauce, egg, and peanuts; verify recipe.",
+  },
+  {
+    term: "satay",
+    possibleDiets: ["Contains Nuts"],
+    warning: "Satay is typically served with peanut sauce; verify recipe.",
+  },
+  {
+    term: "paella",
+    possibleDiets: ["Contains Shellfish", "Contains Fish"],
+    warning: "Paella typically contains shellfish and/or fish; verify recipe.",
+  },
+  {
+    term: "quiche",
+    possibleDiets: ["Contains Eggs", "Contains Dairy", "Contains Gluten"],
+    warning: "Quiche contains egg, dairy, and a wheat pastry crust.",
+  },
+  {
+    term: "risotto",
+    possibleDiets: ["Contains Dairy"],
+    warning: "Risotto is typically finished with butter and parmesan; verify recipe.",
+  },
+  {
+    term: "stroganoff",
+    possibleDiets: ["Contains Dairy"],
+    warning: "Stroganoff typically contains sour cream; verify recipe.",
+  },
+  {
+    term: "croquette",
+    possibleDiets: ["Contains Gluten", "Contains Dairy", "Contains Eggs"],
+    warning: "Croquettes typically contain breadcrumbs, dairy filling, and egg wash.",
+  },
+  {
+    term: "mole",
+    possibleDiets: ["Contains Nuts"],
+    warning: "Mole sauce often contains almonds, peanuts, or other nuts; verify recipe.",
+  },
+  {
+    term: "romesco",
+    possibleDiets: ["Contains Nuts"],
+    warning: "Romesco sauce is typically made with almonds or hazelnuts.",
+  },
+  {
+    term: "profiterole",
+    possibleDiets: ["Contains Gluten", "Contains Dairy", "Contains Eggs"],
+    warning: "Profiteroles are choux pastry filled with cream — contain gluten, dairy, and egg.",
+  },
+  {
+    term: "eclair",
+    possibleDiets: ["Contains Gluten", "Contains Dairy", "Contains Eggs"],
+    warning: "Éclairs are choux pastry filled with cream — contain gluten, dairy, and egg.",
+  },
+  {
+    term: "choux",
+    possibleDiets: ["Contains Gluten", "Contains Dairy", "Contains Eggs"],
+    warning: "Choux pastry contains wheat, butter, and egg.",
+  },
+  {
+    term: "crème brûlée",
+    possibleDiets: ["Contains Eggs", "Contains Dairy"],
+    warning: "Crème brûlée contains cream and egg yolks.",
+  },
+  {
+    term: "creme brulee",
+    possibleDiets: ["Contains Eggs", "Contains Dairy"],
+    warning: "Crème brûlée contains cream and egg yolks.",
+  },
+  {
+    term: "ramen",
+    possibleDiets: ["Contains Gluten"],
+    warning: "Ramen noodles are wheat-based; broth may also contain soy.",
+  },
+  {
+    term: "chimichanga",
+    possibleDiets: ["Contains Gluten"],
+    warning: "Chimichangas are fried in flour tortillas and contain gluten.",
+  },
+  {
+    term: "enchilada",
+    possibleDiets: ["Contains Gluten", "Contains Dairy"],
+    warning: "Enchiladas use flour or corn tortillas and often contain cheese; verify recipe.",
+  },
+  {
+    term: "quesadilla",
+    possibleDiets: ["Contains Gluten", "Contains Dairy"],
+    warning: "Quesadillas use flour tortillas and cheese.",
+  },
+  {
+    term: "burrito",
+    possibleDiets: ["Contains Gluten"],
+    warning: "Burritos are wrapped in flour tortillas and contain gluten.",
+  },
+  {
+    term: "fried chicken",
+    possibleDiets: ["Contains Gluten", "Contains Eggs"],
+    warning: "Fried chicken is typically coated in wheat flour and egg wash.",
+  },
+  {
+    term: "beurre blanc",
+    possibleDiets: ["Contains Dairy"],
+    warning: "Beurre blanc is a butter-based sauce and contains dairy.",
+  },
+  {
+    term: "vol au vent",
+    possibleDiets: ["Contains Gluten", "Contains Dairy"],
+    warning: "Vol-au-vent shells are made from puff pastry containing wheat and butter.",
+  },
+  {
+    term: "borek",
+    possibleDiets: ["Contains Gluten", "Contains Dairy"],
+    warning: "Börek uses phyllo dough and often contains cheese; contains gluten and dairy.",
+  },
+  {
+    term: "spanakopita",
+    possibleDiets: ["Contains Gluten", "Contains Dairy", "Contains Eggs"],
+    warning: "Spanakopita uses phyllo dough and contains feta, egg, gluten, and dairy.",
   },
 ];
 
@@ -252,6 +417,7 @@ function dietsFromRule(rule: IngredientRuleRecord) {
   if (rule.containsNuts) suggested.push("Contains Nuts");
   if (rule.containsShellfish) suggested.push("Contains Shellfish");
   if (rule.containsSesame) suggested.push("Contains Sesame");
+  if (rule.containsFish) suggested.push("Contains Fish");
 
   return suggested;
 }
@@ -451,25 +617,106 @@ async function runLocalRuleAnalysis(params: {
     );
   }
 
-  // extra smart phrase boosts
-  if (containsPhrase(searchText, "flour tortilla")) {
-    if (!suggestedDiets.includes("Contains Gluten")) {
-      suggestedDiets.push("Contains Gluten");
-    }
-    reasoningParts.push("Flour tortilla: treated as gluten-containing.");
-  }
+  // Smart phrase boosts — high-confidence compound ingredient patterns
+  const phraseBoosts: Array<{
+    phrase: string;
+    diets: string[];
+    reasoning: string;
+    cannotVerify?: string;
+  }> = [
+    {
+      phrase: "flour tortilla",
+      diets: ["Contains Gluten"],
+      reasoning: "Flour tortilla: contains wheat gluten.",
+    },
+    {
+      phrase: "mozzarella cheese",
+      diets: ["Contains Dairy"],
+      reasoning: "Mozzarella cheese: contains dairy.",
+    },
+    {
+      phrase: "beurre blanc",
+      diets: ["Contains Dairy"],
+      reasoning: "Beurre blanc: butter-based sauce, contains dairy.",
+    },
+    {
+      phrase: "cream sauce",
+      diets: ["Contains Dairy"],
+      reasoning: "Cream sauce: contains dairy.",
+    },
+    {
+      phrase: "cheese sauce",
+      diets: ["Contains Dairy"],
+      reasoning: "Cheese sauce: contains dairy.",
+    },
+    {
+      phrase: "egg wash",
+      diets: ["Contains Eggs"],
+      reasoning: "Egg wash: contains egg.",
+    },
+    {
+      phrase: "egg noodle",
+      diets: ["Contains Gluten", "Contains Eggs"],
+      reasoning: "Egg noodles: contain wheat and egg.",
+    },
+    {
+      phrase: "peanut sauce",
+      diets: ["Contains Nuts"],
+      reasoning: "Peanut sauce: contains peanuts.",
+    },
+    {
+      phrase: "fish sauce",
+      diets: ["Contains Fish"],
+      reasoning: "Fish sauce: contains fish allergen.",
+    },
+    {
+      phrase: "anchovy paste",
+      diets: ["Contains Fish"],
+      reasoning: "Anchovy paste: contains fish allergen.",
+    },
+    {
+      phrase: "caesar dressing",
+      diets: ["Contains Eggs", "Contains Fish"],
+      reasoning: "Caesar dressing: traditionally contains egg and anchovy.",
+    },
+    {
+      phrase: "bread crumb",
+      diets: ["Contains Gluten"],
+      reasoning: "Breadcrumbs: contain wheat gluten.",
+    },
+    {
+      phrase: "soy glaze",
+      diets: ["Contains Soy", "Contains Gluten"],
+      reasoning: "Soy glaze: contains soy sauce and typically wheat.",
+    },
+    {
+      phrase: "miso butter",
+      diets: ["Contains Soy", "Contains Dairy"],
+      reasoning: "Miso butter: contains soy (miso) and dairy (butter).",
+    },
+    {
+      phrase: "corn tortilla",
+      diets: [],
+      reasoning: "",
+      cannotVerify:
+        "Corn tortilla may still require brand/recipe verification for gluten-free claims.",
+    },
+  ];
 
-  if (containsPhrase(searchText, "corn tortilla")) {
-    cannotVerify.push(
-      "Corn tortilla may still require brand/recipe verification for gluten-free claims."
-    );
-  }
-
-  if (containsPhrase(searchText, "mozzarella cheese")) {
-    if (!suggestedDiets.includes("Contains Dairy")) {
-      suggestedDiets.push("Contains Dairy");
+  for (const boost of phraseBoosts) {
+    if (containsPhrase(searchText, boost.phrase)) {
+      for (const diet of boost.diets) {
+        if (!suggestedDiets.includes(diet)) {
+          suggestedDiets.push(diet);
+        }
+      }
+      if (boost.reasoning) {
+        reasoningParts.push(boost.reasoning);
+      }
+      if (boost.cannotVerify) {
+        cannotVerify.push(boost.cannotVerify);
+      }
     }
-    reasoningParts.push("Mozzarella cheese: treated as dairy-containing.");
   }
 
   return {

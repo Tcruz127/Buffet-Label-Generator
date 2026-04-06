@@ -147,6 +147,7 @@ model IngredientRule {
   containsNuts       Boolean   @default(false)
   containsShellfish  Boolean   @default(false)
   containsSesame     Boolean   @default(false)
+  containsFish       Boolean   @default(false)
 
   isVegetarian       Boolean?
   isVegan            Boolean?
