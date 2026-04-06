@@ -11,6 +11,7 @@ import CreateOrgButton from "./CreateOrgButton";
 import FolderBar from "./FolderBar";
 import { isOrgProUser } from "@/lib/plan";
 import { resendVerificationEmail } from "./resendVerification";
+import OnboardingModal from "./OnboardingModal";
 
 function getInitials(name?: string | null, email?: string | null) {
   const source = name?.trim() || email?.trim() || "A";
@@ -550,6 +551,10 @@ export default async function AppDashboardPage({
           </div>
         )}
       </div>
+
+      {totalSheets === 0 && (
+        <OnboardingModal userName={displayName} />
+      )}
     </main>
   );
 }
