@@ -202,7 +202,7 @@ export default async function AppDashboardPage({
               </div>
             </div>
 
-            <details className="group relative shrink-0 self-start">
+            <details className="group relative z-40 shrink-0 self-start">
               <summary className="flex list-none cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition hover:border-slate-300 hover:shadow-md">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-violet-500 text-sm font-bold text-white">
                   {initials}
@@ -231,7 +231,7 @@ export default async function AppDashboardPage({
                 </svg>
               </summary>
 
-              <div className="absolute right-0 z-20 mt-3 w-72 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.16)]">
+              <div className="absolute right-0 z-40 mt-3 w-72 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.16)]">
                 <div className="bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(168,85,247,0.10))] px-4 py-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-violet-500 text-sm font-semibold text-white">
