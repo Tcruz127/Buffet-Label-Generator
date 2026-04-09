@@ -21,7 +21,7 @@ type MembershipWithOwner = {
 
 /**
  * Returns true if the user has Pro access either through their own
- * subscription or through an org whose owner has an active subscription.
+ * subscription or through an org where any member has an active subscription.
  */
 export function isOrgProUser(
   subscriptionStatus?: string | null,
@@ -32,8 +32,8 @@ export function isOrgProUser(
   if (!memberships || memberships.length === 0) return false;
 
   return memberships.some((membership) =>
-    membership.organization.members.some(
-      (m) => m.role === "owner" && isProUser(m.user.subscriptionStatus)
+    membership.organization.members.some((m) =>
+      isProUser(m.user.subscriptionStatus)
     )
   );
 }

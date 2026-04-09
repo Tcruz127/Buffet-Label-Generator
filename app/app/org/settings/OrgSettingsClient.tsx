@@ -27,14 +27,14 @@ export default function OrgSettingsClient({
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [acceptUrl, setAcceptUrl] = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
 
-  async function handleInvite(e: React.FormEvent) {
+  async function handleInvite(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setInviteLoading(true);
-    setAcceptUrl(null);
+    setInviteSuccess(null);
     setInviteError(null);
 
     try {
@@ -47,11 +47,11 @@ export default function OrgSettingsClient({
       const data = await res.json();
 
       if (!res.ok) {
-        setInviteError(data.error || "Failed to create invite.");
+        setInviteError(data.error || "Failed to send invite.");
         return;
       }
 
-      setAcceptUrl(data.acceptUrl);
+      setInviteSuccess(inviteEmail);
       setInviteEmail("");
     } catch {
       setInviteError("Something went wrong. Please try again.");
@@ -160,8 +160,8 @@ export default function OrgSettingsClient({
             Invite a Team Member
           </h2>
           <p className="mb-5 text-sm text-slate-600">
-            Enter their email address to generate an invite link. Send them the
-            link and they will be added to your organization when they click it.
+            Enter their email address and we'll send them an invitation. They'll
+            be added to your organization when they click the link in the email.
           </p>
 
           <form onSubmit={handleInvite} className="flex gap-3">
@@ -186,22 +186,11 @@ export default function OrgSettingsClient({
             <p className="mt-3 text-sm text-red-600">{inviteError}</p>
           )}
 
-          {acceptUrl && (
+          {inviteSuccess && (
             <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-              <p className="mb-2 text-sm font-semibold text-emerald-800">
-                Invite link created — copy and send this to your teammate:
+              <p className="text-sm font-semibold text-emerald-800">
+                Invite sent to {inviteSuccess}. They'll receive an email with a link to join your organization.
               </p>
-              <div className="flex items-center gap-2">
-                <code className="min-w-0 flex-1 truncate rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs text-slate-700">
-                  {acceptUrl}
-                </code>
-                <button
-                  onClick={() => navigator.clipboard.writeText(acceptUrl)}
-                  className="shrink-0 rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
-                >
-                  Copy
-                </button>
-              </div>
             </div>
           )}
         </div>
