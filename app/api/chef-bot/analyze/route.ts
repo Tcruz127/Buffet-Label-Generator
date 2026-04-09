@@ -755,7 +755,7 @@ export async function POST(request: Request) {
 
     const rules = (await prisma.ingredientRule.findMany({
       orderBy: { ingredientName: "asc" },
-    })) as IngredientRuleRecord[];
+    })) as unknown as IngredientRuleRecord[];
 
     let analysis = await runLocalRuleAnalysis({
       foodName,
