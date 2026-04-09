@@ -899,7 +899,8 @@ button:hover{
   min-height:1.2em;
 }
 
-.description-line[contenteditable="true"]:empty::before{
+.description-line[contenteditable="true"]:empty::before,
+.dish-name[contenteditable="true"]:empty::before{
   content:attr(data-placeholder);
   color:#94a3b8;
   font-style:italic;
@@ -2624,7 +2625,8 @@ function generateLabels(){
 
       const title = document.createElement("div");
       title.className = "dish-name";
-      title.textContent = food || "Food Name";
+      title.textContent = food || "";
+      title.setAttribute("data-placeholder", "Food Name");
       title.style.fontFamily = settings.fontFamily || "Arial";
       title.style.fontSize = (settings.foodNameSize || 20) + "px";
       title.style.color = settings.textColor || "#111111";
