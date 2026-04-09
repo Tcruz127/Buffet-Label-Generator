@@ -18,6 +18,7 @@ export default function FolderBar({
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const activeFolder = folders.find((f) => f.id === activeFolderId) ?? null;
@@ -31,13 +32,13 @@ export default function FolderBar({
   const openRename = (folder: Folder) => {
     setActiveFolderId(folder.id);
     setDraftName(folder.name);
-    setOpenMenuId(null);
+    closeMenu();
     setModalMode("rename");
   };
 
   const openDelete = (folder: Folder) => {
     setActiveFolderId(folder.id);
-    setOpenMenuId(null);
+    closeMenu();
     setModalMode("delete");
   };
 
@@ -45,6 +46,11 @@ export default function FolderBar({
     setModalMode(null);
     setActiveFolderId(null);
     setDraftName("");
+  };
+
+  const closeMenu = () => {
+    setOpenMenuId(null);
+    setMenuPos(null);
   };
 
   return (
@@ -85,9 +91,15 @@ export default function FolderBar({
 
               <button
                 type="button"
-                onClick={() =>
-                  setOpenMenuId(openMenuId === folder.id ? null : folder.id)
-                }
+                onClick={(e) => {
+                  if (openMenuId === folder.id) {
+                    closeMenu();
+                  } else {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setMenuPos({ top: rect.bottom + 8, left: rect.left });
+                    setOpenMenuId(folder.id);
+                  }
+                }}
                 className={`mr-1 flex h-6 w-6 items-center justify-center rounded-full text-xs transition ${
                   selectedFolderId === folder.id
                     ? "hover:bg-white/20 text-white"
@@ -99,24 +111,6 @@ export default function FolderBar({
               </button>
             </div>
 
-            {openMenuId === folder.id && (
-              <div className="absolute left-0 top-full z-20 mt-2 w-40 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-200/70">
-                <button
-                  type="button"
-                  onClick={() => openRename(folder)}
-                  className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-                >
-                  Rename
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openDelete(folder)}
-                  className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  Delete
-                </button>
-              </div>
-            )}
           </div>
         ))}
 
@@ -133,12 +127,37 @@ export default function FolderBar({
         </button>
       </div>
 
-      {/* Click-outside overlay */}
-      {openMenuId && (
-        <div
-          className="fixed inset-0 z-10"
-          onClick={() => setOpenMenuId(null)}
-        />
+      {/* Fixed dropdown — rendered outside overflow container to avoid clipping */}
+      {openMenuId && menuPos && (
+        <>
+          <div
+            className="fixed inset-0 z-30"
+            onClick={closeMenu}
+          />
+          <div
+            style={{ top: menuPos.top, left: menuPos.left }}
+            className="fixed z-40 w-40 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl shadow-slate-200/70"
+          >
+            {folders.filter((f) => f.id === openMenuId).map((folder) => (
+              <div key={folder.id}>
+                <button
+                  type="button"
+                  onClick={() => openRename(folder)}
+                  className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                >
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openDelete(folder)}
+                  className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Modals */}
