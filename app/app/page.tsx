@@ -172,54 +172,49 @@ export default async function AppDashboardPage({
 
         <div className="relative z-10 mb-8 rounded-[2rem] border border-slate-200/80 bg-white/85 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur xl:p-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-4">
-                <Image src="/logo-dark.svg" alt="Instabels" width={200} height={37} />
-              </div>
-
+            <div className="max-w-3xl flex-1">
+              {/* Greeting + inline status badges */}
               <h1 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
                 Welcome back, {displayName}
               </h1>
 
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                Create, organize, and edit buffet label sheets for weddings,
-                corporate events, catering jobs, and hospitality teams.
-              </p>
-
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/app/new"
-                  className="inline-flex items-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
-                >
-                  Create New Sheet
-                </Link>
-
-                <span
-                  className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-                    isPro
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-slate-100 text-slate-700"
-                  }`}
-                >
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  isPro ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
+                }`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${isPro ? "bg-emerald-500" : "bg-slate-400"}`} />
                   {isPro ? "Pro Plan" : "Free Plan"}
                 </span>
 
                 {org && (
-                  <span className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
+                    <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
                     {org.name}
+                    {isOrgOwner && (
+                      <Link
+                        href="/app/org/settings"
+                        className="ml-0.5 text-violet-400 underline underline-offset-2 hover:text-violet-600"
+                      >
+                        Manage
+                      </Link>
+                    )}
                   </span>
                 )}
 
-                {isOrgOwner && (
-                  <Link
-                    href="/app/org/settings"
-                    className="inline-flex items-center rounded-full border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Manage Team
-                  </Link>
-                )}
-
                 {isPro && !org && <CreateOrgButton />}
+              </div>
+
+              {/* Primary CTA */}
+              <div className="mt-6">
+                <Link
+                  href="/app/new"
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                  </svg>
+                  Create New Sheet
+                </Link>
               </div>
             </div>
 
@@ -389,35 +384,33 @@ export default async function AppDashboardPage({
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             <div className="rounded-3xl border border-cyan-100 bg-cyan-50/70 p-5">
-              <p className="text-sm font-medium text-cyan-700">Total Sheets</p>
-              <p className="mt-2 text-3xl font-black text-slate-950">
+              <p className="text-xs font-semibold uppercase tracking-widest text-cyan-600">Total Sheets</p>
+              <p className="mt-1 text-5xl font-black text-slate-950">
                 {totalSheets}
               </p>
-              <p className="mt-2 text-sm text-slate-600">
-                Saved buffet label sheets in your workspace
+              <p className="mt-1 text-sm text-slate-500">
+                Saved in your workspace
               </p>
             </div>
 
             <div className="rounded-3xl border border-violet-100 bg-violet-50/70 p-5">
-              <p className="text-sm font-medium text-violet-700">Total Labels</p>
-              <p className="mt-2 text-3xl font-black text-slate-950">
+              <p className="text-xs font-semibold uppercase tracking-widest text-violet-600">Total Labels</p>
+              <p className="mt-1 text-5xl font-black text-slate-950">
                 {totalLabels}
               </p>
-              <p className="mt-2 text-sm text-slate-600">
-                Labels across all saved sheets
+              <p className="mt-1 text-sm text-slate-500">
+                Across all saved sheets
               </p>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
-              <p className="text-sm font-medium text-slate-700">
-                Most Recent Sheet
-              </p>
-              <p className="mt-2 truncate text-lg font-bold text-slate-950">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Last Updated</p>
+              <p className="mt-1 truncate text-xl font-bold text-slate-950">
                 {recentSheet?.title || "No sheets yet"}
               </p>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-slate-500">
                 {recentSheet
-                  ? `Updated ${formatUpdatedAt(recentSheet.updatedAt)}`
+                  ? formatUpdatedAt(recentSheet.updatedAt)
                   : "Create your first sheet to get started"}
               </p>
             </div>
