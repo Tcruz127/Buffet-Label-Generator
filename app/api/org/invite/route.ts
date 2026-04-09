@@ -19,9 +19,8 @@ export async function POST(req: Request) {
   }
 
   const { prisma } = await import("@/lib/prisma");
-  const db = prisma as any;
 
-  const user = await db.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: {
       memberships: {
@@ -34,7 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const ownerMembership = user.memberships.find((m: any) => m.role === "owner");
+  const ownerMembership = user.memberships.find((m) => m.role === "owner");
 
   if (!ownerMembership) {
     return NextResponse.json(
@@ -46,7 +45,7 @@ export async function POST(req: Request) {
   const org = ownerMembership.organization;
 
   // Check the invitee isn't already a member.
-  const existingMember = await db.organizationMember.findFirst({
+  const existingMember = await prisma.organizationMember.findFirst({
     where: {
       organizationId: org.id,
       user: { email },
@@ -61,14 +60,14 @@ export async function POST(req: Request) {
   }
 
   // Delete any existing pending invite for this email in this org.
-  await db.organizationInvite.deleteMany({
+  await prisma.organizationInvite.deleteMany({
     where: { organizationId: org.id, email },
   });
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
 
-  const invite = await db.organizationInvite.create({
+  const invite = await prisma.organizationInvite.create({
     data: {
       organizationId: org.id,
       email,
@@ -76,13 +75,11 @@ export async function POST(req: Request) {
     },
   });
 
-  const { sendOrgInviteEmail } = await import("@/lib/email");
-  await sendOrgInviteEmail(
-    email,
-    invite.token,
-    org.name,
-    user.name ?? user.email
-  );
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
+  const acceptUrl = `${appUrl}/api/org/invite/accept/${invite.token}`;
 
-  return NextResponse.json({ message: `Invite sent to ${email}` });
+  return NextResponse.json({
+    message: `Invite created for ${email}`,
+    acceptUrl,
+  });
 }
