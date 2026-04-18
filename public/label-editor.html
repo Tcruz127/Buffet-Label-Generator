@@ -90,14 +90,6 @@ body{
   min-height:calc(100vh - 60px);
 }
 
-.container.top-view{
-  display:grid;
-  grid-template-columns:1fr;
-  grid-template-rows:auto 1fr;
-  gap:16px;
-  min-height:calc(100vh - 92px);
-}
-
 .panel{
   min-width:0;
   background:rgba(255,255,255,.92);
@@ -134,82 +126,6 @@ body{
   text-transform:uppercase;
   letter-spacing:.14em;
 }
-
-.ribbon{display:none}
-.container.top-view .ribbon{display:flex;flex-direction:column;height:100%}
-
-.ribbon-tabs{
-  display:flex;
-  gap:8px;
-  padding:6px 6px 0;
-  border-bottom:1px solid var(--border);
-  background:transparent;
-}
-
-.ribbon-tab{
-  width:auto;
-  padding:10px 14px;
-  margin:0;
-  border-radius:12px 12px 0 0;
-  border:1px solid transparent;
-  border-bottom:none;
-  background:transparent;
-  cursor:pointer;
-  color:var(--muted);
-  font-weight:700;
-}
-
-.ribbon-tab.active{
-  background:#fff;
-  color:var(--text);
-  border-color:var(--border);
-}
-
-.ribbon-content{
-  flex:1;
-  overflow-x:auto;
-  overflow-y:hidden;
-  background:#fff;
-  padding:12px;
-  border-radius:0 0 18px 18px;
-}
-
-.ribbon-panel{display:none;gap:12px;align-items:stretch;min-width:max-content}
-.ribbon-panel.active{display:flex}
-
-.ribbon-group{
-  min-width:190px;
-  max-width:230px;
-  border-right:1px solid var(--border);
-  padding-right:12px;
-}
-
-.ribbon-group:last-child{border-right:none}
-
-.ribbon-group-title{
-  font-size:11px;
-  color:var(--muted);
-  margin-top:8px;
-  text-align:center;
-  font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-}
-
-.ribbon .compact-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.ribbon label{display:block;margin-top:6px;font-size:12px;font-weight:700;color:var(--text)}
-.ribbon input,.ribbon select,.ribbon textarea,.ribbon button{font-size:12px;padding:9px 10px;margin-top:4px}
-.ribbon input[type="color"]{height:38px;padding:4px}
-.ribbon .align-grid{gap:6px;margin-top:6px}
-.ribbon .align-grid button{padding:8px 5px;font-size:10px}
-.ribbon .food-strip{display:grid;grid-auto-flow:column;grid-auto-columns:200px;gap:10px}
-.ribbon .food-item{padding:10px}
-.ribbon .food-item h4{font-size:12px;margin:0 0 6px 0}
-.ribbon .food-item .inline-label{font-size:11px;margin-top:6px}
-.ribbon .help{font-size:10px;line-height:1.25}
-.ribbon .mini-row{gap:6px}
-.ribbon textarea{min-height:64px;resize:none}
-.ribbon select[multiple]{min-height:88px}
 
 .controls label,.sidebar label{
   display:block;
@@ -434,6 +350,7 @@ button:hover{
 .sidebar-overlay.open{display:block}
 
 .sidebar{
+  display:none;
   position:fixed;
   top:0;
   left:0;
@@ -444,14 +361,12 @@ button:hover{
   box-shadow:0 20px 50px rgba(15,23,42,.18);
   padding:20px;
   overflow:auto;
-  transform:translateX(-102%);
-  transition:transform .25s ease;
   z-index:21;
   border-right:1px solid var(--border);
   backdrop-filter:blur(12px);
 }
 
-.sidebar.open{transform:translateX(0)}
+.sidebar.open{display:block}
 
 .sidebar-header{
   display:flex;
@@ -684,7 +599,6 @@ button:hover{
   .view-status,
   .help,
   .badge,
-  .ribbon,
   .sidebar-header,
   #overlay,
   #sidebar{
@@ -693,7 +607,6 @@ button:hover{
 
   .container,
   .container.side-view,
-  .container.top-view,
   .panel,
   .preview-panel,
   #previewSheets,
@@ -712,8 +625,7 @@ button:hover{
   }
 
   .container,
-  .container.side-view,
-  .container.top-view{
+  .container.side-view{
     display:block !important;
     width:100% !important;
     height:auto !important;
@@ -989,199 +901,23 @@ button:hover{
   <button class="hamburger" onclick="toggleSidebar()">☰</button>
 </div>
 
-<div id="overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
-
-<aside id="sidebar" class="sidebar">
-  <div class="sidebar-header">
-    <div>
-      <div class="sidebar-title">Workspace Menu</div>
-      <div style="font-size:12px;color:#64748b;margin-top:4px;">
-        Quick actions, saves, layout, and print tools
-      </div>
-    </div>
-    <button class="close-btn" onclick="closeSidebar()">×</button>
+<dialog id="printDialog" style="border:none;border-radius:20px;padding:24px;width:320px;box-shadow:0 20px 50px rgba(15,23,42,.18);background:#fff;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="font-size:18px;font-weight:800;color:#0f172a;">Print</div>
+    <button onclick="closeSidebar()" style="width:36px;height:36px;border-radius:10px;border:1px solid #dbe4f0;background:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">×</button>
   </div>
-
-  <label>Current File</label>
-  <div id="currentFileName" class="doc-status">Unsaved sheet</div>
-
-  <label>View Mode</label>
-  <div class="toolbar">
-    <button onclick="setViewMode('side')">Side by Side</button>
-    <button onclick="setViewMode('top')">Top Editing View</button>
+  <button onclick="openPrintWindow();closeSidebar();" style="width:100%;margin-bottom:10px;">Print / Save PDF</button>
+  <button onclick="printAlignmentTestSheet();closeSidebar();" style="width:100%;margin-bottom:14px;">Print Alignment Test Sheet</button>
+  <div class="print-instructions">
+    For best results when printing Avery labels:<br>
+    • Set scale to <strong>100%</strong><br>
+    • Do <strong>not</strong> use "Fit to Page"<br>
+    • Use standard <strong>Letter paper</strong>
   </div>
-
-  <div id="viewStatus" class="view-status"></div>
-
-  <div class="toolbar">
-    <button onclick="newLabelSheet()">New Label Sheet</button>
-    <button onclick="saveSheet()">Save</button>
-    <button onclick="saveSheetAs()">Save As</button>
-    <button onclick="loadBrowserSave()">Open Browser Save</button>
-    <button onclick="document.getElementById('sheetFileInput').click()">Open File</button>
-    <button onclick="generateLabels()">Refresh Preview</button>
-  </div>
-
-  <div class="print-controls">
-    <button onclick="openPrintWindow()">Print / Save PDF</button>
-    <button onclick="printAlignmentTestSheet()">Print Alignment Test Sheet</button>
-
-    <div class="print-instructions">
-      For best results when printing Avery labels:
-      <br>
-      • Set scale to <strong>100%</strong>
-      <br>
-      • Do <strong>not</strong> use “Fit to Page”
-      <br>
-      • Use standard <strong>Letter paper</strong>
-    </div>
-  </div>
-</aside>
+</dialog>
 
 <div id="mainContainer" class="container side-view">
   <div class="panel controls controls-panel">
-    <div class="ribbon">
-      <div class="ribbon-tabs">
-        <button class="ribbon-tab active" onclick="showRibbonTab('home')">Home</button>
-        <button class="ribbon-tab" onclick="showRibbonTab('logo')">Logo</button>
-        <button class="ribbon-tab" onclick="showRibbonTab('labels')">Labels</button>
-        <button class="ribbon-tab" onclick="showRibbonTab('menu')">Menu</button>
-      </div>
-
-      <div class="ribbon-content">
-        <div id="ribbon-home" class="ribbon-panel active">
-          <div class="ribbon-group">
-            <label>Event Name</label>
-            <input type="text" id="eventNameRibbon" placeholder="Smith Wedding Buffet" oninput="syncField('eventNameRibbon','eventName'); generateLabels();" />
-            <div class="compact-row">
-              <button onclick="addTenLabels()">Add 10</button>
-              <button onclick="removeTenLabels()">Remove 10</button>
-            </div>
-            <div class="ribbon-group-title">Sheet</div>
-          </div>
-
-          <div class="ribbon-group">
-            <label>Main Font</label>
-            <select id="fontSelectRibbon" onchange="syncField('fontSelectRibbon','fontSelect'); generateLabels();">
-              <option>Arial</option>
-              <option>Times New Roman</option>
-              <option>Helvetica</option>
-              <option>Georgia</option>
-              <option>Verdana</option>
-            </select>
-
-            <div class="compact-row">
-              <div>
-                <label>Size</label>
-                <input id="fontSizeRibbon" type="number" value="20" min="8" max="48" oninput="syncField('fontSizeRibbon','fontSize'); generateLabels();" />
-              </div>
-              <div>
-                <label>Color</label>
-                <input id="textColorRibbon" type="color" value="#000000" oninput="syncField('textColorRibbon','textColor'); generateLabels();" />
-              </div>
-            </div>
-
-            <div class="ribbon-group-title">Main Font</div>
-          </div>
-
-          <div class="ribbon-group">
-            <label>Allergen Font</label>
-            <label>Ingredients Size</label>
-<input id="descSizeRibbon" type="number" value="12" min="8" max="30"
-  oninput="syncField('descSizeRibbon','descSize'); generateLabels();" />
-            <select id="allergenFontRibbon" onchange="syncField('allergenFontRibbon','allergenFont'); generateLabels();">
-              <option>Arial</option>
-              <option>Times New Roman</option>
-              <option>Helvetica</option>
-              <option>Georgia</option>
-              <option>Verdana</option>
-            </select>
-
-            <div class="compact-row">
-              <div>
-                <label>Size</label>
-                <input id="allergenSizeRibbon" type="number" value="12" min="8" max="30" oninput="syncField('allergenSizeRibbon','allergenSize'); generateLabels();" />
-              </div>
-              <div>
-                <label>Color</label>
-                <input id="allergenColorRibbon" type="color" value="#000000" oninput="syncField('allergenColorRibbon','allergenColor'); generateLabels();" />
-              </div>
-            </div>
-
-            <div class="ribbon-group-title">Allergen Font</div>
-          </div>
-
-          <div class="ribbon-group">
-            <label>Label Background</label>
-            <input id="bgColorRibbon" type="color" value="#ffffff" oninput="syncField('bgColorRibbon','bgColor'); generateLabels();" />
-            <div class="ribbon-group-title">Colors</div>
-          </div>
-        </div>
-
-       <div id="ribbon-logo" class="ribbon-panel">
-  <div class="ribbon-group">
-    <label>Upload Logo</label>
-    <input
-      type="file"
-      id="logoUploadRibbon"
-      accept="image/*"
-      onchange="handleRibbonLogoUpload(event)"
-    />
-
-    <label>Logo Size</label>
-    <div class="mini-row">
-      <input
-        type="range"
-        id="logoSizeRibbon"
-        min="20"
-        max="140"
-        value="55"
-        oninput="syncLogoSize(this.value)"
-      />
-      <div class="badge"><span id="logoSizeValueRibbon">55</span> px</div>
-    </div>
-
-    <div class="ribbon-group-title">Logo</div>
-  </div>
-
-  <div class="ribbon-group">
-    <label>Alignment</label>
-    <div class="align-grid">
-      <button type="button" onclick="setLogoAlignment('top-left')">Top Left</button>
-      <button type="button" onclick="setLogoAlignment('top-center')">Top Center</button>
-      <button type="button" onclick="setLogoAlignment('top-right')">Top Right</button>
-      <button type="button" onclick="setLogoAlignment('middle-left')">Mid Left</button>
-      <button type="button" onclick="setLogoAlignment('center')">Center</button>
-      <button type="button" onclick="setLogoAlignment('middle-right')">Mid Right</button>
-      <button type="button" onclick="setLogoAlignment('bottom-left')">Bot Left</button>
-      <button type="button" onclick="setLogoAlignment('bottom-center')">Bot Center</button>
-      <button type="button" onclick="setLogoAlignment('bottom-right')">Bot Right</button>
-    </div>
-    <div class="ribbon-group-title">Position</div>
-  </div>
-</div>
-
-        <div id="ribbon-labels" class="ribbon-panel">
-          <div class="ribbon-group">
-            <div id="foodInputsRibbon" class="ribbon-food-strip"></div>
-            <div class="ribbon-group-title">Label Editors</div>
-          </div>
-        </div>
-
-        <div id="ribbon-menu" class="ribbon-panel">
-          <div class="ribbon-group">
-            <label>Paste Menu</label>
-            <textarea id="menuPasteRibbon" placeholder="Paste menu items each on a new line" oninput="syncField('menuPasteRibbon','menuPaste')"></textarea>
-            <div class="compact-row">
-              <button onclick="autoFillMenu()">Auto Fill</button>
-              <button onclick="clearFoods()">Clear</button>
-            </div>
-            <div class="ribbon-group-title">Menu Tools</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="controls-inner">
       <div class="controls-block">
         <label>Event Name</label>
@@ -1532,33 +1268,15 @@ function addDividerToContent(content, settings) {
   content.appendChild(divider);
 }
 
-function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("overlay").classList.toggle("open")}
-function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("overlay").classList.remove("open")}
+function toggleSidebar(){const d=document.getElementById("printDialog");if(d.open)d.close();else d.showModal()}
+function closeSidebar(){const d=document.getElementById("printDialog");if(d&&d.open)d.close()}
 function sanitizeName(v){let n=(v||"buffet-sheet").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");return n||"buffet-sheet"}
 function getFoodValue(i){const el=document.getElementById("food"+i);return el?el.value:""}
 function getSuggestedSheetName(){return sanitizeName(document.getElementById("eventName").value||getFoodValue(1)||"buffet-sheet")}
-function updateCurrentFileName(){document.getElementById("currentFileName").textContent=currentSaveName||"Unsaved sheet • local workspace"}
+function updateCurrentFileName(){const el=document.getElementById("currentFileName");if(el)el.textContent=currentSaveName||"Unsaved sheet • local workspace"}
 function ensureMultipleOfTen(n){n=Math.max(10,Number(n)||10);return Math.ceil(n/10)*10}
 function syncField(fromId,toId){const a=document.getElementById(fromId),b=document.getElementById(toId); if(a&&b) b.value=a.value}
-function syncLogoSize(v){document.getElementById("logoSize").value=v;document.getElementById("logoSizeRibbon").value=v;document.getElementById("logoSizeValue").textContent=v;document.getElementById("logoSizeValueRibbon").textContent=v;logoSettings.size=Number(v);generateLabels()}
-function handleRibbonLogoUpload(e){const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{logoData=ev.target.result; generateLabels()}; r.readAsDataURL(f)}
-function showRibbonTab(name){
-  document.querySelectorAll(".ribbon-tab").forEach(el=>el.classList.remove("active"));
-  document.querySelectorAll(".ribbon-panel").forEach(el=>el.classList.remove("active"));
-  const order={home:0,logo:1,labels:2,menu:3};
-  const tabs=document.querySelectorAll(".ribbon-tab");
-  if(tabs[order[name]]) tabs[order[name]].classList.add("active");
-  const panel=document.getElementById("ribbon-"+name); if(panel) panel.classList.add("active");
-}
-function setViewMode(mode){
-  viewMode=mode;
-  const c=document.getElementById("mainContainer");
-  c.classList.remove("side-view","top-view");
-  c.classList.add(mode==="top"?"top-view":"side-view");
-  document.getElementById("viewStatus").textContent=mode==="top"?"Current view: Top Editing View":"Current view: Side by Side View";
-  closeSidebar();
-  syncRibbonFields();
-}
+function syncLogoSize(v){document.getElementById("logoSize").value=v;document.getElementById("logoSizeValue").textContent=v;logoSettings.size=Number(v);generateLabels()}
 function updateLogoClearButton(){
   const btn = document.getElementById("clearLogoBtn");
   if (btn) {
@@ -1591,10 +1309,7 @@ function removeLogo(){
   logoData = null;
 
   const mainInput = document.getElementById("logoUpload");
-  const ribbonInput = document.getElementById("logoUploadRibbon");
-
   if (mainInput) mainInput.value = "";
-  if (ribbonInput) ribbonInput.value = "";
 
   updateLogoClearButton();
   generateLabels();
@@ -1630,13 +1345,9 @@ const foodContainer=document.getElementById("foodInputs");
 const foodRibbon=document.getElementById("foodInputsRibbon");
 
 function syncRibbonFields(){
-  const map=[["eventName","eventNameRibbon"],["fontSelect","fontSelectRibbon"],["fontSize","fontSizeRibbon"],["textColor","textColorRibbon"],["allergenFont","allergenFontRibbon"],["allergenSize","allergenSizeRibbon"],["allergenColor","allergenColorRibbon"],["bgColor","bgColorRibbon"],["menuPaste","menuPasteRibbon"],["descSize","descSizeRibbon"]];
-  map.forEach(([a,b])=>{const ea=document.getElementById(a),eb=document.getElementById(b); if(ea&&eb) eb.value=ea.value;});
   const s=logoSettings.size;
-  document.getElementById("logoSize").value=s;
-  document.getElementById("logoSizeRibbon").value=s;
-  document.getElementById("logoSizeValue").textContent=s;
-  document.getElementById("logoSizeValueRibbon").textContent=s;
+  const logoSizeEl=document.getElementById("logoSize"); if(logoSizeEl) logoSizeEl.value=s;
+  const logoSizeValEl=document.getElementById("logoSizeValue"); if(logoSizeValEl) logoSizeValEl.textContent=s;
 }
 
 function createFoodEditorCard(i, prefix) {
@@ -1648,7 +1359,7 @@ function createFoodEditorCard(i, prefix) {
     '<label class="inline-label">Main Dish</label>' +
     '<input placeholder="Chicken Marsala" id="' + prefix + 'food' + i + '">' +
 
-    '<label class="inline-label">What’s in the dish</label>' +
+    '<label class="inline-label">What\'s in the dish</label>' +
     '<input placeholder="With roasted potatoes and vegetables" id="' + prefix + 'desc' + i + '">' +
 
     '<label class="inline-label">Dietary dropdown</label>' +
@@ -1828,14 +1539,11 @@ function attachFoodEvents(i, prefix, isRibbon) {
 }
 function createFoodRows(){
   foodContainer.innerHTML="";
-  foodRibbon.innerHTML="";
   for(let i=1;i<=totalLabels;i++){
     foodContainer.appendChild(createFoodEditorCard(i,""));
-    foodRibbon.appendChild(createFoodEditorCard(i,"r_"));
   }
   for(let i=1;i<=totalLabels;i++){
     attachFoodEvents(i,"",false);
-    attachFoodEvents(i,"r_",true);
   }
 }
 function collectLabelData(){
@@ -2354,10 +2062,6 @@ document.getElementById("showContainsIcons").checked =
     size: Number(normalizedSettings.logoSettings?.size ?? 55)
   };
 
-  if (normalizedSettings.viewMode) {
-    setViewMode(normalizedSettings.viewMode);
-  }
-
   logoData = data.logoData || null;
   updateLogoClearButton();
   document.getElementById("menuPaste").value = data.menuPaste || "";
@@ -2690,9 +2394,6 @@ descLine.setAttribute("data-placeholder", "Add ingredients...");
 }
 createFoodRows();
 updateCurrentFileName();
-setViewMode("side");
-syncRibbonFields();
-showRibbonTab('home');
 generateLabels();
 </script>
 <script>
