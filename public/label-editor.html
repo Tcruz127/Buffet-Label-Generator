@@ -510,17 +510,49 @@ button:hover{
   left:0;
   right:0;
   z-index:12;
-  max-height:220px;
-  overflow:auto;
-  padding:8px;
+  max-height:280px;
+  overflow:hidden;
   border:1px solid var(--border);
   border-radius:12px;
   background:#fff;
   box-shadow:var(--shadow-md);
+  flex-direction:column;
 }
 
 .diet-dropdown.open .diet-dropdown-menu{
-  display:block;
+  display:flex;
+}
+
+.diet-options-list{
+  overflow:auto;
+  flex:1;
+  padding:8px;
+}
+
+.diet-dropdown-footer{
+  flex:0 0 auto;
+  display:flex;
+  gap:6px;
+  padding:8px;
+  border-top:1px solid var(--border);
+  background:#fff;
+}
+
+.diet-bulk-btn{
+  flex:1;
+  padding:7px 0;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:#f8fafc;
+  color:var(--text);
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.diet-bulk-btn:hover{
+  background:var(--surface-2);
+  border-color:var(--border-strong);
 }
 
 .diet-option{
@@ -1404,13 +1436,17 @@ function buildDietCheckboxMenu(prefix, i) {
 
   menu.innerHTML = "";
 
+  const list = document.createElement("div");
+  list.className = "diet-options-list";
+  menu.appendChild(list);
+
   const groups = [...new Set(DIET_OPTIONS.map(opt => opt.group))];
 
   groups.forEach((groupName, groupIndex) => {
     const heading = document.createElement("div");
     heading.className = "diet-group-heading";
     heading.textContent = groupName;
-    menu.appendChild(heading);
+    list.appendChild(heading);
 
     const optionsInGroup = DIET_OPTIONS.filter(opt => opt.group === groupName);
 
@@ -1444,15 +1480,54 @@ left.innerHTML =
 
 row.appendChild(checkbox);
 row.appendChild(left);
-menu.appendChild(row);
+list.appendChild(row);
     });
 
     if (groupIndex < groups.length - 1) {
       const divider = document.createElement("div");
       divider.className = "diet-group-divider";
-      menu.appendChild(divider);
+      list.appendChild(divider);
     }
   });
+
+  const footer = document.createElement("div");
+  footer.className = "diet-dropdown-footer";
+
+  const selectAllBtn = document.createElement("button");
+  selectAllBtn.type = "button";
+  selectAllBtn.className = "diet-bulk-btn";
+  selectAllBtn.textContent = "Select All";
+  selectAllBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.checked = true;
+      Array.from(select.options).forEach(option => {
+        if (option.value === cb.value) option.selected = true;
+      });
+    });
+    updateDietDropdownLabel(prefix, i);
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
+  const clearAllBtn = document.createElement("button");
+  clearAllBtn.type = "button";
+  clearAllBtn.className = "diet-bulk-btn";
+  clearAllBtn.textContent = "Clear All";
+  clearAllBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.checked = false;
+      Array.from(select.options).forEach(option => {
+        if (option.value === cb.value) option.selected = false;
+      });
+    });
+    updateDietDropdownLabel(prefix, i);
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
+  footer.appendChild(selectAllBtn);
+  footer.appendChild(clearAllBtn);
+  menu.appendChild(footer);
 
   toggle.onclick = function (e) {
     e.stopPropagation();
