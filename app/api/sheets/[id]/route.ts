@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { FREE_PLAN_MAX_LABELS, isProUser } from "@/lib/plan";
+import { FREE_PLAN_MAX_LABELS, isOrgProUser } from "@/lib/plan";
 
 type RouteContext = {
   params: Promise<{
@@ -142,7 +142,24 @@ export async function PUT(req: Request, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const isPro = isProUser(user.subscriptionStatus);
+    const memberships = await db.organizationMember.findMany({
+      where: { userId: user.id },
+      select: {
+        role: true,
+        organization: {
+          select: {
+            members: {
+              select: {
+                role: true,
+                user: { select: { subscriptionStatus: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const isPro = isOrgProUser(user.subscriptionStatus, memberships);
 
     const orgId = await getOrgId(db, user.id);
 
