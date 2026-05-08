@@ -12,6 +12,7 @@ import FolderBar from "./FolderBar";
 import { isOrgProUser } from "@/lib/plan";
 import { resendVerificationEmail } from "./resendVerification";
 import OnboardingModal from "./OnboardingModal";
+import WhatsNewModal from "./WhatsNewModal";
 
 function getInitials(name?: string | null, email?: string | null) {
   const source = name?.trim() || email?.trim() || "A";
@@ -24,11 +25,26 @@ function getInitials(name?: string | null, email?: string | null) {
   return source.slice(0, 2).toUpperCase();
 }
 
-function formatUpdatedAt(date: Date | string) {
-  return new Date(date).toLocaleDateString(undefined, {
-    year: "numeric",
+function formatRelativeTime(date: Date | string) {
+  const now = new Date();
+  const d = new Date(date);
+  const diff = now.getTime() - d.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (minutes < 2) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function formatEventDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
+    year: "numeric",
   });
 }
 
@@ -119,11 +135,11 @@ export default async function AppDashboardPage({
         ...(activeFolderId ? { folderId: activeFolderId } : {}),
       };
 
-  const sheets: { id: string; title: string; eventName: string | null; totalLabels: number; updatedAt: Date; folderId: string | null }[] =
+  const sheets: { id: string; title: string; eventName: string | null; totalLabels: number; updatedAt: Date; folderId: string | null; settings: any }[] =
     await db.labelSheet.findMany({
       where: sheetWhere,
       orderBy: { updatedAt: "desc" },
-      select: { id: true, title: true, eventName: true, totalLabels: true, updatedAt: true, folderId: true },
+      select: { id: true, title: true, eventName: true, totalLabels: true, updatedAt: true, folderId: true, settings: true },
     });
 
   const displayName =
@@ -146,7 +162,7 @@ export default async function AppDashboardPage({
   );
   const recentSheet = allSheets[0];
   const recentUpdatedLabel = recentSheet
-    ? formatUpdatedAt(recentSheet.updatedAt)
+    ? formatRelativeTime(recentSheet.updatedAt)
     : "No recent activity";
 
   return (
@@ -410,7 +426,7 @@ export default async function AppDashboardPage({
               </p>
               <p className="mt-1 text-sm text-slate-500">
                 {recentSheet
-                  ? formatUpdatedAt(recentSheet.updatedAt)
+                  ? formatRelativeTime(recentSheet.updatedAt)
                   : "Create your first sheet to get started"}
               </p>
             </div>
@@ -492,6 +508,12 @@ export default async function AppDashboardPage({
                     <p className="mt-2 truncate text-sm text-slate-600">
                       {sheet.eventName || "No event name"}
                     </p>
+
+                    {sheet.settings?.eventDate && (
+                      <p className="mt-1 text-xs font-medium text-cyan-700">
+                        📅 {formatEventDate(sheet.settings.eventDate)}
+                      </p>
+                    )}
                   </div>
 
                   <div className="[&_button]:border-slate-200 [&_button]:bg-white [&_button]:text-slate-700 [&_button]:hover:bg-slate-50">
@@ -514,12 +536,12 @@ export default async function AppDashboardPage({
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3" title={new Date(sheet.updatedAt).toLocaleString()}>
                     <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
                       Updated
                     </p>
                     <p className="mt-2 text-sm font-semibold text-slate-950">
-                      {formatUpdatedAt(sheet.updatedAt)}
+                      {formatRelativeTime(sheet.updatedAt)}
                     </p>
                   </div>
                 </div>
@@ -548,6 +570,8 @@ export default async function AppDashboardPage({
       {totalSheets === 0 && (
         <OnboardingModal userName={displayName} />
       )}
+
+      <WhatsNewModal />
     </main>
   );
 }

@@ -366,6 +366,38 @@ button.active{
   z-index:1;
 }
 
+.duplicate-label-btn{
+  margin-top:10px;
+  width:100%;
+  font-size:12px;
+  padding:7px 10px;
+  color:var(--text-muted,#64748b);
+  border-color:var(--border);
+  background:linear-gradient(to bottom,#f8fbff,#f4f7fb);
+}
+
+.duplicate-label-btn:hover{
+  color:var(--cyan,#06b6d4);
+  border-color:var(--cyan,#06b6d4);
+  background:#f0fdff;
+}
+
+.overflow-warn{
+  position:absolute;
+  top:5px;
+  right:6px;
+  background:#fef3c7;
+  border:1px solid #f59e0b;
+  color:#92400e;
+  font-size:10px;
+  font-weight:700;
+  border-radius:6px;
+  padding:1px 5px;
+  z-index:10;
+  pointer-events:none;
+  line-height:1.6;
+}
+
 .sidebar-overlay{
   position:fixed;
   inset:0;
@@ -966,7 +998,7 @@ button.active{
     <div style="font-size:18px;font-weight:800;color:#0f172a;">Print</div>
     <button onclick="closeSidebar()" style="width:36px;height:36px;border-radius:10px;border:1px solid #dbe4f0;background:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">×</button>
   </div>
-  <button onclick="openPrintWindow();closeSidebar();" style="width:100%;margin-bottom:10px;">Print / Save PDF</button>
+  <button onclick="openPrintPreview();closeSidebar();" style="width:100%;margin-bottom:10px;">Print / Save PDF</button>
   <button onclick="printAlignmentTestSheet();closeSidebar();" style="width:100%;margin-bottom:14px;">Print Alignment Test Sheet</button>
   <div class="print-instructions">
     For best results when printing Avery labels:<br>
@@ -976,18 +1008,51 @@ button.active{
   </div>
 </dialog>
 
+<!-- Print Preview Modal -->
+<div id="printPreviewOverlay" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:24px;box-shadow:0 30px 80px rgba(15,23,42,0.22);width:100%;max-width:780px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;margin-bottom:4px;">Print Preview</div>
+        <div style="font-size:18px;font-weight:900;color:#0f172a;" id="printPreviewTitle">Sheet Preview</div>
+      </div>
+      <button type="button" onclick="closePrintPreview()" style="border-radius:50%;width:36px;height:36px;padding:0;font-size:18px;line-height:1;border-color:#e2e8f0;">✕</button>
+    </div>
+    <div style="flex:1;overflow:auto;padding:20px;background:#f8fafc;">
+      <div id="printPreviewContent" style="transform-origin:top left;"></div>
+    </div>
+    <div style="padding:16px 24px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <p style="font-size:12px;color:#64748b;margin:0;">Showing first sheet. All sheets print when you confirm.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button type="button" onclick="closePrintPreview()" style="border-color:#e2e8f0;">Cancel</button>
+        <button type="button" onclick="showPdfGuide()" style="border-color:#e2e8f0;color:#64748b;" title="How to save as PDF">📄 Save as PDF</button>
+        <button type="button" onclick="confirmPrint()" style="background:linear-gradient(135deg,#06b6d4,#8b5cf6);color:#fff;border-color:transparent;padding:10px 22px;">Print All Sheets →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="mainContainer" class="container side-view">
   <div class="panel controls controls-panel">
     <div class="controls-inner">
       <div class="controls-block">
         <label>Event Name</label>
         <input type="text" id="eventName" placeholder="Smith Wedding Buffet" />
+        <label style="margin-top:10px;">Event Date <span style="font-weight:400;opacity:.6;font-size:11px;">(optional)</span></label>
+        <input type="date" id="eventDate" />
         <div class="help">
           Each sheet contains 10 labels. Use the buttons below to add or remove full sheets.
         </div>
         <div class="toolbar">
           <button onclick="addTenLabels()">Add 10 Labels</button>
           <button onclick="removeTenLabels()">Remove 10 Labels</button>
+        </div>
+        <div class="toolbar" style="margin-top:8px;">
+          <button id="undoBtn" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩ Undo</button>
+          <button id="redoBtn" onclick="redo()" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
+        </div>
+        <div class="toolbar" style="margin-top:8px;grid-template-columns:1fr;">
+          <button onclick="clearAllLabels()" style="color:#b91c1c;border-color:#fca5a5;background:linear-gradient(to bottom,#fff5f5,#fff1f1);">✕ Clear All Labels</button>
         </div>
       </div>
 
@@ -1318,7 +1383,8 @@ function getMergedRenderSettings() {
     },
     showDietIcons: document.getElementById("showDietIcons")?.checked ?? normalizedAdvanced.showDietIcons,
     showContainsIcons: document.getElementById("showContainsIcons")?.checked ?? normalizedAdvanced.showContainsIcons,
-    viewMode
+    viewMode,
+    eventDate: document.getElementById("eventDate").value || normalizedAdvanced.eventDate || null
   };
 }
 
@@ -1378,7 +1444,166 @@ function ensureMultipleOfTen(n){n=Math.max(10,Number(n)||10);return Math.ceil(n/
 function syncField(fromId,toId){const a=document.getElementById(fromId),b=document.getElementById(toId); if(a&&b) b.value=a.value}
 function syncLogoSize(v){document.getElementById("logoSize").value=v;document.getElementById("logoSizeValue").textContent=v;logoSettings.size=Number(v);generateLabels()}
 function syncLogoOpacity(v){document.getElementById("logoOpacity").value=v;document.getElementById("logoOpacityValue").textContent=v;logoSettings.opacity=Number(v);generateLabels()}
-function syncLogoLayer(v){logoSettings.layer=v;document.getElementById("logoLayerFrontBtn").classList.toggle("active",v==="front");document.getElementById("logoLayerBackBtn").classList.toggle("active",v==="back");generateLabels()}
+function syncLogoLayer(v){pushHistory();logoSettings.layer=v;document.getElementById("logoLayerFrontBtn").classList.toggle("active",v==="front");document.getElementById("logoLayerBackBtn").classList.toggle("active",v==="back");generateLabels()}
+
+// ── Recently used dietary tags ────────────────────────────────
+const RECENT_TAGS_KEY="instabels_recent_diet_tags";
+const RECENT_TAGS_MAX=4;
+function getRecentTags(){try{return JSON.parse(localStorage.getItem(RECENT_TAGS_KEY)||"[]");}catch{return[];}}
+function recordTagUsage(values){
+  let recent=getRecentTags();
+  values.forEach(v=>{recent=recent.filter(r=>r!==v);recent.unshift(v);});
+  recent=recent.slice(0,RECENT_TAGS_MAX);
+  localStorage.setItem(RECENT_TAGS_KEY,JSON.stringify(recent));
+}
+function injectRecentTagsIntoMenu(prefix,i){
+  const recent=getRecentTags();
+  const menu=document.getElementById(prefix+"dietMenu"+i);
+  const select=document.getElementById(prefix+"diet"+i);
+  if(!menu||!select||!recent.length)return;
+  const existing=menu.querySelector(".diet-recent-group");
+  if(existing)existing.remove();
+  const group=document.createElement("div");
+  group.className="diet-recent-group";
+  const heading=document.createElement("div");
+  heading.className="diet-group-heading";
+  heading.textContent="Recently Used";
+  group.appendChild(heading);
+  recent.forEach(val=>{
+    const opt=DIET_OPTIONS.find(o=>o.value===val);
+    if(!opt)return;
+    const row=document.createElement("label");
+    row.className="diet-option";
+    const checkbox=document.createElement("input");
+    checkbox.type="checkbox";
+    checkbox.value=val;
+    checkbox.checked=Array.from(select.options).some(o=>o.value===val&&o.selected);
+    checkbox.addEventListener("change",()=>{
+      Array.from(select.options).forEach(o=>{if(o.value===val)o.selected=checkbox.checked;});
+      // Sync main checkboxes in the full list
+      menu.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(cb!==checkbox&&cb.value===val)cb.checked=checkbox.checked;});
+      updateDietDropdownLabel(prefix,i);
+      select.dispatchEvent(new Event("change",{bubbles:true}));
+    });
+    const left=document.createElement("div");
+    left.className="diet-option-left";
+    left.innerHTML='<span class="diet-option-icon">'+(opt.icon||"")+'</span><span class="diet-option-name">'+val+'</span>';
+    row.appendChild(checkbox);row.appendChild(left);
+    group.appendChild(row);
+  });
+  const divider=document.createElement("div");
+  divider.className="diet-group-divider";
+  group.appendChild(divider);
+  menu.insertBefore(group,menu.firstChild);
+}
+
+// ── Undo / Redo ───────────────────────────────────────────────
+let undoStack=[], undoIndex=-1;
+function snapshotState(){
+  return {
+    labels: collectLabelData(),
+    total: totalLabels,
+    eventName: document.getElementById("eventName").value,
+    eventDate: document.getElementById("eventDate").value || null,
+    logoData: logoData,
+    logoSettings: {...logoSettings},
+    settings: getMergedRenderSettings()
+  };
+}
+function pushHistory(){
+  undoStack=undoStack.slice(0,undoIndex+1);
+  undoStack.push(snapshotState());
+  if(undoStack.length>50)undoStack.shift(); else undoIndex++;
+  updateUndoRedoBtns();
+}
+function updateUndoRedoBtns(){
+  const u=document.getElementById("undoBtn"),r=document.getElementById("redoBtn");
+  if(u)u.disabled=undoIndex<=0;
+  if(r)r.disabled=undoIndex>=undoStack.length-1;
+}
+function applyHistorySnapshot(snap){
+  if(snap.total!==totalLabels){totalLabels=snap.total;createFoodRows();}
+  restoreLabelData(snap.labels);
+  if(snap.eventName!==undefined) document.getElementById("eventName").value=snap.eventName;
+  if(snap.eventDate!==undefined) document.getElementById("eventDate").value=snap.eventDate||"";
+  if(snap.logoData!==undefined){logoData=snap.logoData;updateLogoClearButton();}
+  if(snap.logoSettings){logoSettings={...snap.logoSettings};}
+  if(snap.settings){
+    advancedTemplateSettings=normalizeTemplateSettings(snap.settings);
+    const s=snap.settings;
+    const el=id=>document.getElementById(id);
+    if(el("fontSelect")) el("fontSelect").value=s.fontFamily||"Arial";
+    if(el("fontSize")) el("fontSize").value=s.foodNameSize||20;
+    if(el("textColor")) el("textColor").value=s.textColor||"#000000";
+    if(el("descFont")) el("descFont").value=s.descFont||"Arial";
+    if(el("descSize")) el("descSize").value=s.descSize||12;
+    if(el("descColor")) el("descColor").value=s.descColor||"#555555";
+    if(el("allergenFont")) el("allergenFont").value=s.allergenFont||s.fontFamily||"Arial";
+    if(el("allergenSize")) el("allergenSize").value=s.dietTextSize||12;
+    if(el("allergenColor")) el("allergenColor").value=s.accentColor||"#000000";
+    if(el("bgColor")) el("bgColor").value=s.backgroundColor||"#ffffff";
+    if(el("showDietIcons")) el("showDietIcons").checked=s.showDietIcons??true;
+    if(el("showContainsIcons")) el("showContainsIcons").checked=s.showContainsIcons??true;
+    updateStyleButtons(s);
+  }
+  syncRibbonFields();
+  generateLabels();
+  triggerAutosave();
+  updateUndoRedoBtns();
+}
+function undo(){if(undoIndex>0){undoIndex--;applyHistorySnapshot(undoStack[undoIndex]);}}
+
+function duplicateLabel(i){
+  pushHistory();
+  const food=document.getElementById("food"+i)?.value||"";
+  const desc=document.getElementById("desc"+i)?.value||"";
+  const dietEl=document.getElementById("diet"+i);
+  const diets=dietEl?Array.from(dietEl.selectedOptions).map(o=>o.value):[];
+  // Find the next empty slot after i, or expand
+  let target=-1;
+  for(let j=i+1;j<=totalLabels;j++){
+    const f=document.getElementById("food"+j);
+    if(f&&!f.value.trim()){target=j;break;}
+  }
+  if(target===-1){
+    const oldData=collectLabelData();
+    totalLabels=ensureMultipleOfTen(totalLabels+1);
+    createFoodRows();
+    restoreLabelData(oldData);
+    target=oldData.length+1;
+    generateLabels();
+  }
+  const tf=document.getElementById("food"+target);const td=document.getElementById("desc"+target);const tDiet=document.getElementById("diet"+target);
+  if(tf)tf.value=food;
+  if(td)td.value=desc;
+  if(tDiet&&diets.length){Array.from(tDiet.options).forEach(o=>{o.selected=diets.includes(o.value);});updateDietDropdownLabel("",target);}
+  // Sync ribbon
+  const rf=document.getElementById("r_food"+target);const rd=document.getElementById("r_desc"+target);
+  if(rf)rf.value=food;if(rd)rd.value=desc;
+  generateLabels();
+  triggerAutosave();
+}
+
+function clearAllLabels(){
+  if(!confirm("Clear all label content? This cannot be undone after saving."))return;
+  pushHistory();
+  for(let i=1;i<=totalLabels;i++){
+    const f=document.getElementById("food"+i);const d=document.getElementById("desc"+i);const dt=document.getElementById("diet"+i);
+    if(f)f.value="";if(d)d.value="";
+    if(dt){Array.from(dt.options).forEach(o=>o.selected=false);updateDietDropdownLabel("",i);}
+    const rf=document.getElementById("r_food"+i);const rd=document.getElementById("r_desc"+i);
+    if(rf)rf.value="";if(rd)rd.value="";
+  }
+  generateLabels();
+  triggerAutosave();
+}
+function redo(){if(undoIndex<undoStack.length-1){undoIndex++;applyHistorySnapshot(undoStack[undoIndex]);}}
+document.addEventListener("keydown",function(e){
+  const tag=document.activeElement?document.activeElement.tagName:"";
+  const inText=tag==="INPUT"||tag==="TEXTAREA";
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==="z"&&!inText){e.preventDefault();undo();}
+  if((e.ctrlKey||e.metaKey)&&(e.key==="y"||(e.shiftKey&&e.key==="z"))){e.preventDefault();redo();}
+});
 function updateLogoClearButton(){
   const btn = document.getElementById("clearLogoBtn");
   if (btn) {
@@ -1391,6 +1616,7 @@ function applyLogoFile(file){
 
   const reader = new FileReader();
   reader.onload = function (ev) {
+    pushHistory();
     logoData = ev.target.result;
     updateLogoClearButton();
     generateLabels();
@@ -1408,6 +1634,7 @@ function handleRibbonLogoUpload(e){
 }
 
 function removeLogo(){
+  pushHistory();
   logoData = null;
 
   const mainInput = document.getElementById("logoUpload");
@@ -1428,6 +1655,10 @@ document.getElementById("sheetFileInput").addEventListener("change",e=>{const f=
 document.getElementById("logoSize").addEventListener("input",e=>{syncLogoSize(e.target.value)});
 document.getElementById("logoOpacity").addEventListener("input",e=>{syncLogoOpacity(e.target.value)});
 document.getElementById("eventName").addEventListener("input",()=>{syncRibbonFields();generateLabels()});
+document.getElementById("logoSize").addEventListener("change",pushHistory);
+document.getElementById("logoOpacity").addEventListener("change",pushHistory);
+document.getElementById("eventName").addEventListener("blur",pushHistory);
+document.getElementById("eventDate").addEventListener("change",()=>{pushHistory();syncRibbonFields();generateLabels();});
 ["fontSelect","fontSize","textColor","descFont","descSize","descColor","allergenFont","allergenSize","allergenColor","showDietIcons","showContainsIcons","bgColor","menuPaste"].forEach(id => {
   const el = document.getElementById(id);
   if (!el) return;
@@ -1438,6 +1669,7 @@ document.getElementById("eventName").addEventListener("input",()=>{syncRibbonFie
   });
 
   el.addEventListener("change", () => {
+    pushHistory();
     syncRibbonFields();
     generateLabels();
   });
@@ -1483,7 +1715,8 @@ function createFoodEditorCard(i, prefix) {
 
     '<select id="' + prefix + 'diet' + i + '" multiple style="display:none;"></select>' +
 
-    '<div class="help">Select one or more dietary notes for this label.</div>';
+    '<div class="help">Select one or more dietary notes for this label.</div>' +
+    '<button type="button" class="duplicate-label-btn" onclick="duplicateLabel(' + i + ')">⧉ Duplicate this label</button>';
 
   return w;
 }
@@ -1620,6 +1853,7 @@ list.appendChild(row);
     if (!isOpen) {
       dropdown.classList.add("open");
       toggle.classList.add("open");
+      injectRecentTagsIntoMenu(prefix, i);
     } else {
       dropdown.classList.remove("open");
       toggle.classList.remove("open");
@@ -1658,13 +1892,17 @@ function attachFoodEvents(i, prefix, isRibbon) {
       document.getElementById("food" + i).value = food.value;
       generateLabels();
     });
+    food.addEventListener("blur", pushHistory);
 
     desc.addEventListener("input", () => {
       document.getElementById("desc" + i).value = desc.value;
       generateLabels();
     });
+    desc.addEventListener("blur", pushHistory);
 
     diet.addEventListener("change", () => {
+      const selectedVals = Array.from(diet.selectedOptions).map(o => o.value);
+      recordTagUsage(selectedVals);
       syncRibbonDietToMain(i);
       updateDietDropdownLabel("", i);
       generateLabels();
@@ -1675,17 +1913,22 @@ function attachFoodEvents(i, prefix, isRibbon) {
       if (rf) rf.value = food.value;
       generateLabels();
     });
+    food.addEventListener("blur", pushHistory);
 
     desc.addEventListener("input", () => {
       const rd = document.getElementById("r_desc" + i);
       if (rd) rd.value = desc.value;
       generateLabels();
     });
+    desc.addEventListener("blur", pushHistory);
 
     diet.addEventListener("change", () => {
+      const selectedVals = Array.from(diet.selectedOptions).map(o => o.value);
+      recordTagUsage(selectedVals);
       syncMainDietToRibbon(i);
       updateDietDropdownLabel("r_", i);
       generateLabels();
+      pushHistory();
     });
   }
 }
@@ -1763,6 +2006,7 @@ function syncMainDietToRibbon(i){
   if(a&&b){const vals=Array.from(a.selectedOptions).map(o=>o.value); Array.from(b.options).forEach(o=>o.selected=vals.includes(o.value));}
 }
 function setTotalLabels(newCount){
+  pushHistory();
   const oldData=collectLabelData();
   totalLabels=ensureMultipleOfTen(newCount);
   createFoodRows();
@@ -1775,6 +2019,7 @@ function removeTenLabels(){setTotalLabels(Math.max(10,totalLabels-10))}
 function autoFillMenu() {
   const raw = document.getElementById("menuPaste").value;
   if (!raw) return;
+  pushHistory();
 
   // STEP 1 — normalize text
   let lines = raw
@@ -1884,6 +2129,7 @@ function toTitleCase(str) {
 function clearFoods(){
   document.getElementById("menuPaste").value="";
   document.getElementById("eventName").value="";
+  document.getElementById("eventDate").value="";
   currentSaveName="";
   logoData = null;
   updateLogoClearButton();
@@ -1953,6 +2199,48 @@ function printAlignmentTestSheet() {
   previewSheets.innerHTML = originalHtml;
   document.getElementById("sheetEventNamePreview").textContent = originalEventName;
   document.getElementById("sheetCountText").textContent = originalSheetCount;
+}
+
+function openPrintPreview(){
+  const overlay=document.getElementById("printPreviewOverlay");
+  const content=document.getElementById("printPreviewContent");
+  const previewSheets=document.getElementById("previewSheets");
+  if(!overlay||!content||!previewSheets)return;
+  const firstSheet=previewSheets.querySelector(".sheet-preview");
+  if(!firstSheet){alert("No labels to preview.");return;}
+  content.innerHTML="";
+  const clone=firstSheet.cloneNode(true);
+  // Show overlay first so clientWidth is available for scale calculation
+  overlay.style.display="flex";
+  overlay.getBoundingClientRect(); // force reflow
+  const scaleW=Math.min(1,(content.parentElement.clientWidth-40)/816);
+  clone.style.transform="scale("+scaleW+")";
+  clone.style.transformOrigin="top left";
+  clone.style.width="816px";
+  clone.style.height="auto";
+  clone.style.marginBottom="0";
+  content.style.height=Math.round(firstSheet.scrollHeight*scaleW)+"px";
+  content.appendChild(clone);
+  document.getElementById("printPreviewTitle").textContent=
+    (document.getElementById("eventName")?.value||"Label Sheet")+" — Preview";
+}
+function closePrintPreview(){
+  document.getElementById("printPreviewOverlay").style.display="none";
+}
+function confirmPrint(){
+  closePrintPreview();
+  openPrintWindow();
+}
+function showPdfGuide(){
+  alert(
+    "Save as PDF — Quick Guide\n\n" +
+    "1. Click \"Print All Sheets →\" to open the print window.\n" +
+    "2. In the print dialog, change the Destination to \"Save as PDF\".\n" +
+    "3. Set Paper size to Letter and Margins to None (or Minimum).\n" +
+    "4. Disable \"Headers and footers\" if shown.\n" +
+    "5. Click Save and choose a location.\n\n" +
+    "Tip: Use Chrome or Edge for the best PDF output."
+  );
 }
 
 function openPrintWindow() {
@@ -2176,6 +2464,7 @@ function getSelectedDietForLabel(index){const select=document.getElementById("di
 function getSheetData(){
   return {
     eventName: document.getElementById("eventName").value,
+    eventDate: document.getElementById("eventDate").value || null,
     totalLabels: totalLabels,
     settings: getMergedRenderSettings(),
     logoData: logoData,
@@ -2188,6 +2477,7 @@ function applySheetData(data){
   advancedTemplateSettings = normalizedSettings;
 
   document.getElementById("eventName").value = data.eventName || "";
+  document.getElementById("eventDate").value = data.eventDate || data.settings?.eventDate || "";
   document.getElementById("descFont").value = normalizedSettings.descFont || "Arial";
   document.getElementById("descSize").value = normalizedSettings.descSize || 12;
   document.getElementById("descColor").value = normalizedSettings.descColor || "#555555";
@@ -2222,6 +2512,10 @@ document.getElementById("showContainsIcons").checked =
   syncRibbonFields();
   updateStyleButtons(normalizedSettings);
   generateLabels();
+  // Seed undo stack with initial loaded state
+  undoStack=[snapshotState()];
+  undoIndex=0;
+  updateUndoRedoBtns();
 }
 function saveToBrowserSlot(slotName){localStorage.setItem("buffetSheetV15:"+slotName,JSON.stringify(getSheetData()))}
 function openBrowserSlot(slotName){const raw=localStorage.getItem("buffetSheetV15:"+slotName);if(!raw){alert("That browser save was not found.");return}applySheetData(JSON.parse(raw));currentSaveName=slotName+" (browser)";hasBrowserSave=true;updateCurrentFileName();alert("Browser save opened.");closeSidebar()}
@@ -2230,6 +2524,7 @@ function downloadSheetFileWithName(baseName){const data=getSheetData(),blob=new 
 function saveSheet(){if(hasBrowserSave&&currentSaveName){saveToBrowserSlot(currentSaveName.replace(" (browser)",""));alert("Saved to browser.");closeSidebar();return}if(currentSaveName&&currentSaveName.endsWith(".json")){downloadSheetFileWithName(currentSaveName.replace(/\.json$/i,""));alert("Saved file download created.");closeSidebar();return}saveSheetAs()}
 function saveSheetAs(){const suggested=getSuggestedSheetName(),choice=prompt("Type a name for this sheet.\nAdd 'browser:' at the start to save in the browser.\nExample file save: wedding-buffet\nExample browser save: browser:wedding-buffet",suggested);if(choice===null)return;let trimmed=choice.trim();if(!trimmed)trimmed=suggested;if(trimmed.toLowerCase().startsWith("browser:")){const slotName=sanitizeName(trimmed.slice(8).trim()||suggested);saveToBrowserSlot(slotName);currentSaveName=slotName+" (browser)";hasBrowserSave=true;updateCurrentFileName();alert("Saved as browser save.");closeSidebar();return}const fileName=sanitizeName(trimmed);downloadSheetFileWithName(fileName);currentSaveName=fileName+".json";hasBrowserSave=false;updateCurrentFileName();alert("Saved as file download.");closeSidebar()}
 function setLogoAlignment(position){
+  pushHistory();
   const size = logoSettings.size, margin = 8;
   let x = margin, y = margin;
 
@@ -2378,6 +2673,7 @@ function updateStyleButtons(settings = getMergedRenderSettings()) {
 }
 
 function toggleStyle(key) {
+  pushHistory();
   const current = !!getMergedRenderSettings()[key];
   advancedTemplateSettings[key] = !current;
   updateStyleButtons();
@@ -2544,7 +2840,21 @@ descLine.setAttribute("data-placeholder", "Add ingredients...");
     sheetWrap.appendChild(container);
     previewSheets.appendChild(sheetWrap);
   }
+  setTimeout(checkLabelOverflow, 50);
 }
+function checkLabelOverflow(){
+  document.querySelectorAll(".label").forEach(function(label){
+    const content=label.querySelector(".label-content");
+    if(!content)return;
+    let warn=label.querySelector(".overflow-warn");
+    if(content.scrollHeight>content.clientHeight+6){
+      if(!warn){warn=document.createElement("div");warn.className="overflow-warn";warn.title="Content may be cut off when printed — try a smaller font size";warn.textContent="⚠ overflow";label.appendChild(warn);}
+    } else {
+      if(warn)warn.remove();
+    }
+  });
+}
+
 createFoodRows();
 updateCurrentFileName();
 generateLabels();
@@ -2585,6 +2895,7 @@ function loadSheetFromApp(sheet) {
 
   applySheetData({
     eventName: sheet.eventName || "",
+    eventDate: sheet.eventDate || sheet.settings?.eventDate || null,
     totalLabels: sheet.totalLabels || convertedLabels.length || 10,
     labels: convertedLabels,
     settings: sheet.settings || {},
@@ -2612,6 +2923,7 @@ function buildSavePayload() {
 
   return {
     eventName: data.eventName,
+    eventDate: data.eventDate || null,
     labels: cleanLabels,
     settings: data.settings,
     logoData: logoData

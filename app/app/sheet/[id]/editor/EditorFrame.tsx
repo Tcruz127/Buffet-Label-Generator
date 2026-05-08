@@ -150,6 +150,8 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuFileInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef(sheet.name ?? sheet.title ?? "Untitled Sheet");
+  const isDirtyRef = useRef(false);
+  const lastSavePayloadRef = useRef<Parameters<typeof saveToDatabase>[0] | null>(null);
 
   const [saveStatus, setSaveStatus] = useState("Ready");
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
@@ -178,9 +180,8 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
   const [isChefBotModalOpen, setIsChefBotModalOpen] = useState(false);
   const [isChefBotAnalyzing, setIsChefBotAnalyzing] = useState(false);
   const [chefBotError, setChefBotError] = useState<string | null>(null);
-  const [chefBotAnalyses, setChefBotAnalyses] = useState<ChefBotLabelAnalysis[]>(
-    []
-  );
+  const [chefBotAnalyses, setChefBotAnalyses] = useState<ChefBotLabelAnalysis[]>([]);
+  const [selectedChefBotIndices, setSelectedChefBotIndices] = useState<Set<number>>(new Set());
 
   const normalizedSheetPayload = useMemo(
     () => normalizeSheetPayload(currentSheet),
@@ -229,6 +230,17 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
   }, [sheet]);
 
   useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  useEffect(() => {
     titleRef.current = title;
   }, [title]);
 
@@ -256,6 +268,7 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
     settings?: unknown;
     logoData?: string | null;
   }) => {
+    lastSavePayloadRef.current = payload;
     try {
       setSaveStatus("Saving...");
 
@@ -271,11 +284,18 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
         throw new Error("Save failed");
       }
 
+      isDirtyRef.current = false;
       setSaveStatus("Saved");
       setLastSavedAt(formatSavedTime());
     } catch (error) {
       console.error("Save failed:", error);
       setSaveStatus("Save failed");
+    }
+  };
+
+  const retryLastSave = async () => {
+    if (lastSavePayloadRef.current) {
+      await saveToDatabase(lastSavePayloadRef.current);
     }
   };
 
@@ -368,6 +388,7 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
 
       if (event.data.type === "AUTOSAVE_STATUS") {
         if (event.data.payload === "dirty") {
+          isDirtyRef.current = true;
           setSaveStatus("Editing...");
         }
       }
@@ -729,6 +750,7 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
       );
 
       setChefBotAnalyses(results);
+      setSelectedChefBotIndices(new Set(results.map((r) => r.index)));
     } catch (error) {
       console.error("Chef Bot batch analyze failed:", error);
       setChefBotError(
@@ -752,6 +774,10 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
     const nextLabels: NormalizedLabel[] = baseLabels.map((label, index) => {
       const analysis = chefBotAnalyses.find((entry) => entry.index === index);
       const existingDiets = Array.isArray(label.diets) ? label.diets : [];
+
+      if (!selectedChefBotIndices.has(index)) {
+        return { ...label, diets: existingDiets };
+      }
 
       if (!analysis) {
         return {
@@ -887,15 +913,33 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                   {!isPro && <span className="mr-1.5">🔒</span>}Analyze with Chef Bot
                 </button>
 
-                <div
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold shadow-sm ${statusTone}`}
-                >
-                  <span className="h-2.5 w-2.5 rounded-full bg-current opacity-80" />
-                  <span>{statusText}</span>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold shadow-sm ${statusTone}`}
+                  >
+                    <span className="h-2.5 w-2.5 rounded-full bg-current opacity-80" />
+                    <span>{statusText}</span>
+                  </div>
+                  {saveStatus === "Save failed" && (
+                    <button
+                      type="button"
+                      onClick={retryLastSave}
+                      className="inline-flex items-center justify-center rounded-full border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-100"
+                    >
+                      Retry
+                    </button>
+                  )}
                 </div>
 
                 <Link
                   href="/app"
+                  onClick={(e) => {
+                    if (isDirtyRef.current) {
+                      if (!window.confirm("You have unsaved changes. Leave anyway?")) {
+                        e.preventDefault();
+                      }
+                    }
+                  }}
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50"
                 >
                   ← Back to Dashboard
@@ -1300,19 +1344,34 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                           className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5"
                         >
                           <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                            <div className="min-w-0">
-                              <div className="text-lg font-bold text-slate-950">
-                                {analysis.title || "Untitled Label"}
+                            <div className="flex min-w-0 flex-1 items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedChefBotIndices.has(analysis.index)}
+                                onChange={(e) => {
+                                  setSelectedChefBotIndices((prev) => {
+                                    const next = new Set(prev);
+                                    if (e.target.checked) next.add(analysis.index);
+                                    else next.delete(analysis.index);
+                                    return next;
+                                  });
+                                }}
+                                className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                              />
+                              <div className="min-w-0">
+                                <div className="text-lg font-bold text-slate-950">
+                                  {analysis.title || "Untitled Label"}
+                                </div>
+                                {analysis.description ? (
+                                  <div className="mt-1 text-sm text-slate-500">
+                                    {analysis.description}
+                                  </div>
+                                ) : (
+                                  <div className="mt-1 text-sm italic text-slate-400">
+                                    No ingredient line provided
+                                  </div>
+                                )}
                               </div>
-                              {analysis.description ? (
-                                <div className="mt-1 text-sm text-slate-500">
-                                  {analysis.description}
-                                </div>
-                              ) : (
-                                <div className="mt-1 text-sm italic text-slate-400">
-                                  No ingredient line provided
-                                </div>
-                              )}
                             </div>
 
                             <span
@@ -1470,13 +1529,14 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                     onClick={applyChefBotSuggestions}
                     disabled={
                       isChefBotAnalyzing ||
-                      chefBotAnalyses.every(
-                        (entry) => (entry.suggestedDiets ?? []).length === 0
-                      )
+                      selectedChefBotIndices.size === 0 ||
+                      chefBotAnalyses
+                        .filter((e) => selectedChefBotIndices.has(e.index))
+                        .every((entry) => (entry.suggestedDiets ?? []).length === 0)
                     }
                     className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Apply Suggested Diets
+                    Apply to {selectedChefBotIndices.size} Label{selectedChefBotIndices.size === 1 ? "" : "s"}
                   </button>
                 </div>
               </div>
