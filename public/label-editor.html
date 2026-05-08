@@ -1985,8 +1985,6 @@ function openPrintWindow() {
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    background: white !important;
-    background-image: none !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -2001,11 +1999,9 @@ function openPrintWindow() {
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
     justify-content: center !important;
     position: relative !important;
     box-sizing: border-box !important;
-    text-align: center !important;
     padding-top: 10px !important;
     padding-bottom: 10px !important;
     padding-left: 16px !important;
@@ -2028,7 +2024,6 @@ function openPrintWindow() {
   .dish-name,
   .allergen-line {
     width: 100% !important;
-    text-align: center !important;
   }
 
   .label *,
@@ -2054,7 +2049,6 @@ function openPrintWindow() {
       el.style.borderRadius = "0";
       el.style.boxShadow = "none";
       el.style.outline = "none";
-      el.style.backgroundImage = "none";
     });
 
     document.querySelectorAll(".label-content").forEach((el) => {
@@ -2062,7 +2056,6 @@ function openPrintWindow() {
       el.style.borderRadius = "0";
       el.style.boxShadow = "none";
       el.style.outline = "none";
-      el.style.background = "transparent";
     });
 
     document.querySelectorAll(".sheet-preview").forEach((el) => {
