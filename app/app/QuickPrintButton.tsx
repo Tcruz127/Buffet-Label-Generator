@@ -144,10 +144,24 @@ export default function QuickPrintButton() {
   const print = () => {
     if (!selected.length) return;
     const html = buildPrintHtml(selected);
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(html);
-    win.document.close();
+
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;width:0;height:0;border:none;visibility:hidden;";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+    if (!doc) { document.body.removeChild(iframe); return; }
+
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    // Remove iframe after print dialog is dismissed, with a fallback timeout
+    const cleanup = () => {
+      if (document.body.contains(iframe)) document.body.removeChild(iframe);
+    };
+    iframe.contentWindow?.addEventListener("afterprint", cleanup);
+    setTimeout(cleanup, 60000);
   };
 
   return (
