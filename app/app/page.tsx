@@ -13,6 +13,7 @@ import { isOrgProUser } from "@/lib/plan";
 import { resendVerificationEmail } from "./resendVerification";
 import OnboardingModal from "./OnboardingModal";
 import WhatsNewModal from "./WhatsNewModal";
+import QuickPrintButton from "./QuickPrintButton";
 
 function getInitials(name?: string | null, email?: string | null) {
   const source = name?.trim() || email?.trim() || "A";
@@ -221,7 +222,7 @@ export default async function AppDashboardPage({
               </div>
 
               {/* Primary CTA */}
-              <div className="mt-6">
+              <div className="mt-6 flex flex-wrap items-center gap-3">
                 <Link
                   href="/app/new"
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
@@ -231,6 +232,7 @@ export default async function AppDashboardPage({
                   </svg>
                   Create New Sheet
                 </Link>
+                <QuickPrintButton />
               </div>
             </div>
 
