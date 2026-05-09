@@ -10,63 +10,74 @@ type LabelResult = {
   sheet: { id: string; title: string };
 };
 
-const DIET_COLORS: Record<string, string> = {
-  "Contains Gluten": "#d97706",
-  "Contains Dairy": "#2563eb",
-  "Contains Eggs": "#ca8a04",
-  "Contains Soy": "#16a34a",
-  "Contains Nuts": "#b45309",
-  "Contains Shellfish": "#0891b2",
-  "Contains Sesame": "#7c3aed",
-  "Contains Fish": "#0369a1",
-  Vegetarian: "#15803d",
-  Vegan: "#166534",
-};
-
 function buildPrintHtml(labels: LabelResult[]): string {
-  const labelCards = labels
-    .map((label) => {
-      const diets = Array.isArray(label.diets) ? label.diets : [];
-      const dietBadges = diets
-        .map((d) => {
-          const color = DIET_COLORS[d] ?? "#475569";
-          return `<span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:999px;border:1px solid ${color}33;background:${color}11;color:${color};font-size:9px;font-weight:700;letter-spacing:0.04em;">${d}</span>`;
+  // Group into sheets of 10 — same as the label editor
+  const sheets: LabelResult[][] = [];
+  for (let i = 0; i < labels.length; i += 10) {
+    sheets.push(labels.slice(i, i + 10));
+  }
+
+  const sheetsHtml = sheets
+    .map((sheetLabels) => {
+      const labelHtml = sheetLabels
+        .map((label) => {
+          const diets = Array.isArray(label.diets) ? label.diets : [];
+          const dietText = diets.join(" • ");
+
+          return `
+<div class="label">
+  <div class="label-content">
+    <div class="dish-name">${label.foodName}</div>
+    ${label.description ? `<div class="description-line">${label.description}</div>` : ""}
+    ${dietText ? `<div class="label-divider"></div><div class="allergen-line">${dietText}</div>` : ""}
+  </div>
+</div>`;
         })
         .join("");
 
-      return `
-        <div style="break-inside:avoid;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;background:#fff;margin-bottom:12px;">
-          <div style="font-family:'Inter',Arial,sans-serif;font-size:15px;font-weight:800;color:#0f172a;margin-bottom:4px;line-height:1.3;">${label.foodName}</div>
-          ${label.description ? `<div style="font-family:'Inter',Arial,sans-serif;font-size:11px;color:#64748b;margin-bottom:6px;line-height:1.5;">${label.description}</div>` : ""}
-          ${dietBadges ? `<div style="margin-top:4px;">${dietBadges}</div>` : ""}
-          <div style="margin-top:8px;padding-top:6px;border-top:1px solid #f1f5f9;font-family:'Inter',Arial,sans-serif;font-size:9px;color:#94a3b8;">${label.sheet.title}</div>
-        </div>`;
+      return `<div class="sheet-preview"><div class="labels">${labelHtml}</div></div>`;
     })
     .join("");
 
   return `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <title>Quick Print — ${labels.length} Label${labels.length === 1 ? "" : "s"}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Inter',Arial,sans-serif;background:#f8fafc;padding:24px;}
-    h1{font-size:13px;font-weight:700;color:#64748b;margin-bottom:16px;letter-spacing:0.06em;text-transform:uppercase;}
-    .grid{columns:2;column-gap:16px;}
-    @media print{
-      body{padding:0;background:#fff;}
-      h1{display:none;}
-      @page{margin:12mm 10mm;}
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Quick Print</title>
+<style>
+  @page { size: Letter portrait; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0 !important; padding: 0 !important; background: white !important; color: #000 !important; font-family: Arial, sans-serif !important; width: 100% !important; height: auto !important; }
+  .print-wrap { width: 100% !important; margin: 0 !important; padding: 0 !important; }
+  .sheet-preview { display: block !important; width: 8.5in !important; height: 11in !important; margin: 0 !important; padding: 0.5in !important; box-sizing: border-box !important; background: white !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; overflow: hidden !important; page-break-after: always !important; break-after: page !important; }
+  .sheet-preview:last-child { page-break-after: auto !important; break-after: auto !important; }
+  .labels { display: grid !important; grid-template-columns: repeat(2, 3.5in) !important; grid-template-rows: repeat(5, 2in) !important; column-gap: 0 !important; row-gap: 0 !important; width: 7in !important; height: 10in !important; margin-left: auto !important; margin-right: auto !important; padding: 0 !important; background: white !important; border: none !important; box-shadow: none !important; }
+  .label { width: 3.5in !important; height: 2in !important; box-sizing: border-box !important; overflow: hidden !important; page-break-inside: avoid !important; break-inside: avoid !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .label:nth-child(even) { position: relative !important; left: -0.05in !important; }
+  .label-content { width: 100% !important; height: 100% !important; display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; text-align: center !important; box-sizing: border-box !important; padding: 10px 16px 10px 12px !important; }
+  .dish-name { font-family: Arial, sans-serif; font-size: 20px; font-weight: 700; color: #111111; line-height: 1.1; word-break: break-word; width: 100% !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .description-line { font-family: Arial, sans-serif; font-size: 12px; color: #555555; margin-top: 4px; width: 100% !important; }
+  .label-divider { width: 40px; height: 1px; background: #cccccc; margin: 6px auto 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .allergen-line { font-family: Arial, sans-serif; font-size: 12px; color: #444444; margin-top: 0; width: 100% !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+</style>
 </head>
 <body>
-  <h1>Quick Print &mdash; ${labels.length} Label${labels.length === 1 ? "" : "s"}</h1>
-  <div class="grid">${labelCards}</div>
-  <script>window.onload=function(){window.print();}<\/script>
+<div class="print-wrap">${sheetsHtml}</div>
+<script>
+window.onload = function () {
+  document.querySelectorAll(".label,.label-content,.sheet-preview").forEach(function(el){
+    el.style.border = "none";
+    el.style.borderRadius = "0";
+    el.style.boxShadow = "none";
+    el.style.outline = "none";
+  });
+  document.querySelectorAll(".description-line").forEach(function(el){
+    if (!(el.textContent || "").trim()) el.remove();
+  });
+  setTimeout(function(){ window.focus(); window.print(); }, 250);
+};
+<\/script>
 </body>
 </html>`;
 }
