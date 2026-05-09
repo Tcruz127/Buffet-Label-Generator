@@ -569,14 +569,20 @@ async function runLocalRuleAnalysis(params: {
   const reasoningParts: string[] = [];
   const warningParts: string[] = [];
 
+  // Build concise "ingredient → tag1, tag2" lines, grouped by tag so duplicates collapse
+  const tagToIngredients = new Map<string, string[]>();
   for (const rule of matchedRules) {
-    if (rule.notes) {
-      reasoningParts.push(`${rule.ingredientName}: ${rule.notes}`);
-    } else {
-      reasoningParts.push(
-        `${rule.ingredientName}: matched dietary rule in database.`
-      );
+    const tags = dietsFromRule(rule);
+    for (const tag of tags) {
+      if (!tagToIngredients.has(tag)) tagToIngredients.set(tag, []);
+      const name = rule.ingredientName.charAt(0).toUpperCase() + rule.ingredientName.slice(1);
+      if (!tagToIngredients.get(tag)!.includes(name)) {
+        tagToIngredients.get(tag)!.push(name);
+      }
     }
+  }
+  for (const [tag, ingredients] of tagToIngredients) {
+    reasoningParts.push(`${tag}: ${ingredients.join(", ")}`);
   }
 
   for (const rule of POSSIBLE_NAME_ONLY_RULES) {
@@ -812,7 +818,7 @@ export async function POST(request: Request) {
     const reasoning = uniq([
       ...analysis.reasoningParts,
       externalSourceNote,
-    ]).filter(Boolean).join(" ") ||
+    ]).filter(Boolean).join("\n") ||
       "No strong ingredient matches were found in the dietary database.";
 
     const warnings =

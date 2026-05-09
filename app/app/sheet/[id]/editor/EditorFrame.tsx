@@ -1484,8 +1484,12 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                                   <div className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
                                     Reasoning
                                   </div>
-                                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-                                    {analysis.reasoning || "No reasoning available."}
+                                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 space-y-1">
+                                    {analysis.reasoning
+                                      ? analysis.reasoning.split("\n").map((line, i) => (
+                                          <div key={i}>{line}</div>
+                                        ))
+                                      : <div>No reasoning available.</div>}
                                   </div>
                                 </div>
 
