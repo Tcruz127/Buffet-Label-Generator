@@ -3,48 +3,18 @@
 import { useEffect, useState } from "react";
 
 // ─── UPDATE THESE TWO THINGS EACH RELEASE ────────────────────────────────────
-const CURRENT_VERSION = "v1.1";
+const CURRENT_VERSION = "v1.2";
 
 const PATCH_NOTES: { icon: string; title: string; description: string }[] = [
   {
-    icon: "↩",
-    title: "Undo & Redo",
-    description: "Step back through label changes with Ctrl+Z / Ctrl+Y.",
-  },
-  {
-    icon: "⚠️",
-    title: "Overflow Warnings",
-    description: "Labels that are too full now show a warning badge automatically.",
-  },
-  {
-    icon: "⧉",
-    title: "Duplicate Labels",
-    description: "Copy any label to the next empty slot with one click.",
-  },
-  {
     icon: "🖨️",
-    title: "Print Preview",
-    description: "Preview your sheet before sending it to the printer.",
+    title: "Quick Print",
+    description: "Search all your labels across every sheet, pick the ones you need, and print them as a single custom sheet — no editor required.",
   },
   {
-    icon: "🏷️",
-    title: "Recently Used Dietary Tags",
-    description: "Your most-used tags appear at the top of the diet dropdown.",
-  },
-  {
-    icon: "📅",
-    title: "Event Date Field",
-    description: "Set an event date on each sheet — shown on your dashboard.",
-  },
-  {
-    icon: "🖼️",
-    title: "Logo Opacity & Layer",
-    description: "Push your logo behind text or adjust its opacity for a watermark look.",
-  },
-  {
-    icon: "🤖",
-    title: "Chef Bot Per-Label Control",
-    description: "Choose exactly which labels to apply AI suggestions to.",
+    icon: "💬",
+    title: "Sheet Comments",
+    description: "Leave notes for your team directly inside the label editor. Comments are shared with everyone who has access to the sheet.",
   },
 ];
 // ─────────────────────────────────────────────────────────────────────────────
