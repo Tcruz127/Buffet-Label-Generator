@@ -193,11 +193,13 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
 
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [comments, setComments] = useState<SheetComment[]>([]);
+  const [commentCount, setCommentCount] = useState<number | null>(null);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [newCommentBody, setNewCommentBody] = useState("");
   const [isPostingComment, setIsPostingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const commentsBottomRef = useRef<HTMLDivElement>(null);
 
   const normalizedSheetPayload = useMemo(
     () => normalizeSheetPayload(currentSheet),
@@ -259,6 +261,15 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
   useEffect(() => {
     titleRef.current = title;
   }, [title]);
+
+  useEffect(() => {
+    fetch(`/api/sheets/${sheet.id}/comments`)
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => {
+        if (Array.isArray(data)) setCommentCount(data.length);
+      })
+      .catch(() => {});
+  }, [sheet.id]);
 
   const formatSavedTime = () => {
     return new Date().toLocaleTimeString([], {
@@ -873,7 +884,9 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
       ]);
       if (commentsRes.ok) {
         const data = await commentsRes.json();
-        setComments(Array.isArray(data) ? data : []);
+        const loaded = Array.isArray(data) ? data : [];
+        setComments(loaded);
+        setCommentCount(loaded.length);
       }
       if (sessionRes.ok) {
         const sessionData = await sessionRes.json();
@@ -883,6 +896,8 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
       setCommentError("Failed to load comments.");
     } finally {
       setIsLoadingComments(false);
+      // scroll after data renders
+      setTimeout(() => commentsBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     }
   };
 
@@ -903,7 +918,9 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
       }
       const created: SheetComment = await res.json();
       setComments((prev) => [...prev, created]);
+      setCommentCount((prev) => (prev ?? 0) + 1);
       setNewCommentBody("");
+      setTimeout(() => commentsBottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     } catch (error) {
       setCommentError(error instanceof Error ? error.message : "Failed to post comment.");
     } finally {
@@ -918,6 +935,7 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
       });
       if (!res.ok) return;
       setComments((prev) => prev.filter((c) => c.id !== commentId));
+      setCommentCount((prev) => Math.max(0, (prev ?? 1) - 1));
     } catch {
       // silently fail — comment stays in list
     }
@@ -1006,9 +1024,9 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                     <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v7a2 2 0 01-2 2H6l-4 4V5z" clipRule="evenodd" />
                   </svg>
                   Comments
-                  {comments.length > 0 && (
+                  {commentCount !== null && commentCount > 0 && (
                     <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-[10px] font-black text-white">
-                      {comments.length}
+                      {commentCount}
                     </span>
                   )}
                 </button>
@@ -1724,6 +1742,7 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                   ))}
                 </ul>
               )}
+              <div ref={commentsBottomRef} />
             </div>
 
             {/* Composer */}
@@ -1747,7 +1766,9 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                 className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-cyan-500/15"
               />
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-xs text-slate-400">⌘↵ to send</span>
+                <span className={`text-xs ${newCommentBody.length > 900 ? newCommentBody.length >= 1000 ? "font-semibold text-red-500" : "text-amber-500" : "text-slate-400"}`}>
+                  {newCommentBody.length > 0 ? `${newCommentBody.length}/1000 · ` : ""}⌘↵ to send
+                </span>
                 <button
                   type="button"
                   onClick={postComment}
