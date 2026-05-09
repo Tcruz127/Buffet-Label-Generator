@@ -3,39 +3,39 @@ import Link from "next/link";
 
 const features = [
   {
-    title: "Create polished labels fast",
+    title: "Import menus in seconds",
     description:
-      "Turn event menus into elegant buffet labels in minutes with a workflow built for hospitality speed.",
-  },
-  {
-    title: "Save every sheet",
-    description:
-      "Keep event setups organized and return to them anytime from your private Instabels workspace.",
-  },
-  {
-    title: "Customize every detail",
-    description:
-      "Adjust colors, fonts, logos, allergens, and layouts without rebuilding from scratch.",
-  },
-  {
-    title: "Print-ready by design",
-    description:
-      "Use Avery-friendly layouts and PDF-friendly printing with confidence.",
-  },
-  {
-    title: "Import menus instantly",
-    description:
-      "Upload a PDF or Word document and Instabels extracts your menu items automatically — no manual re-typing.",
+      "Upload a PDF or Word document and Instabels pulls your menu items automatically. No copy-pasting, no re-typing.",
   },
   {
     title: "Chef Bot allergen analysis",
     description:
-      "AI-powered ingredient scanning detects allergens and dietary flags across your entire sheet in seconds.",
+      "AI-powered ingredient scanning detects allergens and dietary flags across your entire sheet in one click.",
   },
   {
-    title: "Team collaboration built in",
+    title: "Quick Print — any label, any sheet",
     description:
-      "Create an organization, invite your team, and share label sheets across your entire operation.",
+      "Search across all your saved sheets, pick the labels you need, and print them as a single custom sheet — no editor required.",
+  },
+  {
+    title: "Team workspace & comments",
+    description:
+      "Invite your team, share sheets across your operation, and leave notes directly inside the editor so everyone stays on the same page.",
+  },
+  {
+    title: "Customize every detail",
+    description:
+      "Adjust fonts, colors, logos, allergen styles, and layouts. Save your settings with the sheet so you never rebuild from scratch.",
+  },
+  {
+    title: "Print-ready by design",
+    description:
+      "Every sheet outputs to Avery-friendly 3.5 × 2 in. label dimensions. Send straight to the printer or save as PDF.",
+  },
+  {
+    title: "Undo, duplicate & overflow warnings",
+    description:
+      "Step back through any change with Ctrl+Z, copy labels in one click, and get automatic warnings before content gets cut off at print time.",
   },
 ];
 
@@ -123,7 +123,7 @@ export default function HomePage() {
           <div className="grid items-center gap-16 pb-20 lg:grid-cols-[1.08fr_.92fr]">
             <div>
               <div className="mb-6 inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-100 backdrop-blur">
-                Meet Instabels — built for caterers, resorts, wedding venues, banquet teams, and hospitality groups
+                The label tool built for hospitality teams
               </div>
 
               <h1 className="max-w-5xl text-5xl font-black leading-[0.95] tracking-tight text-white md:text-7xl">
@@ -133,12 +133,10 @@ export default function HomePage() {
                 </span>
               </h1>
 
-              <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">
+              <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300 md:text-xl">
                 Create, save, and print polished buffet labels from one
-                beautiful workspace. Import menus from PDF or Word, detect
-                allergens instantly with Chef Bot, and share sheets across your
-                entire team — built for hospitality operations that can't afford
-                to slow down.
+                workspace — built for hospitality operations that can&apos;t
+                afford to slow down.
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -146,7 +144,7 @@ export default function HomePage() {
                   href="/signup"
                   className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-7 py-3.5 text-base font-semibold text-white shadow-2xl shadow-cyan-500/30 transition hover:scale-[1.02]"
                 >
-                  Start with Instabels
+                  Start free
                 </Link>
 
                 <Link
@@ -159,23 +157,23 @@ export default function HomePage() {
 
               <div className="mt-12 grid max-w-2xl gap-4 sm:grid-cols-3">
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-cyan-500/5 backdrop-blur">
-                  <p className="text-3xl font-black text-white">Fast</p>
+                  <p className="text-3xl font-black text-white">Chef Bot</p>
                   <p className="mt-2 text-sm text-slate-300">
-                    Build label sheets in minutes
+                    AI allergen detection in one click
                   </p>
                 </div>
 
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-violet-500/5 backdrop-blur">
-                  <p className="text-3xl font-black text-white">Saved</p>
+                  <p className="text-3xl font-black text-white">Teams</p>
                   <p className="mt-2 text-sm text-slate-300">
-                    Reopen and reuse your work anytime
+                    Shared sheets across your operation
                   </p>
                 </div>
 
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-cyan-500/5 backdrop-blur">
-                  <p className="text-3xl font-black text-white">Print-ready</p>
+                  <p className="text-3xl font-black text-white">Quick Print</p>
                   <p className="mt-2 text-sm text-slate-300">
-                    Avery-friendly layouts and PDF export
+                    Find and print any label instantly
                   </p>
                 </div>
               </div>
@@ -203,13 +201,13 @@ export default function HomePage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      "Chicken Marsala",
-                      "Roasted Potatoes",
-                      "Caesar Salad",
-                      "Grilled Vegetables",
+                      { name: "Chicken Marsala", desc: "Wine sauce, cremini mushrooms" },
+                      { name: "Roasted Potatoes", desc: "Herb roasted, sea salt • GF" },
+                      { name: "Caesar Salad", desc: "Romaine, parmesan, house dressing" },
+                      { name: "Grilled Vegetables", desc: "Seasonal blend, olive oil • VG" },
                     ].map((item, index) => (
                       <div
-                        key={item}
+                        key={item.name}
                         className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg backdrop-blur"
                       >
                         <div
@@ -220,10 +218,10 @@ export default function HomePage() {
                           }`}
                         />
                         <p className="text-base font-semibold text-white">
-                          {item}
+                          {item.name}
                         </p>
                         <p className="mt-1 text-xs text-slate-400">
-                          Print-ready label
+                          {item.desc}
                         </p>
                       </div>
                     ))}
@@ -448,6 +446,8 @@ export default function HomePage() {
                     "Unlimited labels per sheet",
                     "Upload Menu — import from PDF or Word",
                     "Chef Bot — AI allergen & dietary analysis",
+                    "Quick Print — search & print across all sheets",
+                    "Sheet Comments — leave notes inside the editor",
                     "Custom logo upload & branding",
                     "Team accounts with member invites",
                   ].map((feature) => (
