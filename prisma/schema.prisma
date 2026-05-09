@@ -27,6 +27,7 @@ model User {
   folders              SheetFolder[]
   passwordResetTokens  PasswordResetToken[]
   emailVerifyTokens    EmailVerifyToken[]
+  sheetComments        SheetComment[]
 }
 
 model PasswordResetToken {
@@ -117,6 +118,7 @@ model LabelSheet {
   folder         SheetFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
   items          LabelItem[]
   dishAnalyses   DishAnalysis[]
+  comments       SheetComment[]
 }
 
 model LabelItem {
@@ -159,6 +161,19 @@ model IngredientRule {
 
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+}
+
+model SheetComment {
+  id        String     @id @default(cuid())
+  sheetId   String
+  userId    String
+  body      String
+  createdAt DateTime   @default(now())
+
+  sheet     LabelSheet @relation(fields: [sheetId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sheetId])
 }
 
 model DishAnalysis {

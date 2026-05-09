@@ -87,6 +87,14 @@ type ChefBotLabelAnalysis = {
   error?: string;
 };
 
+type SheetComment = {
+  id: string;
+  body: string;
+  createdAt: string;
+  userId: string;
+  user: { name: string | null; email: string };
+};
+
 type NormalizedLabel = {
   id?: string;
   title: string;
@@ -182,6 +190,14 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
   const [chefBotError, setChefBotError] = useState<string | null>(null);
   const [chefBotAnalyses, setChefBotAnalyses] = useState<ChefBotLabelAnalysis[]>([]);
   const [selectedChefBotIndices, setSelectedChefBotIndices] = useState<Set<number>>(new Set());
+
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [comments, setComments] = useState<SheetComment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [newCommentBody, setNewCommentBody] = useState("");
+  const [isPostingComment, setIsPostingComment] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
 
   const normalizedSheetPayload = useMemo(
     () => normalizeSheetPayload(currentSheet),
@@ -846,6 +862,74 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
     setIsChefBotModalOpen(false);
   };
 
+  const openComments = async () => {
+    setIsCommentsOpen(true);
+    setIsLoadingComments(true);
+    setCommentError(null);
+    try {
+      const [commentsRes, sessionRes] = await Promise.all([
+        fetch(`/api/sheets/${sheet.id}/comments`),
+        fetch("/api/auth/session"),
+      ]);
+      if (commentsRes.ok) {
+        const data = await commentsRes.json();
+        setComments(Array.isArray(data) ? data : []);
+      }
+      if (sessionRes.ok) {
+        const sessionData = await sessionRes.json();
+        setCurrentUserEmail(sessionData?.user?.email ?? null);
+      }
+    } catch {
+      setCommentError("Failed to load comments.");
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  const postComment = async () => {
+    const text = newCommentBody.trim();
+    if (!text) return;
+    setIsPostingComment(true);
+    setCommentError(null);
+    try {
+      const res = await fetch(`/api/sheets/${sheet.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: text }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to post comment");
+      }
+      const created: SheetComment = await res.json();
+      setComments((prev) => [...prev, created]);
+      setNewCommentBody("");
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : "Failed to post comment.");
+    } finally {
+      setIsPostingComment(false);
+    }
+  };
+
+  const deleteComment = async (commentId: string) => {
+    try {
+      const res = await fetch(`/api/sheets/${sheet.id}/comments/${commentId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) return;
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch {
+      // silently fail — comment stays in list
+    }
+  };
+
+  const formatCommentTime = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString([], { month: "short", day: "numeric" }) +
+      " at " +
+      d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  };
+
   const statusText =
     saveStatus === "Saved" && lastSavedAt
       ? `Saved at ${lastSavedAt}`
@@ -911,6 +995,22 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
                   className="inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 shadow-sm transition hover:bg-amber-100"
                 >
                   {!isPro && <span className="mr-1.5">🔒</span>}Analyze with Chef Bot
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openComments}
+                  className="relative inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v7a2 2 0 01-2 2H6l-4 4V5z" clipRule="evenodd" />
+                  </svg>
+                  Comments
+                  {comments.length > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-[10px] font-black text-white">
+                      {comments.length}
+                    </span>
+                  )}
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -1547,6 +1647,119 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
             </div>
           </div>
         </div>
+      ) : null}
+
+      {/* Comments slide-over */}
+      {isCommentsOpen ? (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-slate-950/20 backdrop-blur-[2px]"
+            onClick={() => setIsCommentsOpen(false)}
+          />
+          {/* Panel */}
+          <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col border-l border-slate-200 bg-white shadow-[0_0_60px_rgba(15,23,42,0.15)]">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div>
+                <h2 className="text-lg font-black tracking-tight text-slate-950">Comments</h2>
+                <p className="text-xs text-slate-500">Notes for your team on this sheet</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCommentsOpen(false)}
+                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Thread */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+              {isLoadingComments ? (
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                  <div className="mb-3 h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-500" />
+                  <span className="text-sm">Loading comments…</span>
+                </div>
+              ) : comments.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
+                  <svg className="mb-3 h-10 w-10 opacity-40" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v7a2 2 0 01-2 2H6l-4 4V5z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-sm font-medium">No comments yet</p>
+                  <p className="mt-1 text-xs">Be the first to leave a note.</p>
+                </div>
+              ) : (
+                <ul className="space-y-4">
+                  {comments.map((comment) => (
+                    <li key={comment.id} className="group flex gap-3">
+                      {/* Avatar */}
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 text-xs font-black text-white">
+                        {(comment.user.name ?? comment.user.email).charAt(0).toUpperCase()}
+                      </div>
+                      {/* Body */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="truncate text-sm font-semibold text-slate-900">
+                            {comment.user.name ?? comment.user.email}
+                          </span>
+                          <span className="shrink-0 text-xs text-slate-400">
+                            {formatCommentTime(comment.createdAt)}
+                          </span>
+                        </div>
+                        <p className="mt-1 break-words text-sm text-slate-700">{comment.body}</p>
+                        {comment.user.email === currentUserEmail && (
+                          <button
+                            type="button"
+                            onClick={() => deleteComment(comment.id)}
+                            className="mt-1 text-xs text-slate-400 opacity-0 transition hover:text-red-500 group-hover:opacity-100"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Composer */}
+            <div className="border-t border-slate-100 px-5 py-4">
+              {commentError ? (
+                <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                  {commentError}
+                </div>
+              ) : null}
+              <textarea
+                value={newCommentBody}
+                onChange={(e) => setNewCommentBody(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    postComment();
+                  }
+                }}
+                placeholder="Leave a note for your team…"
+                rows={3}
+                className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-cyan-500/15"
+              />
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-xs text-slate-400">⌘↵ to send</span>
+                <button
+                  type="button"
+                  onClick={postComment}
+                  disabled={!newCommentBody.trim() || isPostingComment}
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isPostingComment ? "Posting…" : "Post"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       ) : null}
     </>
   );
