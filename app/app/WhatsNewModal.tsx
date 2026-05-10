@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 // ─── UPDATE THESE TWO THINGS EACH RELEASE ────────────────────────────────────
-const CURRENT_VERSION = "v1.2";
+const CURRENT_VERSION = "v1.3";
 
 const PATCH_NOTES: { icon: string; title: string; description: string }[] = [
   {
@@ -15,6 +15,11 @@ const PATCH_NOTES: { icon: string; title: string; description: string }[] = [
     icon: "💬",
     title: "Sheet Comments",
     description: "Leave notes for your team directly inside the label editor. Comments are shared with everyone who has access to the sheet.",
+  },
+  {
+    icon: "📝",
+    title: "Feedback",
+    description: "Have a suggestion or ran into something? Use the new Feedback button in the bottom-right corner to share your thoughts with us directly.",
   },
 ];
 // ─────────────────────────────────────────────────────────────────────────────
