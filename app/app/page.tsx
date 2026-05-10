@@ -575,6 +575,7 @@ export default async function AppDashboardPage({
       )}
 
       <WhatsNewModal />
+      <FeedbackButton />
     </main>
   );
 }
