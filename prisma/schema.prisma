@@ -28,6 +28,7 @@ model User {
   passwordResetTokens  PasswordResetToken[]
   emailVerifyTokens    EmailVerifyToken[]
   sheetComments        SheetComment[]
+  feedbacks            Feedback[]
 }
 
 model PasswordResetToken {
@@ -174,6 +175,18 @@ model SheetComment {
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([sheetId])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String
+  rating    Int?
+  body      String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
 }
 
 model DishAnalysis {

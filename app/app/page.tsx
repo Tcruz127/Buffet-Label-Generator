@@ -14,6 +14,7 @@ import { resendVerificationEmail } from "./resendVerification";
 import OnboardingModal from "./OnboardingModal";
 import WhatsNewModal from "./WhatsNewModal";
 import QuickPrintButton from "./QuickPrintButton";
+import FeedbackButton from "./FeedbackButton";
 
 function getInitials(name?: string | null, email?: string | null) {
   const source = name?.trim() || email?.trim() || "A";

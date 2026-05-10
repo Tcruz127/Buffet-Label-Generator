@@ -120,3 +120,42 @@ export async function sendVerificationEmail(email: string, token: string) {
     `,
   });
 }
+
+export async function sendFeedbackNotificationEmail(
+  fromEmail: string,
+  rating: number | null,
+  body: string
+) {
+  const stars = rating ? "⭐".repeat(rating) + ` (${rating}/5)` : "No rating";
+
+  await resend.emails.send({
+    from: FROM,
+    to: "tbcbusiness127@gmail.com",
+    subject: `New Instabels Feedback${rating ? ` — ${rating}/5 stars` : ""}`,
+    html: `
+      <div style="font-family:Inter,system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#ffffff;">
+        <div style="margin-bottom:24px;">
+          <span style="font-size:22px;font-weight:900;color:#0f172a;letter-spacing:-0.5px;">Instabels</span>
+        </div>
+
+        <h1 style="font-size:20px;font-weight:800;color:#0f172a;margin:0 0 8px;">New feedback received</h1>
+        <p style="font-size:13px;color:#94a3b8;margin:0 0 24px;">From: ${fromEmail}</p>
+
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+          <p style="font-size:12px;font-weight:600;color:#64748b;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.05em;">Rating</p>
+          <p style="font-size:16px;color:#0f172a;margin:0;">${stars}</p>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;">
+          <p style="font-size:12px;font-weight:600;color:#64748b;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.05em;">Message</p>
+          <p style="font-size:15px;color:#0f172a;margin:0;line-height:1.6;">${body}</p>
+        </div>
+
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:28px 0;" />
+        <p style="font-size:12px;color:#cbd5e1;margin:0;">
+          Instabels · Professional buffet labeling for hospitality teams
+        </p>
+      </div>
+    `,
+  });
+}
