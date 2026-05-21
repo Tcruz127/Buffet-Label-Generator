@@ -679,6 +679,32 @@ function getExtension(fileName: string): string {
 
 export async function POST(request: Request) {
   try {
+    const contentType = request.headers.get("content-type") ?? "";
+
+    // Client-side PDF extraction path — receives JSON with pre-extracted text
+    if (contentType.includes("application/json")) {
+      const body = await request.json();
+      const rawText: string = typeof body.text === "string" ? body.text : "";
+      const fileName: string = typeof body.fileName === "string" ? body.fileName : "menu";
+
+      if (!rawText.trim()) {
+        return NextResponse.json<ParsedMenuResponse>(
+          { success: false, error: "No readable text was found in that file." },
+          { status: 400 }
+        );
+      }
+
+      const normalizedRawText = normalizeWhitespace(rawText);
+      const items = extractMenuItemsFromText(normalizedRawText);
+
+      return NextResponse.json<ParsedMenuResponse>({
+        success: true,
+        fileName,
+        rawText: normalizedRawText,
+        items,
+      });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
 

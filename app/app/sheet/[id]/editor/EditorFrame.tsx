@@ -554,31 +554,67 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
     setImportMode("replace");
 
     try {
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-      if (file.size > MAX_FILE_SIZE) {
-        throw new Error(
-          "File is too large. Please upload a file under 10MB."
-        );
+      const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+      let response: Response;
+
+      if (extension === "pdf") {
+        // Extract text in the browser so the raw binary never hits the server.
+        // This sidesteps Vercel's 4.5 MB serverless body limit entirely.
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfjsLib = await import("pdfjs-dist");
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+          "pdfjs-dist/build/pdf.worker.mjs",
+          import.meta.url
+        ).toString();
+
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pageTexts: string[] = [];
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+
+          // Use y-coordinate changes to reconstruct line breaks
+          let lastY: number | null = null;
+          const lines: string[] = [];
+          let currentLine = "";
+
+          for (const item of content.items) {
+            if (!("str" in item) || !item.str) continue;
+            const y: number = (item as any).transform[5];
+
+            if (lastY !== null && Math.abs(y - lastY) > 1) {
+              if (currentLine.trim()) lines.push(currentLine.trim());
+              currentLine = item.str;
+            } else {
+              currentLine += (currentLine ? " " : "") + item.str;
+            }
+            lastY = y;
+          }
+          if (currentLine.trim()) lines.push(currentLine.trim());
+          pageTexts.push(lines.join("\n"));
+        }
+        const extractedText = pageTexts.join("\n");
+
+        response = await fetch("/api/menu/parse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: extractedText, fileName: file.name }),
+        });
+      } else {
+        const formData = new FormData();
+        formData.append("file", file);
+        response = await fetch("/api/menu/parse", {
+          method: "POST",
+          body: formData,
+        });
       }
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/menu/parse", {
-        method: "POST",
-        body: formData,
-      });
 
       let result: ParsedMenuResponse;
       const responseText = await response.text();
       try {
         result = JSON.parse(responseText) as ParsedMenuResponse;
       } catch {
-        if (response.status === 413) {
-          throw new Error(
-            "File is too large for the server to process. Please try a smaller file."
-          );
-        }
         throw new Error(
           `Unexpected server response (${response.status}). Please try again.`
         );
