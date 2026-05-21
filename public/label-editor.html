@@ -1446,56 +1446,6 @@ function syncLogoSize(v){document.getElementById("logoSize").value=v;document.ge
 function syncLogoOpacity(v){document.getElementById("logoOpacity").value=v;document.getElementById("logoOpacityValue").textContent=v;logoSettings.opacity=Number(v);generateLabels()}
 function syncLogoLayer(v){pushHistory();logoSettings.layer=v;document.getElementById("logoLayerFrontBtn").classList.toggle("active",v==="front");document.getElementById("logoLayerBackBtn").classList.toggle("active",v==="back");generateLabels()}
 
-// ── Recently used dietary tags ────────────────────────────────
-const RECENT_TAGS_KEY="instabels_recent_diet_tags";
-const RECENT_TAGS_MAX=4;
-function getRecentTags(){try{return JSON.parse(localStorage.getItem(RECENT_TAGS_KEY)||"[]");}catch{return[];}}
-function recordTagUsage(values){
-  let recent=getRecentTags();
-  values.forEach(v=>{recent=recent.filter(r=>r!==v);recent.unshift(v);});
-  recent=recent.slice(0,RECENT_TAGS_MAX);
-  localStorage.setItem(RECENT_TAGS_KEY,JSON.stringify(recent));
-}
-function injectRecentTagsIntoMenu(prefix,i){
-  const recent=getRecentTags();
-  const menu=document.getElementById(prefix+"dietMenu"+i);
-  const select=document.getElementById(prefix+"diet"+i);
-  if(!menu||!select||!recent.length)return;
-  const existing=menu.querySelector(".diet-recent-group");
-  if(existing)existing.remove();
-  const group=document.createElement("div");
-  group.className="diet-recent-group";
-  const heading=document.createElement("div");
-  heading.className="diet-group-heading";
-  heading.textContent="Recently Used";
-  group.appendChild(heading);
-  recent.forEach(val=>{
-    const opt=DIET_OPTIONS.find(o=>o.value===val);
-    if(!opt)return;
-    const row=document.createElement("label");
-    row.className="diet-option";
-    const checkbox=document.createElement("input");
-    checkbox.type="checkbox";
-    checkbox.value=val;
-    checkbox.checked=Array.from(select.options).some(o=>o.value===val&&o.selected);
-    checkbox.addEventListener("change",()=>{
-      Array.from(select.options).forEach(o=>{if(o.value===val)o.selected=checkbox.checked;});
-      // Sync main checkboxes in the full list
-      menu.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(cb!==checkbox&&cb.value===val)cb.checked=checkbox.checked;});
-      updateDietDropdownLabel(prefix,i);
-      select.dispatchEvent(new Event("change",{bubbles:true}));
-    });
-    const left=document.createElement("div");
-    left.className="diet-option-left";
-    left.innerHTML='<span class="diet-option-icon">'+(opt.icon||"")+'</span><span class="diet-option-name">'+val+'</span>';
-    row.appendChild(checkbox);row.appendChild(left);
-    group.appendChild(row);
-  });
-  const divider=document.createElement("div");
-  divider.className="diet-group-divider";
-  group.appendChild(divider);
-  menu.insertBefore(group,menu.firstChild);
-}
 
 // ── Undo / Redo ───────────────────────────────────────────────
 let undoStack=[], undoIndex=-1;
@@ -1853,7 +1803,6 @@ list.appendChild(row);
     if (!isOpen) {
       dropdown.classList.add("open");
       toggle.classList.add("open");
-      injectRecentTagsIntoMenu(prefix, i);
     } else {
       dropdown.classList.remove("open");
       toggle.classList.remove("open");
@@ -1901,8 +1850,6 @@ function attachFoodEvents(i, prefix, isRibbon) {
     desc.addEventListener("blur", pushHistory);
 
     diet.addEventListener("change", () => {
-      const selectedVals = Array.from(diet.selectedOptions).map(o => o.value);
-      recordTagUsage(selectedVals);
       syncRibbonDietToMain(i);
       updateDietDropdownLabel("", i);
       generateLabels();
@@ -1923,8 +1870,6 @@ function attachFoodEvents(i, prefix, isRibbon) {
     desc.addEventListener("blur", pushHistory);
 
     diet.addEventListener("change", () => {
-      const selectedVals = Array.from(diet.selectedOptions).map(o => o.value);
-      recordTagUsage(selectedVals);
       syncMainDietToRibbon(i);
       updateDietDropdownLabel("r_", i);
       generateLabels();
