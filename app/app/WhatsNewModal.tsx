@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 
 // ─── UPDATE THESE TWO THINGS EACH RELEASE ────────────────────────────────────
-const CURRENT_VERSION = "v1.3";
+const CURRENT_VERSION = "v1.4";
 
 const PATCH_NOTES: { icon: string; title: string; description: string }[] = [
+  {
+    icon: "🎨",
+    title: "Quick Print Design Panel",
+    description: "Customize your labels before printing — change fonts, adjust text sizes, pick colors, and see a live preview, all without leaving Quick Print.",
+  },
   {
     icon: "🖨️",
     title: "Quick Print",
