@@ -11,12 +11,67 @@ type LabelResult = {
   sheet: { id: string; title: string };
 };
 
-function buildPrintHtml(labels: LabelResult[]): string {
-  // Group into sheets of 10 — same as the label editor
+type DesignSettings = {
+  fontFamily: string;
+  foodNameSize: number;
+  textColor: string;
+  foodBold: boolean;
+  foodItalic: boolean;
+  descColor: string;
+  descSize: number;
+  accentColor: string;
+  dietTextSize: number;
+  backgroundColor: string;
+  borderStyle: "none" | "classic" | "modern" | "elegant" | "gold-frame";
+  borderColor: string;
+  borderRadius: number;
+  align: "left" | "center" | "right";
+};
+
+const DEFAULT_DESIGN: DesignSettings = {
+  fontFamily: "Arial",
+  foodNameSize: 20,
+  textColor: "#111111",
+  foodBold: true,
+  foodItalic: false,
+  descColor: "#555555",
+  descSize: 12,
+  accentColor: "#444444",
+  dietTextSize: 12,
+  backgroundColor: "#ffffff",
+  borderStyle: "classic",
+  borderColor: "#cfcfcf",
+  borderRadius: 0,
+  align: "center",
+};
+
+const FONTS = [
+  "Arial",
+  "Georgia",
+  "Times New Roman",
+  "Helvetica",
+  "Verdana",
+  "Trebuchet MS",
+  "Garamond",
+  "Palatino",
+];
+
+function getLabelBorderCss(d: DesignSettings): string {
+  const r = `border-radius: ${d.borderRadius}px !important;`;
+  if (d.borderStyle === "none") return `border: none !important; box-shadow: none !important; ${r}`;
+  if (d.borderStyle === "classic") return `border: 1px solid ${d.borderColor} !important; box-shadow: none !important; ${r}`;
+  if (d.borderStyle === "modern") return `border: none !important; box-shadow: 0 2px 10px rgba(15,23,42,0.08) !important; ${r}`;
+  if (d.borderStyle === "elegant") return `border: none !important; box-shadow: inset 0 0 0 1px ${d.borderColor}, inset 0 0 0 4px rgba(219,199,170,0.18) !important; ${r}`;
+  if (d.borderStyle === "gold-frame") return `border: none !important; box-shadow: inset 0 0 0 2px ${d.borderColor}, inset 0 0 0 6px rgba(212,175,55,0.18) !important; ${r}`;
+  return `border: none !important; ${r}`;
+}
+
+function buildPrintHtml(labels: LabelResult[], d: DesignSettings): string {
   const sheets: LabelResult[][] = [];
-  for (let i = 0; i < labels.length; i += 10) {
-    sheets.push(labels.slice(i, i + 10));
-  }
+  for (let i = 0; i < labels.length; i += 10) sheets.push(labels.slice(i, i + 10));
+
+  const alignItems = d.align === "left" ? "flex-start" : d.align === "right" ? "flex-end" : "center";
+  const labelBorder = getLabelBorderCss(d);
 
   const sheetsHtml = sheets
     .map((sheetLabels) => {
@@ -24,7 +79,6 @@ function buildPrintHtml(labels: LabelResult[]): string {
         .map((label) => {
           const diets = Array.isArray(label.diets) ? label.diets : [];
           const dietText = diets.join(" • ");
-
           return `
 <div class="label">
   <div class="label-content">
@@ -35,7 +89,6 @@ function buildPrintHtml(labels: LabelResult[]): string {
 </div>`;
         })
         .join("");
-
       return `<div class="sheet-preview"><div class="labels">${labelHtml}</div></div>`;
     })
     .join("");
@@ -44,34 +97,31 @@ function buildPrintHtml(labels: LabelResult[]): string {
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Quick Print</title>
 <style>
   @page { size: Letter portrait; margin: 0; }
   *, *::before, *::after { box-sizing: border-box; }
-  html, body { margin: 0 !important; padding: 0 !important; background: white !important; color: #000 !important; font-family: Arial, sans-serif !important; width: 100% !important; height: auto !important; }
+  html, body { margin: 0 !important; padding: 0 !important; background: white !important; color: #000 !important; font-family: ${d.fontFamily}, Arial, sans-serif !important; width: 100% !important; height: auto !important; }
   .print-wrap { width: 100% !important; margin: 0 !important; padding: 0 !important; }
   .sheet-preview { display: block !important; width: 8.5in !important; height: 11in !important; margin: 0 !important; padding: 0.5in !important; box-sizing: border-box !important; background: white !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; overflow: hidden !important; page-break-after: always !important; break-after: page !important; }
   .sheet-preview:last-child { page-break-after: auto !important; break-after: auto !important; }
-  .labels { display: grid !important; grid-template-columns: repeat(2, 3.5in) !important; grid-template-rows: repeat(5, 2in) !important; column-gap: 0 !important; row-gap: 0 !important; width: 7in !important; height: 10in !important; margin-left: auto !important; margin-right: auto !important; padding: 0 !important; background: white !important; border: none !important; box-shadow: none !important; }
-  .label { width: 3.5in !important; height: 2in !important; box-sizing: border-box !important; overflow: hidden !important; page-break-inside: avoid !important; break-inside: avoid !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .labels { display: grid !important; grid-template-columns: repeat(2, 3.5in) !important; grid-template-rows: repeat(5, 2in) !important; column-gap: 0 !important; row-gap: 0 !important; width: 7in !important; height: 10in !important; margin-left: auto !important; margin-right: auto !important; padding: 0 !important; background: white !important; }
+  .label { width: 3.5in !important; height: 2in !important; box-sizing: border-box !important; overflow: hidden !important; page-break-inside: avoid !important; break-inside: avoid !important; background-color: ${d.backgroundColor} !important; ${labelBorder} -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .label:nth-child(even) { position: relative !important; left: -0.05in !important; }
-  .label-content { width: 100% !important; height: 100% !important; display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; text-align: center !important; box-sizing: border-box !important; padding: 10px 16px 10px 12px !important; }
-  .dish-name { font-family: Arial, sans-serif; font-size: 20px; font-weight: 700; color: #111111; line-height: 1.1; word-break: break-word; width: 100% !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  .description-line { font-family: Arial, sans-serif; font-size: 12px; color: #555555; margin-top: 4px; width: 100% !important; }
-  .label-divider { width: 40px; height: 1px; background: #cccccc; margin: 6px auto 4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  .allergen-line { font-family: Arial, sans-serif; font-size: 12px; color: #444444; margin-top: 0; width: 100% !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .label-content { width: 100% !important; height: 100% !important; display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: ${alignItems} !important; text-align: ${d.align} !important; box-sizing: border-box !important; padding: 10px 16px 10px 12px !important; }
+  .dish-name { font-family: ${d.fontFamily}, Arial, sans-serif; font-size: ${d.foodNameSize}px; font-weight: ${d.foodBold ? "700" : "400"}; font-style: ${d.foodItalic ? "italic" : "normal"}; color: ${d.textColor}; line-height: 1.1; word-break: break-word; width: 100% !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .description-line { font-family: ${d.fontFamily}, Arial, sans-serif; font-size: ${d.descSize}px; color: ${d.descColor}; margin-top: 4px; width: 100% !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .label-divider { width: 40px; height: 1px; background: ${d.accentColor}; margin: 6px auto 4px; opacity: 0.4; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .allergen-line { font-family: ${d.fontFamily}, Arial, sans-serif; font-size: ${d.dietTextSize}px; color: ${d.accentColor}; margin-top: 0; width: 100% !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 </style>
 </head>
 <body>
 <div class="print-wrap">${sheetsHtml}</div>
 <script>
 window.onload = function () {
-  document.querySelectorAll(".label,.label-content,.sheet-preview").forEach(function(el){
+  document.querySelectorAll(".sheet-preview").forEach(function(el){
     el.style.border = "none";
-    el.style.borderRadius = "0";
     el.style.boxShadow = "none";
-    el.style.outline = "none";
   });
   document.querySelectorAll(".description-line").forEach(function(el){
     if (!(el.textContent || "").trim()) el.remove();
@@ -83,16 +133,191 @@ window.onload = function () {
 </html>`;
 }
 
+// ── Small reusable UI pieces ────────────────────────────────────────────────
+
+function ColorRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-xs text-slate-600">{label}</span>
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-7 w-10 cursor-pointer rounded-lg border border-slate-200 p-0.5"
+      />
+    </div>
+  );
+}
+
+function SliderRow({
+  label,
+  value,
+  min,
+  max,
+  unit,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  unit?: string;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-xs text-slate-600">{label}</span>
+        <span className="text-xs font-semibold text-slate-700">
+          {value}{unit}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-cyan-500"
+      />
+    </div>
+  );
+}
+
+
+// ── Side panels ─────────────────────────────────────────────────────────────
+
+function DesignSidePanel({
+  design,
+  onChange,
+  onReset,
+}: {
+  design: DesignSettings;
+  onChange: (patch: Partial<DesignSettings>) => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="flex w-52 shrink-0 flex-col rounded-l-[2rem] border-r border-slate-200 bg-white px-5 py-6">
+      <p className="mb-5 text-base font-black tracking-tight text-slate-900">Design</p>
+
+      <div className="flex flex-col gap-5">
+        {/* Font */}
+        <div>
+          <span className="mb-1.5 block text-xs font-semibold text-slate-500">Font style</span>
+          <select
+            value={design.fontFamily}
+            onChange={(e) => onChange({ fontFamily: e.target.value })}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20"
+          >
+            {FONTS.map((f) => (
+              <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Sizes */}
+        <SliderRow label="Dish name size" value={design.foodNameSize} min={12} max={32} unit="px" onChange={(v) => onChange({ foodNameSize: v })} />
+        <SliderRow label="Ingredient size" value={design.descSize} min={8} max={20} unit="px" onChange={(v) => onChange({ descSize: v })} />
+        <SliderRow label="Allergen size" value={design.dietTextSize} min={8} max={18} unit="px" onChange={(v) => onChange({ dietTextSize: v })} />
+
+        {/* Colors */}
+        <div className="space-y-2.5">
+          <ColorRow label="Dish name color" value={design.textColor} onChange={(v) => onChange({ textColor: v })} />
+          <ColorRow label="Ingredient color" value={design.descColor} onChange={(v) => onChange({ descColor: v })} />
+          <ColorRow label="Allergen color" value={design.accentColor} onChange={(v) => onChange({ accentColor: v })} />
+        </div>
+
+        {/* Bold / Italic */}
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-slate-500">Style</span>
+          <div className="flex gap-1">
+            {(["B", "I"] as const).map((s) => {
+              const key = s === "B" ? "foodBold" : "foodItalic";
+              const active = design[key as keyof DesignSettings] as boolean;
+              return (
+                <button key={s} type="button" onClick={() => onChange({ [key]: !active })}
+                  className={`h-7 w-7 rounded-lg border text-xs font-bold transition ${active ? "border-cyan-400 bg-cyan-50 text-cyan-700" : "border-slate-200 bg-white text-slate-500 hover:border-slate-300"}`}>
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <button type="button" onClick={onReset}
+        className="mt-auto pt-6 text-left text-xs font-semibold text-slate-400 transition hover:text-slate-600">
+        Reset to defaults
+      </button>
+    </div>
+  );
+}
+
+function PreviewSidePanel({ design }: { design: DesignSettings }) {
+  const boxShadow =
+    design.borderStyle === "modern" ? "0 2px 10px rgba(15,23,42,0.10)" :
+    design.borderStyle === "elegant" ? `inset 0 0 0 1px ${design.borderColor}, inset 0 0 0 4px rgba(219,199,170,0.18)` :
+    design.borderStyle === "gold-frame" ? `inset 0 0 0 2px ${design.borderColor}, inset 0 0 0 6px rgba(212,175,55,0.18)` :
+    "none";
+
+  // Scale font sizes proportionally (preview ≈ 65% of a real 3.5in label)
+  const scale = 0.65;
+
+  return (
+    <div className="flex w-64 shrink-0 flex-col rounded-r-[2rem] border-l border-slate-200 bg-white px-5 py-6">
+      <p className="mb-5 text-base font-black tracking-tight text-slate-900">Label Preview</p>
+
+      <div
+        className="flex items-center justify-center overflow-hidden rounded-2xl p-5"
+        style={{
+          background: design.backgroundColor,
+          border: design.borderStyle === "classic" ? `1px solid ${design.borderColor}` : "1px solid #e2e8f0",
+          boxShadow,
+          textAlign: design.align,
+          minHeight: "190px",
+        }}
+      >
+        <div style={{ width: "100%" }}>
+          <p style={{ fontFamily: design.fontFamily, fontSize: Math.round(design.foodNameSize * scale) + "px", fontWeight: design.foodBold ? 700 : 400, fontStyle: design.foodItalic ? "italic" : "normal", color: design.textColor, margin: 0, lineHeight: 1.2 }}>
+            Chicken Marsala
+          </p>
+          <p style={{ fontFamily: design.fontFamily, fontSize: Math.round(design.descSize * scale) + "px", color: design.descColor, margin: "4px 0 0" }}>
+            Wine sauce, mushrooms
+          </p>
+          <div style={{ width: "28px", height: "1px", background: design.accentColor, opacity: 0.4, margin: design.align === "center" ? "6px auto" : "6px 0" }} />
+          <p style={{ fontFamily: design.fontFamily, fontSize: Math.round(design.dietTextSize * scale) + "px", color: design.accentColor, margin: 0 }}>
+            Gluten Free
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ──────────────────────────────────────────────────────────
+
 export default function QuickPrintButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<LabelResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selected, setSelected] = useState<LabelResult[]>([]);
+  const [isDesignOpen, setIsDesignOpen] = useState(false);
+  const [design, setDesign] = useState<DesignSettings>(DEFAULT_DESIGN);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus search input when modal opens
+  const patchDesign = (patch: Partial<DesignSettings>) =>
+    setDesign((prev) => ({ ...prev, ...patch }));
+
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -100,10 +325,11 @@ export default function QuickPrintButton() {
       setQuery("");
       setResults([]);
       setSelected([]);
+      setIsDesignOpen(false);
+      setDesign(DEFAULT_DESIGN);
     }
   }, [isOpen]);
 
-  // Debounced search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!query || query.trim().length < 2) {
@@ -114,9 +340,7 @@ export default function QuickPrintButton() {
     setIsSearching(true);
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `/api/labels/search?q=${encodeURIComponent(query.trim())}`
-        );
+        const res = await fetch(`/api/labels/search?q=${encodeURIComponent(query.trim())}`);
         if (res.ok) {
           const data = await res.json();
           setResults(Array.isArray(data) ? data : []);
@@ -131,36 +355,25 @@ export default function QuickPrintButton() {
 
   const isSelected = (id: string) => selected.some((s) => s.id === id);
 
-  const toggle = (label: LabelResult) => {
+  const toggle = (label: LabelResult) =>
     setSelected((prev) =>
       isSelected(label.id) ? prev.filter((s) => s.id !== label.id) : [...prev, label]
     );
-  };
 
-  const removeSelected = (id: string) => {
+  const removeSelected = (id: string) =>
     setSelected((prev) => prev.filter((s) => s.id !== id));
-  };
 
   const print = () => {
     if (!selected.length) return;
-    const html = buildPrintHtml(selected);
-
+    const html = buildPrintHtml(selected, design);
     const iframe = document.createElement("iframe");
     iframe.style.cssText = "position:fixed;width:0;height:0;border:none;visibility:hidden;";
     document.body.appendChild(iframe);
-
-    const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
-    if (!doc) { document.body.removeChild(iframe); return; }
-
-    doc.open();
-    doc.write(html);
-    doc.close();
-
-    // Remove iframe after print dialog is dismissed, with a fallback timeout
-    const cleanup = () => {
-      if (document.body.contains(iframe)) document.body.removeChild(iframe);
-    };
-    iframe.contentWindow?.addEventListener("afterprint", cleanup);
+    const cleanup = () => { if (document.body.contains(iframe)) document.body.removeChild(iframe); };
+    iframe.addEventListener("load", () => {
+      iframe.contentWindow?.addEventListener("afterprint", cleanup);
+    });
+    iframe.srcdoc = html;
     setTimeout(cleanup, 60000);
   };
 
@@ -179,8 +392,28 @@ export default function QuickPrintButton() {
 
       {isOpen && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
-          <div className="flex w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)]" style={{ maxHeight: "90vh" }}>
+          <div
+            className="flex w-full items-stretch shadow-[0_30px_80px_rgba(15,23,42,0.18)]"
+            style={{ maxWidth: isDesignOpen ? "980px" : "672px", maxHeight: "90vh" }}
+          >
+          {/* Design side panel */}
+          {isDesignOpen && (
+            <DesignSidePanel
+              design={design}
+              onChange={patchDesign}
+              onReset={() => setDesign(DEFAULT_DESIGN)}
+            />
+          )}
 
+          {/* Main modal */}
+          <div
+            className="flex min-w-0 flex-1 flex-col overflow-hidden border border-slate-200 bg-white"
+            style={{
+              borderRadius: isDesignOpen ? "0" : "2rem",
+              borderLeft: isDesignOpen ? "none" : undefined,
+              borderRight: isDesignOpen ? "none" : undefined,
+            }}
+          >
             {/* Header */}
             <div className="border-b border-slate-200 px-6 py-5">
               <div className="flex items-start justify-between gap-4">
@@ -206,7 +439,6 @@ export default function QuickPrintButton() {
                 </button>
               </div>
 
-              {/* Search input */}
               <div className="relative mt-4">
                 <svg className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
@@ -227,7 +459,7 @@ export default function QuickPrintButton() {
               </div>
             </div>
 
-            {/* Results list */}
+            {/* Results */}
             <div className="min-h-0 flex-1 overflow-y-auto">
               {query.trim().length < 2 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
@@ -251,9 +483,7 @@ export default function QuickPrintButton() {
                       <li
                         key={label.id}
                         onClick={() => toggle(label)}
-                        className={`flex cursor-pointer items-start gap-4 px-6 py-4 transition ${
-                          checked ? "bg-cyan-50" : "hover:bg-slate-50"
-                        }`}
+                        className={`flex cursor-pointer items-start gap-4 px-6 py-4 transition ${checked ? "bg-cyan-50" : "hover:bg-slate-50"}`}
                       >
                         <input
                           type="checkbox"
@@ -264,7 +494,7 @@ export default function QuickPrintButton() {
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">
-                            <span className="font-semibold text-slate-900 leading-snug">{label.foodName}</span>
+                            <span className="font-semibold leading-snug text-slate-900">{label.foodName}</span>
                             <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-medium text-slate-500">
                               {label.sheet.title}
                             </span>
@@ -275,10 +505,7 @@ export default function QuickPrintButton() {
                           {diets.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1">
                               {diets.map((d) => (
-                                <span
-                                  key={d}
-                                  className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500"
-                                >
+                                <span key={d} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500">
                                   {d}
                                 </span>
                               ))}
@@ -292,7 +519,7 @@ export default function QuickPrintButton() {
               )}
             </div>
 
-            {/* Footer — selected tray + actions */}
+            {/* Footer */}
             <div className="border-t border-slate-200 px-6 py-5">
               {selected.length > 0 && (
                 <div className="mb-4">
@@ -328,6 +555,29 @@ export default function QuickPrintButton() {
                     : `${Math.ceil(selected.length / 10)} sheet${Math.ceil(selected.length / 10) === 1 ? "" : "s"} will be printed.`}
                 </p>
                 <div className="flex shrink-0 items-center gap-2">
+                  {/* Design toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setIsDesignOpen((v) => !v)}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+                      isDesignOpen
+                        ? "border-violet-300 bg-violet-50 text-violet-700"
+                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M13.5 4.938a7 7 0 1 1-9.006 1.737c.202-.257.59-.218.793.039.278.352.594.672.943.954.332.269.786-.049.773-.476a5.977 5.977 0 0 1 .572-2.838c.082-.20.218-.392.365-.396s.28.17.357.354a5.978 5.978 0 0 1 .428 2.268c0 .61.697.867 1.025.423A6.967 6.967 0 0 0 13.5 4.938ZM14 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" clipRule="evenodd" />
+                    </svg>
+                    Design
+                    <svg
+                      className={`h-3.5 w-3.5 transition-transform ${isDesignOpen ? "rotate-180" : ""}`}
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
@@ -350,6 +600,10 @@ export default function QuickPrintButton() {
               </div>
             </div>
 
+          </div>
+
+          {/* Preview side panel */}
+          {isDesignOpen && <PreviewSidePanel design={design} />}
           </div>
         </div>,
         document.body
