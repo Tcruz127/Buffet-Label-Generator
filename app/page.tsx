@@ -268,6 +268,72 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Social proof */}
+      <section className="relative bg-white text-slate-900">
+        <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
+          <p className="mb-12 text-center text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
+            Trusted by hospitality teams
+          </p>
+
+          <div className="grid overflow-hidden rounded-[2.5rem] border border-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[1fr_1.1fr]">
+            {/* Left — property photo */}
+            <div className="relative min-h-[280px]">
+              <Image
+                src="/crystal-springs-property.jpg"
+                alt="Crystal Springs Resort"
+                fill
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/10" />
+            </div>
+
+            {/* Right — content */}
+            <div className="flex flex-col justify-center gap-6 bg-white p-10 lg:p-12">
+              {/* Logo + badge row */}
+              <div className="flex items-center gap-4">
+                <Image
+                  src="/Crystal_Springs_Resort_Logo.png"
+                  alt="Crystal Springs Resort"
+                  width={130}
+                  height={60}
+                  className="h-12 w-auto object-contain"
+                />
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  Active Customer
+                </span>
+              </div>
+
+              <div>
+                <h3 className="text-2xl font-black tracking-tight text-slate-950">
+                  Crystal Springs Resort
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Resort &amp; Banquet Operations · Hamburg, New Jersey
+                </p>
+                <p className="mt-4 text-sm leading-7 text-slate-600">
+                  Crystal Springs Resort is New Jersey&apos;s premier four-season destination — home to multiple hotels, award-winning golf courses, a full-service spa, and the region&apos;s most sought-after wedding and banquet venues. Their culinary team manages everything from intimate private dinners to large-scale resort events where presentation and consistency are non-negotiable.
+                </p>
+              </div>
+
+              {/* Festival highlight */}
+              <div className="flex items-start gap-3 rounded-2xl border border-cyan-100 bg-cyan-50 px-5 py-4">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-500 text-white">
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.403 12.652a3 3 0 0 0 0-5.304 3 3 0 0 0-3.75-3.751 3 3 0 0 0-5.305 0 3 3 0 0 0-3.751 3.75 3 3 0 0 0 0 5.305 3 3 0 0 0 3.75 3.751 3 3 0 0 0 5.305 0 3 3 0 0 0 3.751-3.75Zm-2.546-4.46a.75.75 0 0 0-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-cyan-900">New Jersey Beer &amp; Food Festival 2026</p>
+                  <p className="mt-0.5 text-xs leading-5 text-cyan-700">
+                    Instabels was used to create and manage all buffet labels for this year&apos;s New Jersey Beer &amp; Food Festival — powering a seamless, professional food presentation at one of the state&apos;s premier culinary events.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="relative bg-white text-slate-900">
         <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
