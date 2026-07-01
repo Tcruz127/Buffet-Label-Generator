@@ -275,6 +275,7 @@ export default function HomePage() {
             Trusted by hospitality teams
           </p>
 
+          <div className="space-y-8">
           <div className="grid overflow-hidden rounded-[2.5rem] border border-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[1fr_1.1fr]">
             {/* Left — property photo */}
             <div className="relative min-h-[280px]">
@@ -330,6 +331,53 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Montammy Golf Country Club */}
+          <div className="grid overflow-hidden rounded-[2.5rem] border border-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[1fr_1.1fr]">
+            {/* Left — property photo */}
+            <div className="relative min-h-[280px]">
+              <Image
+                src="/montammy-property.jpg"
+                alt="Montammy Golf Country Club"
+                fill
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/10" />
+            </div>
+
+            {/* Right — content */}
+            <div className="flex flex-col justify-center gap-6 bg-white p-10 lg:p-12">
+              <div className="flex items-center gap-4">
+                <Image
+                  src="/montammy-logo.png"
+                  alt="Montammy Golf Country Club"
+                  width={130}
+                  height={60}
+                  className="h-12 w-auto object-contain"
+                />
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  Active Customer
+                </span>
+              </div>
+
+              <div>
+                <h3 className="text-2xl font-black tracking-tight text-slate-950">
+                  Montammy Golf Country Club
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Private Country Club &amp; Banquet Operations · Alpine, New Jersey
+                </p>
+                <p className="mt-4 text-sm leading-7 text-slate-600">
+                  Montammy Golf Country Club is one of New Jersey&apos;s most prestigious private clubs, offering an exceptional dining and events experience for its members and guests. Their culinary team oversees a wide range of private events, member dining, and banquet service — where flawless presentation is a standard, not an option.
+                </p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Montammy relies on Instabels to keep their buffet and event labels consistent, polished, and ready at a moment&apos;s notice.
+                </p>
+              </div>
+            </div>
+          </div>
+
           </div>
         </div>
       </section>
