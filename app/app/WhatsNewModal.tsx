@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 
 // ─── UPDATE THESE TWO THINGS EACH RELEASE ────────────────────────────────────
-const CURRENT_VERSION = "v1.4";
+const CURRENT_VERSION = "v1.5";
 
 const PATCH_NOTES: { icon: string; title: string; description: string }[] = [
+  {
+    icon: "🔍",
+    title: "Sheet Search",
+    description: "Find any sheet instantly — search by name or event name right from your dashboard.",
+  },
   {
     icon: "🎨",
     title: "Quick Print Design Panel",

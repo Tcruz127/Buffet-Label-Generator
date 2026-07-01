@@ -15,6 +15,7 @@ import OnboardingModal from "./OnboardingModal";
 import WhatsNewModal from "./WhatsNewModal";
 import QuickPrintButton from "./QuickPrintButton";
 import FeedbackButton from "./FeedbackButton";
+import SheetSearch from "./SheetSearch";
 
 function getInitials(name?: string | null, email?: string | null) {
   const source = name?.trim() || email?.trim() || "A";
@@ -53,10 +54,11 @@ function formatEventDate(dateStr: string) {
 export default async function AppDashboardPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ folder?: string }>;
+  searchParams?: Promise<{ folder?: string; q?: string }>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const selectedFolderId = resolvedSearchParams?.folder ?? null;
+  const searchQuery = resolvedSearchParams?.q?.trim() ?? "";
 
   const session = await auth();
 
@@ -127,14 +129,25 @@ export default async function AppDashboardPage({
       : null;
 
   // Org members share the org's sheet workspace.
+  const searchFilter = searchQuery
+    ? {
+        OR: [
+          { title: { contains: searchQuery, mode: "insensitive" } },
+          { eventName: { contains: searchQuery, mode: "insensitive" } },
+        ],
+      }
+    : {};
+
   const sheetWhere = org
     ? {
         organizationId: org.id,
         ...(activeFolderId ? { folderId: activeFolderId } : {}),
+        ...searchFilter,
       }
     : {
         userId: user.id,
         ...(activeFolderId ? { folderId: activeFolderId } : {}),
+        ...searchFilter,
       };
 
   const sheets: { id: string; title: string; eventName: string | null; totalLabels: number; updatedAt: Date; folderId: string | null; settings: any }[] =
@@ -443,7 +456,7 @@ export default async function AppDashboardPage({
           </div>
         </div>
 
-        <div className="mb-5 flex items-end justify-between gap-4">
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-black tracking-tight text-slate-950">
               {org ? `${org.name} Sheets` : "Your Sheets"}
@@ -453,6 +466,9 @@ export default async function AppDashboardPage({
                 ? "Shared sheets visible to everyone on your team."
                 : "Open and manage your saved buffet label projects."}
             </p>
+          </div>
+          <div className="w-full sm:w-72">
+            <SheetSearch defaultValue={searchQuery} />
           </div>
         </div>
 
@@ -481,22 +497,30 @@ export default async function AppDashboardPage({
               </svg>
             </div>
 
-            <h3 className="mt-6 text-2xl font-bold text-slate-950">
-              No sheets yet
-            </h3>
-            <p className="mt-3 text-sm text-slate-600">
-              Create your first buffet label sheet to start building polished,
-              printable event signage.
-            </p>
-
-            <div className="mt-8">
-              <Link
-                href="/app/new"
-                className="inline-flex items-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
-              >
-                Create Your First Sheet
-              </Link>
-            </div>
+            {searchQuery ? (
+              <>
+                <h3 className="mt-6 text-2xl font-bold text-slate-950">No sheets found</h3>
+                <p className="mt-3 text-sm text-slate-600">
+                  No sheets match &ldquo;{searchQuery}&rdquo;. Try a different search term.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="mt-6 text-2xl font-bold text-slate-950">No sheets yet</h3>
+                <p className="mt-3 text-sm text-slate-600">
+                  Create your first buffet label sheet to start building polished,
+                  printable event signage.
+                </p>
+                <div className="mt-8">
+                  <Link
+                    href="/app/new"
+                    className="inline-flex items-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.01]"
+                  >
+                    Create Your First Sheet
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
