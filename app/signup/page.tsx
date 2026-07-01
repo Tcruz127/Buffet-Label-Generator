@@ -5,11 +5,12 @@ import { signUpAction } from "./actions";
 export default async function SignUpPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ redirect?: string }>;
+  searchParams?: Promise<{ redirect?: string; error?: string }>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const rawRedirect = resolvedSearchParams?.redirect ?? "";
   const callbackUrl = rawRedirect.startsWith("/") ? rawRedirect : "";
+  const error = resolvedSearchParams?.error ?? "";
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       <div className="absolute inset-0 -z-10">
@@ -82,6 +83,12 @@ export default async function SignUpPage({
                   </p>
                 </div>
 
+                {error && (
+                  <div className="mb-5 rounded-2xl border border-red-400/30 bg-red-500/15 px-4 py-3 text-sm font-medium text-red-300">
+                    {decodeURIComponent(error)}
+                  </div>
+                )}
+
                 <form action={signUpAction} className="space-y-5">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-200">
@@ -118,6 +125,7 @@ export default async function SignUpPage({
                       className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-400 shadow-sm transition focus:border-cyan-300 focus:outline-none focus:ring-4 focus:ring-cyan-500/20"
                       required
                     />
+                    <p className="mt-1.5 text-xs text-slate-400">Minimum 8 characters</p>
                   </div>
 
                   {callbackUrl && (

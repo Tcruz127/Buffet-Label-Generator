@@ -14,7 +14,9 @@ export async function signUpAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect("/signup");
+    const issues = parsed.error.issues.map((i) => i.message).join(", ");
+    const msg = encodeURIComponent(issues || "Invalid input.");
+    redirect(`/signup?error=${msg}`);
   }
 
   const name =
@@ -38,7 +40,7 @@ export async function signUpAction(formData: FormData) {
   });
 
   if (existing) {
-    redirect("/signup");
+    redirect("/signup?error=An+account+with+that+email+already+exists.");
   }
 
   const passwordHash = await hashPassword(password);
