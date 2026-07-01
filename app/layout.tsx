@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Buffet Label Generator",
+  title: "Instabels",
   description:
     "Create professional buffet and catering labels in seconds. Perfect for weddings, banquets, hotels, and catering events.",
   icons: {
