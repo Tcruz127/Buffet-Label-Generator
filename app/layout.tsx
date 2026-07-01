@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description:
     "Create professional buffet and catering labels in seconds. Perfect for weddings, banquets, hotels, and catering events.",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/logo.png",
   },
 };
 
