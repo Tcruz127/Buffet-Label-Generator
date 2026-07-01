@@ -371,8 +371,15 @@ export default async function AppDashboardPage({
                   </div>
 
                   <Link
-                    href="/contact"
+                    href="/app/settings"
                     className="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-sm transition hover:bg-slate-50"
+                  >
+                    Account Settings
+                  </Link>
+
+                  <Link
+                    href="/contact"
+                    className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-sm transition hover:bg-slate-50"
                   >
                     Contact Support
                   </Link>
