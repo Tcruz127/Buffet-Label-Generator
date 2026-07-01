@@ -68,9 +68,13 @@ export async function signUpAction(formData: FormData) {
     // Email failure should not block account creation
   }
 
-  await signIn("credentials", {
-    email,
-    password,
-    redirectTo,
-  });
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo,
+    });
+  } catch {
+    redirect("/login?success=1");
+  }
 }

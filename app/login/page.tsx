@@ -7,10 +7,11 @@ import { signIn, signOut } from "../../auth";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ error?: string; redirect?: string }>;
+  searchParams?: Promise<{ error?: string; redirect?: string; success?: string }>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const error = resolvedSearchParams?.error;
+  const success = resolvedSearchParams?.success;
   const rawRedirect = resolvedSearchParams?.redirect ?? "";
   const callbackUrl = rawRedirect.startsWith("/") ? rawRedirect : "";
 
@@ -85,6 +86,13 @@ export default async function LoginPage({
                     Access your dashboard and manage your label sheets.
                   </p>
                 </div>
+
+                {success === "1" && (
+                  <div className="mb-5 rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-4 py-4 text-center">
+                    <p className="text-sm font-semibold text-emerald-300">Account created successfully!</p>
+                    <p className="mt-1 text-xs text-emerald-400">Sign in below to access your dashboard.</p>
+                  </div>
+                )}
 
                 {error === "invalid" && (
                   <div className="mb-5 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
