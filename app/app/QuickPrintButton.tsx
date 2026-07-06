@@ -302,6 +302,25 @@ function PreviewSidePanel({ design }: { design: DesignSettings }) {
   );
 }
 
+const DIET_OPTIONS: { group: string; value: string; icon: string }[] = [
+  { group: "Dietary Notes", value: "Gluten Free", icon: "🌾" },
+  { group: "Dietary Notes", value: "Dairy Free", icon: "🥛" },
+  { group: "Dietary Notes", value: "Egg Free", icon: "🥚" },
+  { group: "Dietary Notes", value: "Soy Free", icon: "🫘" },
+  { group: "Dietary Notes", value: "Nut Free", icon: "🥜" },
+  { group: "Dietary Notes", value: "Shellfish Free", icon: "🦐" },
+  { group: "Dietary Notes", value: "Sesame Free", icon: "🫓" },
+  { group: "Dietary Notes", value: "Vegan", icon: "🌱" },
+  { group: "Dietary Notes", value: "Vegetarian", icon: "🥬" },
+  { group: "Contains", value: "Contains Gluten", icon: "🌾" },
+  { group: "Contains", value: "Contains Dairy", icon: "🥛" },
+  { group: "Contains", value: "Contains Eggs", icon: "🥚" },
+  { group: "Contains", value: "Contains Soy", icon: "🫘" },
+  { group: "Contains", value: "Contains Nuts", icon: "🥜" },
+  { group: "Contains", value: "Contains Shellfish", icon: "🦐" },
+  { group: "Contains", value: "Contains Sesame", icon: "🫓" },
+];
+
 // ── Main component ──────────────────────────────────────────────────────────
 
 export default function QuickPrintButton() {
@@ -312,8 +331,12 @@ export default function QuickPrintButton() {
   const [selected, setSelected] = useState<LabelResult[]>([]);
   const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [design, setDesign] = useState<DesignSettings>(DEFAULT_DESIGN);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const patchDiets = (id: string, diets: string[]) =>
+    setSelected((prev) => prev.map((s) => s.id === id ? { ...s, diets } : s));
 
   const patchDesign = (patch: Partial<DesignSettings>) =>
     setDesign((prev) => ({ ...prev, ...patch }));
@@ -527,23 +550,81 @@ export default function QuickPrintButton() {
                     {selected.length} label{selected.length === 1 ? "" : "s"} selected
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {selected.map((s) => (
-                      <span
-                        key={s.id}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800"
-                      >
-                        {s.foodName}
-                        <button
-                          type="button"
-                          onClick={() => removeSelected(s.id)}
-                          className="text-cyan-400 transition hover:text-red-500"
-                        >
-                          <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                      </span>
-                    ))}
+                    {selected.map((s) => {
+                      const diets = Array.isArray(s.diets) ? s.diets : [];
+                      const isEditing = editingId === s.id;
+                      return (
+                        <div key={s.id} className="relative">
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800">
+                            {s.foodName}
+                            {diets.length > 0 && (
+                              <span className="text-cyan-500">· {diets.join(", ")}</span>
+                            )}
+                            {/* Edit allergens */}
+                            <button
+                              type="button"
+                              onClick={() => setEditingId(isEditing ? null : s.id)}
+                              className="text-cyan-400 transition hover:text-cyan-700"
+                              title="Edit allergens"
+                            >
+                              <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M2.695 14.763l-1.262 3.154a.5.5 0 0 0 .65.65l3.155-1.262a4 4 0 0 0 1.343-.885L17.5 5.5a2.121 2.121 0 0 0-3-3L3.58 13.42a4 4 0 0 0-.885 1.343Z" />
+                              </svg>
+                            </button>
+                            {/* Remove */}
+                            <button
+                              type="button"
+                              onClick={() => removeSelected(s.id)}
+                              className="text-cyan-400 transition hover:text-red-500"
+                            >
+                              <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </span>
+
+                          {/* Allergen popover */}
+                          {isEditing && (
+                            <div className="absolute bottom-full left-0 z-50 mb-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
+                              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">Edit Allergens</p>
+                              {["Dietary Notes", "Contains"].map((group) => (
+                                <div key={group} className="mb-3">
+                                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">{group}</p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {DIET_OPTIONS.filter((o) => o.group === group).map((opt) => {
+                                      const active = diets.includes(opt.value);
+                                      return (
+                                        <button
+                                          key={opt.value}
+                                          type="button"
+                                          onClick={() =>
+                                            patchDiets(s.id, active ? diets.filter((d) => d !== opt.value) : [...diets, opt.value])
+                                          }
+                                          className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition ${
+                                            active
+                                              ? "border-cyan-300 bg-cyan-50 text-cyan-700"
+                                              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                                          }`}
+                                        >
+                                          {opt.icon} {opt.value}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => setEditingId(null)}
+                                className="mt-2 w-full rounded-xl bg-slate-900 py-2 text-xs font-semibold text-white transition hover:bg-slate-700"
+                              >
+                                Done
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
