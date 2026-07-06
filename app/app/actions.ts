@@ -78,6 +78,7 @@ export async function copySheet(formData: FormData) {
         create: original.items.map((item: any) => ({
           positionIndex: item.positionIndex,
           foodName: item.foodName,
+          description: item.description ?? undefined,
           diets: item.diets ?? undefined,
         })),
       },
