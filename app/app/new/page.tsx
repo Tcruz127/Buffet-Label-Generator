@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_TEMPLATE, LABEL_TEMPLATES } from "@/lib/templates";
 import { FREE_PLAN_MAX_SHEETS, isProUser } from "@/lib/plan";
+import { PRINT_TEMPLATES, getPrintTemplate } from "@/lib/printTemplates";
 
 async function createSheet(formData: FormData) {
   "use server";
@@ -61,6 +62,9 @@ async function createSheet(formData: FormData) {
     redirect("/app/new?error=pro-template-required");
   }
 
+  const printTemplateId = String(formData.get("printTemplate") || "5870");
+  const printTemplate = getPrintTemplate(printTemplateId);
+
   const defaultSettings = {
     themeName: "Classic White",
 
@@ -102,6 +106,7 @@ async function createSheet(formData: FormData) {
   const settings = {
     ...defaultSettings,
     ...(template.settings ?? {}),
+    printTemplate: printTemplate.id,
   };
 
   const sheet = await db.labelSheet.create({
@@ -110,11 +115,11 @@ async function createSheet(formData: FormData) {
       organizationId: membership?.organizationId ?? null,
       title: "Untitled Sheet",
       eventName: "",
-      totalLabels: 10,
+      totalLabels: printTemplate.labelsPerSheet,
       settings,
       logoUrl: null,
       items: {
-        create: Array.from({ length: 10 }, (_, i) => ({
+        create: Array.from({ length: printTemplate.labelsPerSheet }, (_, i) => ({
           positionIndex: i,
           foodName: "",
           diets: [],
@@ -423,7 +428,7 @@ function TemplatePreview({
 export default async function NewSheetPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ error?: string }>;
+  searchParams?: Promise<{ error?: string; printTemplate?: string }>;
 }) {
   const session = await auth();
 
@@ -447,6 +452,10 @@ export default async function NewSheetPage({
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const error = resolvedSearchParams?.error;
+  const printTemplateParam = resolvedSearchParams?.printTemplate ?? "";
+  const selectedPrintTemplate = printTemplateParam
+    ? getPrintTemplate(printTemplateParam)
+    : null;
 
   const db = prisma as any;
   const membership = await db.organizationMember.findFirst({
@@ -468,6 +477,91 @@ export default async function NewSheetPage({
 
   const freeLimitReached = !isPro && sheetCount >= FREE_PLAN_MAX_SHEETS;
 
+  if (!selectedPrintTemplate) {
+    return (
+      <div className="min-h-screen bg-[linear-gradient(to_bottom,#f8fbff_0%,#f4f7fb_55%,#ffffff_100%)] px-4 py-6 lg:px-6">
+        <div className="mx-auto max-w-4xl">
+          <div className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="flex flex-col gap-6 px-5 py-5 lg:px-6">
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/app"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
+                >
+                  ← Dashboard
+                </Link>
+                <span className="text-xs text-slate-400">Step 1 of 2</span>
+              </div>
+
+              <div>
+                <div className="mb-3 inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-700">
+                  Print Format
+                </div>
+                <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                  Choose a print format
+                </h1>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                  Select the Avery label size you&apos;ll be printing on. You can always
+                  adjust this later from within the editor.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                {PRINT_TEMPLATES.map((pt) => (
+                  <Link
+                    key={pt.id}
+                    href={`/app/new?printTemplate=${pt.id}`}
+                    className="group block overflow-hidden rounded-[1.7rem] border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.10)]"
+                  >
+                    <div className="relative">
+                      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 opacity-80" />
+                      <div className="flex items-center justify-center bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_100%)] px-8 py-10">
+                        <div
+                          className="grid gap-1.5"
+                          style={{
+                            gridTemplateColumns: `repeat(${pt.columns}, 1fr)`,
+                            width: "180px",
+                          }}
+                        >
+                          {Array.from({ length: pt.labelsPerSheet }).map((_, i) => (
+                            <div
+                              key={i}
+                              className="rounded-lg border border-slate-300 bg-white shadow-sm"
+                              style={{ aspectRatio: `${pt.labelWidth} / ${pt.labelHeight}` }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-5">
+                      <div className="mb-1 flex items-start justify-between gap-3">
+                        <h3 className="text-lg font-black tracking-tight text-slate-950">
+                          {pt.name}
+                        </h3>
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          {pt.averyProduct}
+                        </span>
+                      </div>
+                      <p className="text-sm leading-6 text-slate-600">{pt.description}</p>
+                      <div className="mt-4 flex items-center justify-between">
+                        <span className="text-sm font-semibold text-cyan-700 group-hover:text-violet-700">
+                          Use this format
+                        </span>
+                        <span className="text-sm text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-slate-600">
+                          →
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[linear-gradient(to_bottom,#f8fbff_0%,#f4f7fb_55%,#ffffff_100%)] px-4 py-6 lg:px-6">
       <div className="mx-auto max-w-7xl">
@@ -475,12 +569,25 @@ export default async function NewSheetPage({
           <div className="flex flex-col gap-6 px-5 py-5 lg:px-6">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0 flex-1">
+                <div className="mb-2 flex items-center gap-3">
+                  <Link
+                    href="/app/new"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
+                  >
+                    ← Back
+                  </Link>
+                  <span className="text-xs text-slate-400">Step 2 of 2</span>
+                  <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-700 ring-1 ring-cyan-200">
+                    {selectedPrintTemplate.averyProduct} · {selectedPrintTemplate.labelsPerSheet} labels/sheet
+                  </span>
+                </div>
+
                 <div className="mb-3 inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-700">
-                  Template Workspace
+                  Label Style
                 </div>
 
                 <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-                  Choose a Template
+                  Choose a label style
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
@@ -591,6 +698,11 @@ export default async function NewSheetPage({
                       type="hidden"
                       name="templateId"
                       value={template.id}
+                    />
+                    <input
+                      type="hidden"
+                      name="printTemplate"
+                      value={selectedPrintTemplate.id}
                     />
 
                     <button

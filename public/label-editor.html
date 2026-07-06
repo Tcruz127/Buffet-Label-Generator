@@ -274,7 +274,7 @@ button.active{
 .sheet-preview{
   margin:0 auto 24px;
   width:fit-content;
-  zoom:.92;
+  zoom:.80;
   padding:16px;
   border-radius:24px;
   background:#fff;
@@ -293,7 +293,7 @@ button.active{
   display:grid;
   grid-template-columns:repeat(2,3.5in);
   grid-template-rows:repeat(5,2in);
-  column-gap:.5in;
+  column-gap:.2in;
   row-gap:0;
   justify-content:center;
 }
@@ -1040,12 +1040,12 @@ button.active{
         <input type="text" id="eventName" placeholder="Smith Wedding Buffet" />
         <label style="margin-top:10px;">Event Date <span style="font-weight:400;opacity:.6;font-size:11px;">(optional)</span></label>
         <input type="date" id="eventDate" />
-        <div class="help">
+        <div class="help" id="labelCountHelp">
           Each sheet contains 10 labels. Use the buttons below to add or remove full sheets.
         </div>
         <div class="toolbar">
-          <button onclick="addTenLabels()">Add 10 Labels</button>
-          <button onclick="removeTenLabels()">Remove 10 Labels</button>
+          <button id="addLabelsBtn" onclick="addTenLabels()">Add 10 Labels</button>
+          <button id="removeLabelsBtn" onclick="removeTenLabels()">Remove 10 Labels</button>
         </div>
         <div class="toolbar" style="margin-top:8px;">
           <button id="undoBtn" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩ Undo</button>
@@ -1234,7 +1234,7 @@ button.active{
 <input type="file" id="sheetFileInput" accept=".json" style="display:none;" />
 
 <script>
-let logoData=null,logoSettings={x:8,y:8,size:55,opacity:100,layer:"front"},currentSaveName="",hasBrowserSave=false,totalLabels=10,viewMode="side",advancedTemplateSettings={};
+let logoData=null,logoSettings={x:8,y:8,size:55,opacity:100,layer:"front"},currentSaveName="",hasBrowserSave=false,totalLabels=10,viewMode="side",advancedTemplateSettings={},printTemplateId="5870",labelsPerSheet=10;
 const LABEL_WIDTH = 336,
   LABEL_HEIGHT = 192,
   DIET_OPTIONS = [
@@ -1256,6 +1256,36 @@ const LABEL_WIDTH = 336,
     { group: "Contains", value: "Contains Shellfish", icon: "🦐" },
     { group: "Contains", value: "Contains Sesame", icon: "🫓" }
   ];
+
+const EDITOR_PRINT_TEMPLATES = {
+  "5870": { columns: 2, rows: 5, labelWidth: "3.5in", labelHeight: "2in", columnGap: "0.2in",
+            printColumnGap: "0in", marginTop: "0.5in", marginSide: "0.5in",
+            gridWidth: "7in", gridHeight: "10in", evenLabelOffset: "-0.05in" },
+  "5164": { columns: 2, rows: 3, labelWidth: "4in", labelHeight: "3.333in", columnGap: "0",
+            printColumnGap: "0in", marginTop: "0.5in", marginSide: "0.25in",
+            gridWidth: "8in", gridHeight: "10in", evenLabelOffset: "" },
+};
+
+function applyGridStyles(tmpl) {
+  let styleEl = document.getElementById("dynamic-grid-style");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "dynamic-grid-style";
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent =
+    ".labels{grid-template-columns:repeat(" + tmpl.columns + "," + tmpl.labelWidth + ")!important;" +
+    "grid-template-rows:repeat(" + tmpl.rows + "," + tmpl.labelHeight + ")!important;" +
+    "column-gap:" + tmpl.columnGap + "!important;}" +
+    ".label{width:" + tmpl.labelWidth + "!important;height:" + tmpl.labelHeight + "!important;}";
+  labelsPerSheet = tmpl.columns * tmpl.rows;
+  const helpEl = document.getElementById("labelCountHelp");
+  if (helpEl) helpEl.textContent = "Each sheet contains " + labelsPerSheet + " labels. Use the buttons below to add or remove full sheets.";
+  const addBtn = document.getElementById("addLabelsBtn");
+  if (addBtn) addBtn.textContent = "Add " + labelsPerSheet + " Labels";
+  const removeBtn = document.getElementById("removeLabelsBtn");
+  if (removeBtn) removeBtn.textContent = "Remove " + labelsPerSheet + " Labels";
+}
 
   
 
@@ -1440,7 +1470,7 @@ function sanitizeName(v){let n=(v||"buffet-sheet").toLowerCase().replace(/[^a-z0
 function getFoodValue(i){const el=document.getElementById("food"+i);return el?el.value:""}
 function getSuggestedSheetName(){return sanitizeName(document.getElementById("eventName").value||getFoodValue(1)||"buffet-sheet")}
 function updateCurrentFileName(){const el=document.getElementById("currentFileName");if(el)el.textContent=currentSaveName||"Unsaved sheet • local workspace"}
-function ensureMultipleOfTen(n){n=Math.max(10,Number(n)||10);return Math.ceil(n/10)*10}
+function ensureMultipleOfTen(n){n=Math.max(labelsPerSheet,Number(n)||labelsPerSheet);return Math.ceil(n/labelsPerSheet)*labelsPerSheet}
 function syncField(fromId,toId){const a=document.getElementById(fromId),b=document.getElementById(toId); if(a&&b) b.value=a.value}
 function syncLogoSize(v){document.getElementById("logoSize").value=v;document.getElementById("logoSizeValue").textContent=v;logoSettings.size=Number(v);generateLabels()}
 function syncLogoOpacity(v){document.getElementById("logoOpacity").value=v;document.getElementById("logoOpacityValue").textContent=v;logoSettings.opacity=Number(v);generateLabels()}
@@ -1959,8 +1989,8 @@ function setTotalLabels(newCount){
   syncRibbonFields();
   generateLabels();
 }
-function addTenLabels(){setTotalLabels(totalLabels+10)}
-function removeTenLabels(){setTotalLabels(Math.max(10,totalLabels-10))}
+function addTenLabels(){setTotalLabels(totalLabels+labelsPerSheet)}
+function removeTenLabels(){setTotalLabels(Math.max(labelsPerSheet,totalLabels-labelsPerSheet))}
 function autoFillMenu() {
   const raw = document.getElementById("menuPaste").value;
   if (!raw) return;
@@ -2080,7 +2110,7 @@ function clearFoods(){
   updateLogoClearButton();
   hasBrowserSave=false;
   updateCurrentFileName();
-  totalLabels=10;
+  totalLabels=labelsPerSheet;
   createFoodRows();
   syncRibbonFields();
   generateLabels();
@@ -2205,6 +2235,7 @@ function openPrintWindow() {
     return;
   }
 
+  const _pt = EDITOR_PRINT_TEMPLATES[printTemplateId] || EDITOR_PRINT_TEMPLATES["5870"];
   const printHtml = `
 <!DOCTYPE html>
 <html lang="en">
@@ -2248,7 +2279,7 @@ function openPrintWindow() {
     width: 8.5in !important;
     height: 11in !important;
     margin: 0 !important;
-    padding: 0.5in !important;
+    padding: ${_pt.marginTop} ${_pt.marginSide} !important;
     box-sizing: border-box !important;
     background: white !important;
     border: none !important;
@@ -2267,12 +2298,12 @@ function openPrintWindow() {
 
   .labels {
     display: grid !important;
-    grid-template-columns: repeat(2, 3.5in) !important;
-    grid-template-rows: repeat(5, 2in) !important;
-    column-gap: 0in !important;
+    grid-template-columns: repeat(${_pt.columns}, ${_pt.labelWidth}) !important;
+    grid-template-rows: repeat(${_pt.rows}, ${_pt.labelHeight}) !important;
+    column-gap: ${_pt.printColumnGap} !important;
     row-gap: 0 !important;
-    width: 7in !important;
-    height: 10in !important;
+    width: ${_pt.gridWidth} !important;
+    height: ${_pt.gridHeight} !important;
     margin-left: auto !important;
     margin-right: auto !important;
     padding: 0 !important;
@@ -2282,8 +2313,8 @@ function openPrintWindow() {
   }
 
   .label {
-    width: 3.5in !important;
-    height: 2in !important;
+    width: ${_pt.labelWidth} !important;
+    height: ${_pt.labelHeight} !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
     page-break-inside: avoid !important;
@@ -2299,10 +2330,7 @@ function openPrintWindow() {
     print-color-adjust: exact !important;
   }
 
-  .label:nth-child(even) {
-    position: relative !important;
-    left: -0.05in !important;
-  }
+  ${_pt.evenLabelOffset ? ".label:nth-child(even) { position: relative !important; left: " + _pt.evenLabelOffset + " !important; }" : ""}
 
   .label-content {
     width: 100% !important;
@@ -2420,6 +2448,12 @@ function getSheetData(){
 function applySheetData(data){
   const normalizedSettings = normalizeTemplateSettings(data.settings || {});
   advancedTemplateSettings = normalizedSettings;
+  // Apply print template grid if specified in settings
+  const incomingTmplId = (data.settings || {}).printTemplate || "5870";
+  if (EDITOR_PRINT_TEMPLATES[incomingTmplId]) {
+    printTemplateId = incomingTmplId;
+    applyGridStyles(EDITOR_PRINT_TEMPLATES[incomingTmplId]);
+  }
 
   document.getElementById("eventName").value = data.eventName || "";
   document.getElementById("eventDate").value = data.eventDate || data.settings?.eventDate || "";
@@ -2639,14 +2673,14 @@ function generateLabels(){
 
   document.getElementById("sheetEventNamePreview").textContent = eventName;
   document.getElementById("sheetCountText").textContent =
-    "Total labels: " + totalLabels + " • Total sheets: " + Math.ceil(totalLabels / 10);
+    "Total labels: " + totalLabels + " • Total sheets: " + Math.ceil(totalLabels / labelsPerSheet);
 
   updateCurrentFileName();
 
   const previewSheets = document.getElementById("previewSheets");
   previewSheets.innerHTML = "";
 
-  const totalSheets = Math.ceil(totalLabels / 10);
+  const totalSheets = Math.ceil(totalLabels / labelsPerSheet);
 
   for(let sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++){
     const sheetWrap = document.createElement("div");
@@ -2662,8 +2696,8 @@ function generateLabels(){
     container.style.columnGap = ".25in";
     container.style.rowGap = settings.cardGap + "px";
 
-    for(let offset = 1; offset <= 10; offset++){
-      const i = sheetIndex * 10 + offset;
+    for(let offset = 1; offset <= labelsPerSheet; offset++){
+      const i = sheetIndex * labelsPerSheet + offset;
       if(i > totalLabels) break;
 
       const food = document.getElementById("food" + i).value.trim() || "Food Name";

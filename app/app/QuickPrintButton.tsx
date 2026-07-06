@@ -56,6 +56,55 @@ const FONTS = [
   "Palatino",
 ];
 
+type QuickPrintTemplate = {
+  id: string;
+  name: string;
+  averyProduct: string;
+  detail: string;
+  columns: number;
+  rows: number;
+  labelWidthIn: number;
+  labelHeightIn: number;
+  labelsPerSheet: number;
+  pagePaddingTop: string;
+  pagePaddingSide: string;
+  gridWidthIn: number;
+  gridHeightIn: number;
+};
+
+const QUICK_PRINT_TEMPLATES: QuickPrintTemplate[] = [
+  {
+    id: "5870",
+    name: "Standard",
+    averyProduct: "Avery 5870",
+    detail: '3.5" × 2" — 10/sheet',
+    columns: 2,
+    rows: 5,
+    labelWidthIn: 3.5,
+    labelHeightIn: 2,
+    labelsPerSheet: 10,
+    pagePaddingTop: "0.5in",
+    pagePaddingSide: "0.75in",
+    gridWidthIn: 7,
+    gridHeightIn: 10,
+  },
+  {
+    id: "5164",
+    name: "Large",
+    averyProduct: "Avery 5164",
+    detail: '4" × 3.33" — 6/sheet',
+    columns: 2,
+    rows: 3,
+    labelWidthIn: 4,
+    labelHeightIn: 3.333,
+    labelsPerSheet: 6,
+    pagePaddingTop: "0.5in",
+    pagePaddingSide: "0.25in",
+    gridWidthIn: 8,
+    gridHeightIn: 10,
+  },
+];
+
 function getLabelBorderCss(d: DesignSettings): string {
   const r = `border-radius: ${d.borderRadius}px !important;`;
   if (d.borderStyle === "none") return `border: none !important; box-shadow: none !important; ${r}`;
@@ -66,12 +115,15 @@ function getLabelBorderCss(d: DesignSettings): string {
   return `border: none !important; ${r}`;
 }
 
-function buildPrintHtml(labels: LabelResult[], d: DesignSettings): string {
+function buildPrintHtml(labels: LabelResult[], d: DesignSettings, tmpl: QuickPrintTemplate): string {
   const sheets: LabelResult[][] = [];
-  for (let i = 0; i < labels.length; i += 10) sheets.push(labels.slice(i, i + 10));
+  for (let i = 0; i < labels.length; i += tmpl.labelsPerSheet) sheets.push(labels.slice(i, i + tmpl.labelsPerSheet));
 
   const alignItems = d.align === "left" ? "flex-start" : d.align === "right" ? "flex-end" : "center";
   const labelBorder = getLabelBorderCss(d);
+  const lw = `${tmpl.labelWidthIn}in`;
+  const lh = `${tmpl.labelHeightIn}in`;
+  const sheetPadding = `${tmpl.pagePaddingTop} ${tmpl.pagePaddingSide}`;
 
   const sheetsHtml = sheets
     .map((sheetLabels) => {
@@ -103,11 +155,10 @@ function buildPrintHtml(labels: LabelResult[], d: DesignSettings): string {
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0 !important; padding: 0 !important; background: white !important; color: #000 !important; font-family: ${d.fontFamily}, Arial, sans-serif !important; width: 100% !important; height: auto !important; }
   .print-wrap { width: 100% !important; margin: 0 !important; padding: 0 !important; }
-  .sheet-preview { display: block !important; width: 8.5in !important; height: 11in !important; margin: 0 !important; padding: 0.5in !important; box-sizing: border-box !important; background: white !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; overflow: hidden !important; page-break-after: always !important; break-after: page !important; }
+  .sheet-preview { display: block !important; width: 8.5in !important; height: 11in !important; margin: 0 !important; padding: ${sheetPadding} !important; box-sizing: border-box !important; background: white !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; overflow: hidden !important; page-break-after: always !important; break-after: page !important; }
   .sheet-preview:last-child { page-break-after: auto !important; break-after: auto !important; }
-  .labels { display: grid !important; grid-template-columns: repeat(2, 3.5in) !important; grid-template-rows: repeat(5, 2in) !important; column-gap: 0 !important; row-gap: 0 !important; width: 7in !important; height: 10in !important; margin-left: auto !important; margin-right: auto !important; padding: 0 !important; background: white !important; }
-  .label { width: 3.5in !important; height: 2in !important; box-sizing: border-box !important; overflow: hidden !important; page-break-inside: avoid !important; break-inside: avoid !important; background-color: ${d.backgroundColor} !important; ${labelBorder} -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  .label:nth-child(even) { position: relative !important; left: -0.05in !important; }
+  .labels { display: grid !important; grid-template-columns: repeat(${tmpl.columns}, ${lw}) !important; grid-template-rows: repeat(${tmpl.rows}, ${lh}) !important; column-gap: 0 !important; row-gap: 0 !important; width: ${tmpl.gridWidthIn}in !important; height: ${tmpl.gridHeightIn}in !important; margin-left: auto !important; margin-right: auto !important; padding: 0 !important; background: white !important; }
+  .label { width: ${lw} !important; height: ${lh} !important; box-sizing: border-box !important; overflow: hidden !important; page-break-inside: avoid !important; break-inside: avoid !important; background-color: ${d.backgroundColor} !important; ${labelBorder} -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .label-content { width: 100% !important; height: 100% !important; display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: ${alignItems} !important; text-align: ${d.align} !important; box-sizing: border-box !important; padding: 10px 16px 10px 12px !important; }
   .dish-name { font-family: ${d.fontFamily}, Arial, sans-serif; font-size: ${d.foodNameSize}px; font-weight: ${d.foodBold ? "700" : "400"}; font-style: ${d.foodItalic ? "italic" : "normal"}; color: ${d.textColor}; line-height: 1.1; word-break: break-word; width: 100% !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .description-line { font-family: ${d.fontFamily}, Arial, sans-serif; font-size: ${d.descSize}px; color: ${d.descColor}; margin-top: 4px; width: 100% !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -199,16 +250,44 @@ function DesignSidePanel({
   design,
   onChange,
   onReset,
+  printTemplateId,
+  onPrintTemplateChange,
 }: {
   design: DesignSettings;
   onChange: (patch: Partial<DesignSettings>) => void;
   onReset: () => void;
+  printTemplateId: string;
+  onPrintTemplateChange: (id: string) => void;
 }) {
   return (
     <div className="flex w-52 shrink-0 flex-col rounded-l-[2rem] border-r border-slate-200 bg-white px-5 py-6">
       <p className="mb-5 text-base font-black tracking-tight text-slate-900">Design</p>
 
       <div className="flex flex-col gap-5">
+        {/* Print Format */}
+        <div>
+          <span className="mb-1.5 block text-xs font-semibold text-slate-500">Print format</span>
+          <div className="flex flex-col gap-1.5">
+            {QUICK_PRINT_TEMPLATES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => onPrintTemplateChange(t.id)}
+                className={`flex w-full flex-col rounded-xl border px-3 py-2 text-left transition ${
+                  printTemplateId === t.id
+                    ? "border-cyan-400 bg-cyan-50"
+                    : "border-slate-200 bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                <span className={`text-xs font-semibold ${printTemplateId === t.id ? "text-cyan-800" : "text-slate-700"}`}>
+                  {t.name}
+                </span>
+                <span className="text-[10px] text-slate-400">{t.detail}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Font */}
         <div>
           <span className="mb-1.5 block text-xs font-semibold text-slate-500">Font style</span>
@@ -331,6 +410,7 @@ export default function QuickPrintButton() {
   const [selected, setSelected] = useState<LabelResult[]>([]);
   const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [design, setDesign] = useState<DesignSettings>(DEFAULT_DESIGN);
+  const [printTemplateId, setPrintTemplateId] = useState("5870");
   const [editingId, setEditingId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -388,7 +468,8 @@ export default function QuickPrintButton() {
 
   const print = () => {
     if (!selected.length) return;
-    const html = buildPrintHtml(selected, design);
+    const tmpl = QUICK_PRINT_TEMPLATES.find((t) => t.id === printTemplateId) ?? QUICK_PRINT_TEMPLATES[0];
+    const html = buildPrintHtml(selected, design, tmpl);
     const iframe = document.createElement("iframe");
     iframe.style.cssText = "position:fixed;width:0;height:0;border:none;visibility:hidden;";
     document.body.appendChild(iframe);
@@ -425,6 +506,8 @@ export default function QuickPrintButton() {
               design={design}
               onChange={patchDesign}
               onReset={() => setDesign(DEFAULT_DESIGN)}
+              printTemplateId={printTemplateId}
+              onPrintTemplateChange={setPrintTemplateId}
             />
           )}
 

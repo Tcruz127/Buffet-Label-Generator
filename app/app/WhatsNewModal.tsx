@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 
 // ─── UPDATE THESE TWO THINGS EACH RELEASE ────────────────────────────────────
-const CURRENT_VERSION = "v1.5";
+const CURRENT_VERSION = "v1.6";
 
 const PATCH_NOTES: { icon: string; title: string; description: string }[] = [
+  {
+    icon: "📐",
+    title: "Multiple Print Formats",
+    description: "Choose your label size when creating a new sheet — Standard (Avery 5870, 3.5\" × 2\") or Large (Avery 5164, 4\" × 3.33\"). Quick Print also lets you pick the format before printing.",
+  },
   {
     icon: "🔍",
     title: "Sheet Search",
