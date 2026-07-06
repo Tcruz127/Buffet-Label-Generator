@@ -39,7 +39,7 @@ const DEFAULT_DESIGN: DesignSettings = {
   accentColor: "#444444",
   dietTextSize: 12,
   backgroundColor: "#ffffff",
-  borderStyle: "classic",
+  borderStyle: "none",
   borderColor: "#cfcfcf",
   borderRadius: 0,
   align: "center",
