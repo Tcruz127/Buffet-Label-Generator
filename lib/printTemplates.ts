@@ -45,6 +45,21 @@ export const PRINT_TEMPLATES: PrintTemplate[] = [
     marginSide: 0.25,
     labelsPerSheet: 6,
   },
+  {
+    id: "8371",
+    name: "Business Card",
+    averyProduct: "Avery 8371",
+    description: '3.5" × 2" — 1 per sheet. Prints a single label centered on the page — cut to size or print directly onto card stock.',
+    columns: 1,
+    rows: 1,
+    labelWidth: 3.5,
+    labelHeight: 2,
+    columnGap: 0,
+    rowGap: 0,
+    marginTop: 0,
+    marginSide: 0,
+    labelsPerSheet: 1,
+  },
 ];
 
 export const DEFAULT_PRINT_TEMPLATE = PRINT_TEMPLATES[0];

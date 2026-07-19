@@ -1260,10 +1260,16 @@ const LABEL_WIDTH = 336,
 const EDITOR_PRINT_TEMPLATES = {
   "5870": { columns: 2, rows: 5, labelWidth: "3.5in", labelHeight: "2in", columnGap: "0.2in",
             printColumnGap: "0in", marginTop: "0.5in", marginSide: "0.5in",
+            pageWidth: "8.5in", pageHeight: "11in",
             gridWidth: "7in", gridHeight: "10in", evenLabelOffset: "-0.05in" },
   "5164": { columns: 2, rows: 3, labelWidth: "4in", labelHeight: "3.333in", columnGap: "0",
             printColumnGap: "0in", marginTop: "0.5in", marginSide: "0.25in",
+            pageWidth: "8.5in", pageHeight: "11in",
             gridWidth: "8in", gridHeight: "10in", evenLabelOffset: "" },
+  "8371": { columns: 1, rows: 1, labelWidth: "3.5in", labelHeight: "2in", columnGap: "0",
+            printColumnGap: "0in", marginTop: "0", marginSide: "0",
+            pageWidth: "3.5in", pageHeight: "2in",
+            gridWidth: "3.5in", gridHeight: "2in", evenLabelOffset: "" },
 };
 
 function applyGridStyles(tmpl) {
@@ -2245,7 +2251,7 @@ function openPrintWindow() {
 <title>Print Buffet Labels</title>
 <style>
   @page {
-    size: Letter portrait;
+    size: ${_pt.pageWidth || "8.5in"} ${_pt.pageHeight || "11in"};
     margin: 0;
   }
 
@@ -2276,8 +2282,8 @@ function openPrintWindow() {
 
   .sheet-preview {
     display: block !important;
-    width: 8.5in !important;
-    height: 11in !important;
+    width: ${_pt.pageWidth || "8.5in"} !important;
+    height: ${_pt.pageHeight || "11in"} !important;
     margin: 0 !important;
     padding: ${_pt.marginTop} ${_pt.marginSide} !important;
     box-sizing: border-box !important;

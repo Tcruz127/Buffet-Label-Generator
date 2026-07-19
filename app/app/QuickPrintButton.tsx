@@ -66,6 +66,8 @@ type QuickPrintTemplate = {
   labelWidthIn: number;
   labelHeightIn: number;
   labelsPerSheet: number;
+  pageWidthIn: number;
+  pageHeightIn: number;
   pagePaddingTop: string;
   pagePaddingSide: string;
   gridWidthIn: number;
@@ -83,6 +85,8 @@ const QUICK_PRINT_TEMPLATES: QuickPrintTemplate[] = [
     labelWidthIn: 3.5,
     labelHeightIn: 2,
     labelsPerSheet: 10,
+    pageWidthIn: 8.5,
+    pageHeightIn: 11,
     pagePaddingTop: "0.5in",
     pagePaddingSide: "0.75in",
     gridWidthIn: 7,
@@ -98,10 +102,29 @@ const QUICK_PRINT_TEMPLATES: QuickPrintTemplate[] = [
     labelWidthIn: 4,
     labelHeightIn: 3.333,
     labelsPerSheet: 6,
+    pageWidthIn: 8.5,
+    pageHeightIn: 11,
     pagePaddingTop: "0.5in",
     pagePaddingSide: "0.25in",
     gridWidthIn: 8,
     gridHeightIn: 10,
+  },
+  {
+    id: "8371",
+    name: "Business Card",
+    averyProduct: "Avery 8371",
+    detail: '3.5" × 2" — 1 card',
+    columns: 1,
+    rows: 1,
+    labelWidthIn: 3.5,
+    labelHeightIn: 2,
+    labelsPerSheet: 1,
+    pageWidthIn: 3.5,
+    pageHeightIn: 2,
+    pagePaddingTop: "0",
+    pagePaddingSide: "0",
+    gridWidthIn: 3.5,
+    gridHeightIn: 2,
   },
 ];
 
@@ -151,11 +174,11 @@ function buildPrintHtml(labels: LabelResult[], d: DesignSettings, tmpl: QuickPri
 <meta charset="UTF-8"/>
 <title>Quick Print</title>
 <style>
-  @page { size: Letter portrait; margin: 0; }
+  @page { size: ${tmpl.pageWidthIn}in ${tmpl.pageHeightIn}in; margin: 0; }
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0 !important; padding: 0 !important; background: white !important; color: #000 !important; font-family: ${d.fontFamily}, Arial, sans-serif !important; width: 100% !important; height: auto !important; }
   .print-wrap { width: 100% !important; margin: 0 !important; padding: 0 !important; }
-  .sheet-preview { display: block !important; width: 8.5in !important; height: 11in !important; margin: 0 !important; padding: ${sheetPadding} !important; box-sizing: border-box !important; background: white !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; overflow: hidden !important; page-break-after: always !important; break-after: page !important; }
+  .sheet-preview { display: block !important; width: ${tmpl.pageWidthIn}in !important; height: ${tmpl.pageHeightIn}in !important; margin: 0 !important; padding: ${sheetPadding} !important; box-sizing: border-box !important; background: white !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; overflow: hidden !important; page-break-after: always !important; break-after: page !important; }
   .sheet-preview:last-child { page-break-after: auto !important; break-after: auto !important; }
   .labels { display: grid !important; grid-template-columns: repeat(${tmpl.columns}, ${lw}) !important; grid-template-rows: repeat(${tmpl.rows}, ${lh}) !important; column-gap: 0 !important; row-gap: 0 !important; width: ${tmpl.gridWidthIn}in !important; height: ${tmpl.gridHeightIn}in !important; margin-left: auto !important; margin-right: auto !important; padding: 0 !important; background: white !important; }
   .label { width: ${lw} !important; height: ${lh} !important; box-sizing: border-box !important; overflow: hidden !important; page-break-inside: avoid !important; break-inside: avoid !important; background-color: ${d.backgroundColor} !important; ${labelBorder} -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
