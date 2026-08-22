@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 
 // ─── UPDATE THESE TWO THINGS EACH RELEASE ────────────────────────────────────
-const CURRENT_VERSION = "v1.6";
+const CURRENT_VERSION = "v1.7";
 
 const PATCH_NOTES: { icon: string; title: string; description: string }[] = [
+  {
+    icon: "🥗",
+    title: "Edit Dietary Tags Right on the Label",
+    description: "Click the dietary tags line on any label card in the live preview to add, change, or remove allergen and dietary notes — no need to open a separate menu.",
+  },
   {
     icon: "📐",
     title: "Multiple Print Formats",

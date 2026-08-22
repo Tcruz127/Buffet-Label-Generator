@@ -358,6 +358,42 @@ button.active{
   word-break:break-word;
   position:relative;
   z-index:1;
+  cursor:pointer;
+  border-radius:6px;
+  padding:2px 4px;
+  margin-left:-4px;
+  margin-right:-4px;
+  transition:background-color .15s ease;
+}
+
+.allergen-line:hover{
+  background-color:rgba(15,23,42,0.06);
+}
+
+.allergen-line:empty::before{
+  content:attr(data-placeholder);
+  color:#94a3b8;
+  font-style:italic;
+}
+
+.preview-diet-popover{
+  position:absolute;
+  z-index:9999;
+  min-width:220px;
+  max-width:280px;
+  max-height:320px;
+  display:flex;
+  flex-direction:column;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  box-shadow:var(--shadow-md);
+  overflow:hidden;
+}
+
+.preview-diet-popover .diet-options-list{
+  overflow:auto;
+  padding:8px;
 }
 
 .description-line,
@@ -1206,19 +1242,7 @@ button.active{
   <input id="bgColor" type="color" value="#ffffff" />
 </div>
 
-      <div class="controls-block">
-        <label>Paste Menu (auto fill labels)</label>
-        <textarea id="menuPaste" rows="6" placeholder="Paste menu items each on a new line"></textarea>
-        <div class="toolbar">
-          <button onclick="autoFillMenu()">Auto Fill Labels</button>
-          <button onclick="clearFoods()">Clear Sheet</button>
-        </div>
-
-        <label>Menu Items & Dietary Tags</label>
-        <div class="help">
-  Each label has its own dietary dropdown. Open the menu and check or uncheck the dietary notes you want.
-</div>
-      </div>
+      <textarea id="menuPaste" style="display:none;" aria-hidden="true"></textarea>
 
       <div id="foodInputs" class="food-grid controls-block"></div>
     </div>
@@ -2650,6 +2674,136 @@ function bindPreviewEditable(el, inputId, mirrorInputId) {
   });
 }
 
+let activePreviewDietPopover = null;
+let activePreviewDietPopoverIndex = null;
+
+function closePreviewDietPopover() {
+  if (activePreviewDietPopover) {
+    activePreviewDietPopover.remove();
+    activePreviewDietPopover = null;
+    activePreviewDietPopoverIndex = null;
+  }
+}
+
+function getPreviewDietPopoverAnchor() {
+  return document.querySelector(".preview-panel");
+}
+
+function positionPreviewDietPopover(popover, anchorEl) {
+  const panel = getPreviewDietPopoverAnchor();
+  if (!panel) return;
+
+  const panelRect = panel.getBoundingClientRect();
+  const anchorRect = anchorEl.getBoundingClientRect();
+  const popoverWidth = popover.offsetWidth || 240;
+
+  let left = anchorRect.left - panelRect.left + panel.scrollLeft;
+  const maxLeft = panel.scrollLeft + panel.clientWidth - popoverWidth - 8;
+  if (left > maxLeft) left = Math.max(panel.scrollLeft + 8, maxLeft);
+
+  const top = anchorRect.bottom - panelRect.top + panel.scrollTop + 6;
+
+  popover.style.left = left + "px";
+  popover.style.top = top + "px";
+}
+
+function openPreviewDietPopover(anchorEl, i) {
+  if (activePreviewDietPopoverIndex === i) {
+    closePreviewDietPopover();
+    return;
+  }
+  closePreviewDietPopover();
+
+  const select = document.getElementById("diet" + i);
+  if (!select) return;
+
+  const popover = document.createElement("div");
+  popover.className = "preview-diet-popover";
+
+  const list = document.createElement("div");
+  list.className = "diet-options-list";
+  popover.appendChild(list);
+
+  const groups = [...new Set(DIET_OPTIONS.map(opt => opt.group))];
+
+  groups.forEach((groupName, groupIndex) => {
+    const heading = document.createElement("div");
+    heading.className = "diet-group-heading";
+    heading.textContent = groupName;
+    list.appendChild(heading);
+
+    DIET_OPTIONS.filter(opt => opt.group === groupName).forEach(opt => {
+      const row = document.createElement("label");
+      row.className = "diet-option";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = opt.value;
+      checkbox.checked = Array.from(select.options).some(
+        o => o.value === opt.value && o.selected
+      );
+
+      checkbox.addEventListener("change", () => {
+        Array.from(select.options).forEach(option => {
+          if (option.value === opt.value) option.selected = checkbox.checked;
+        });
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+
+      const left = document.createElement("div");
+      left.className = "diet-option-left";
+      left.innerHTML =
+        '<span class="diet-option-icon">' + (opt.icon || "") + '</span>' +
+        '<span class="diet-option-name">' + opt.value + '</span>';
+
+      row.appendChild(checkbox);
+      row.appendChild(left);
+      list.appendChild(row);
+    });
+
+    if (groupIndex < groups.length - 1) {
+      const divider = document.createElement("div");
+      divider.className = "diet-group-divider";
+      list.appendChild(divider);
+    }
+  });
+
+  const panel = getPreviewDietPopoverAnchor();
+  if (!panel) return;
+
+  popover.style.position = "absolute";
+  panel.appendChild(popover);
+  activePreviewDietPopover = popover;
+  activePreviewDietPopoverIndex = i;
+
+  positionPreviewDietPopover(popover, anchorEl);
+}
+
+function bindAllergenLinePreview(el, i) {
+  if (!el) return;
+
+  el.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openPreviewDietPopover(el, i);
+  });
+}
+
+document.addEventListener("click", (e) => {
+  if (
+    activePreviewDietPopover &&
+    !activePreviewDietPopover.contains(e.target) &&
+    !e.target.closest(".allergen-line")
+  ) {
+    closePreviewDietPopover();
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && activePreviewDietPopover) {
+    closePreviewDietPopover();
+  }
+});
+
 function updateStyleButtons(settings = getMergedRenderSettings()) {
   document.querySelectorAll(".style-btn[data-style-key]").forEach((btn) => {
     const key = btn.getAttribute("data-style-key");
@@ -2794,8 +2948,8 @@ descLine.setAttribute("data-placeholder", "Add ingredients...");
       bindPreviewEditable(descLine, "desc" + i, "r_desc" + i);
       content.appendChild(descLine);
 
-      if(diets.length){
-        addDividerToContent(content, settings);
+      {
+        if (diets.length) addDividerToContent(content, settings);
 
         const dietDiv = document.createElement("div");
         dietDiv.className = "allergen-line";
@@ -2807,6 +2961,7 @@ descLine.setAttribute("data-placeholder", "Add ingredients...");
 
   return shouldShowIcon ? (d.icon + " " + d.value) : d.value;
 }).join(" • ");
+        dietDiv.setAttribute("data-placeholder", "Add dietary tags...");
         dietDiv.style.fontFamily = settings.allergenFont || settings.fontFamily || "Arial";
         dietDiv.style.fontSize = (settings.dietTextSize || 12) + "px";
         dietDiv.style.marginTop = "4px";
@@ -2815,6 +2970,7 @@ descLine.setAttribute("data-placeholder", "Add ingredients...");
         dietDiv.style.fontStyle = settings.dietItalic ? "italic" : "normal";
         dietDiv.style.textDecoration = settings.dietUnderline ? "underline" : "none";
         dietDiv.style.width = "100%";
+        bindAllergenLinePreview(dietDiv, i);
         content.appendChild(dietDiv);
       }
 
