@@ -2,47 +2,63 @@
 
 import { useEffect, useState } from "react";
 
-// ─── UPDATE THESE TWO THINGS EACH RELEASE ────────────────────────────────────
-const CURRENT_VERSION = "v1.7";
+// ─── ADD A NEW RELEASE AT THE TOP EACH TIME — DON'T APPEND TO AN OLD ONE ─────
+// Only the first (newest) release's notes are shown to users. Older releases
+// stay here purely as a changelog record.
+type PatchNote = { icon: string; title: string; description: string };
+type Release = { version: string; notes: PatchNote[] };
 
-const PATCH_NOTES: { icon: string; title: string; description: string }[] = [
+const RELEASES: Release[] = [
   {
-    icon: "🥗",
-    title: "Edit Dietary Tags Right on the Label",
-    description: "Click the dietary tags line on any label card in the live preview to add, change, or remove allergen and dietary notes — no need to open a separate menu.",
+    version: "v1.7",
+    notes: [
+      {
+        icon: "🥗",
+        title: "Edit Dietary Tags Right on the Label",
+        description: "Click the dietary tags line on any label card in the live preview to add, change, or remove allergen and dietary notes — no need to open a separate menu.",
+      },
+    ],
   },
   {
-    icon: "📐",
-    title: "Multiple Print Formats",
-    description: "Choose your label size when creating a new sheet — Standard (Avery 5870, 3.5\" × 2\") or Large (Avery 5164, 4\" × 3.33\"). Quick Print also lets you pick the format before printing.",
-  },
-  {
-    icon: "🔍",
-    title: "Sheet Search",
-    description: "Find any sheet instantly — search by name or event name right from your dashboard.",
-  },
-  {
-    icon: "🎨",
-    title: "Quick Print Design Panel",
-    description: "Customize your labels before printing — change fonts, adjust text sizes, pick colors, and see a live preview, all without leaving Quick Print.",
-  },
-  {
-    icon: "🖨️",
-    title: "Quick Print",
-    description: "Search all your labels across every sheet, pick the ones you need, and print them as a single custom sheet — no editor required.",
-  },
-  {
-    icon: "💬",
-    title: "Sheet Comments",
-    description: "Leave notes for your team directly inside the label editor. Comments are shared with everyone who has access to the sheet.",
-  },
-  {
-    icon: "📝",
-    title: "Feedback",
-    description: "Have a suggestion or ran into something? Use the new Feedback button in the bottom-right corner to share your thoughts with us directly.",
+    version: "v1.6",
+    notes: [
+      {
+        icon: "📐",
+        title: "Multiple Print Formats",
+        description: "Choose your label size when creating a new sheet — Standard (Avery 5870, 3.5\" × 2\") or Large (Avery 5164, 4\" × 3.33\"). Quick Print also lets you pick the format before printing.",
+      },
+      {
+        icon: "🔍",
+        title: "Sheet Search",
+        description: "Find any sheet instantly — search by name or event name right from your dashboard.",
+      },
+      {
+        icon: "🎨",
+        title: "Quick Print Design Panel",
+        description: "Customize your labels before printing — change fonts, adjust text sizes, pick colors, and see a live preview, all without leaving Quick Print.",
+      },
+      {
+        icon: "🖨️",
+        title: "Quick Print",
+        description: "Search all your labels across every sheet, pick the ones you need, and print them as a single custom sheet — no editor required.",
+      },
+      {
+        icon: "💬",
+        title: "Sheet Comments",
+        description: "Leave notes for your team directly inside the label editor. Comments are shared with everyone who has access to the sheet.",
+      },
+      {
+        icon: "📝",
+        title: "Feedback",
+        description: "Have a suggestion or ran into something? Use the new Feedback button in the bottom-right corner to share your thoughts with us directly.",
+      },
+    ],
   },
 ];
 // ─────────────────────────────────────────────────────────────────────────────
+
+const CURRENT_VERSION = RELEASES[0].version;
+const PATCH_NOTES = RELEASES[0].notes;
 
 const STORAGE_KEY = "instabels_whats_new_seen";
 

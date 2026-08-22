@@ -13,6 +13,7 @@ import { isOrgProUser } from "@/lib/plan";
 import { resendVerificationEmail } from "./resendVerification";
 import OnboardingModal from "./OnboardingModal";
 import WhatsNewModal from "./WhatsNewModal";
+import SignupConversionTracker from "./SignupConversionTracker";
 import QuickPrintButton from "./QuickPrintButton";
 import FeedbackButton from "./FeedbackButton";
 import SheetSearch from "./SheetSearch";
@@ -607,6 +608,7 @@ export default async function AppDashboardPage({
 
       <WhatsNewModal />
       <FeedbackButton />
+      <SignupConversionTracker />
     </main>
   );
 }

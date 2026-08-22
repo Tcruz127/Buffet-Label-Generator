@@ -76,11 +76,14 @@ export async function signUpAction(formData: FormData) {
     // Analytics failure should not block account creation
   }
 
+  const conversionRedirectTo =
+    redirectTo + (redirectTo.includes("?") ? "&" : "?") + "new_signup=1";
+
   try {
     await signIn("credentials", {
       email,
       password,
-      redirectTo,
+      redirectTo: conversionRedirectTo,
     });
   } catch {
     redirect("/login?success=1");
