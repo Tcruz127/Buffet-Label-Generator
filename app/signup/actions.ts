@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { track } from "@vercel/analytics/server";
 import { signIn } from "@/auth";
 import { hashPassword } from "../../lib/password";
@@ -70,7 +71,7 @@ export async function signUpAction(formData: FormData) {
   }
 
   try {
-    await track("Sign Up");
+    await track("Sign Up", undefined, { headers: await headers() });
   } catch {
     // Analytics failure should not block account creation
   }

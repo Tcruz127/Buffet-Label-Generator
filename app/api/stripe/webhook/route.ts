@@ -111,7 +111,11 @@ export async function POST(req: Request) {
         }
 
         try {
-          await track("Upgrade to Pro", { billingCycle });
+          await track(
+            "Upgrade to Pro",
+            { billingCycle },
+            { headers: await headers() }
+          );
         } catch {
           // Analytics failure should not block webhook processing
         }
