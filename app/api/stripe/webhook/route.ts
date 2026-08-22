@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { track } from "@vercel/analytics/server";
 import type Stripe from "stripe";
 
 function getUnixDate(value: number | null | undefined) {
@@ -63,6 +64,11 @@ export async function POST(req: Request) {
 
         const userId = metadataUserId || clientReferenceUserId;
 
+        const billingCycle =
+          typeof checkoutSession.metadata?.billingCycle === "string"
+            ? checkoutSession.metadata.billingCycle
+            : "unknown";
+
         let subscription: Stripe.Subscription | null = null;
 
         if (stripeSubscriptionId) {
@@ -102,6 +108,12 @@ export async function POST(req: Request) {
                 subscription?.cancel_at_period_end ?? false,
             },
           });
+        }
+
+        try {
+          await track("Upgrade to Pro", { billingCycle });
+        } catch {
+          // Analytics failure should not block webhook processing
         }
 
         break;

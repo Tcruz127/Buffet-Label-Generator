@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { track } from "@vercel/analytics/server";
 import { signIn } from "@/auth";
 import { hashPassword } from "../../lib/password";
 import { signUpSchema } from "../../lib/validations/auth";
@@ -66,6 +67,12 @@ export async function signUpAction(formData: FormData) {
     await sendVerificationEmail(email, record.token);
   } catch {
     // Email failure should not block account creation
+  }
+
+  try {
+    await track("Sign Up");
+  } catch {
+    // Analytics failure should not block account creation
   }
 
   try {
