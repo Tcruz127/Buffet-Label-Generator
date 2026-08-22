@@ -16,47 +16,46 @@ export default async function LoginPage({
   const callbackUrl = rawRedirect.startsWith("/") ? rawRedirect : "";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[linear-gradient(to_bottom,#f8fbff_0%,#f6f8fc_45%,#ffffff_100%)] text-slate-900">
       <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.18),transparent_30%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.12),transparent_28%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#020617_0%,#0f172a_45%,#111827_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.14),transparent_28%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.14),transparent_30%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.08),transparent_28%)]" />
       </div>
 
       <div className="mx-auto flex min-h-screen max-w-7xl items-center px-6 py-10 lg:px-8">
         <div className="grid w-full items-center gap-12 lg:grid-cols-[1fr_480px]">
           <div className="hidden lg:block">
             <div className="max-w-xl">
-              <div className="mb-6 inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-100 backdrop-blur">
+              <div className="mb-6 inline-flex items-center rounded-full border border-cyan-100 bg-cyan-50 px-4 py-2 text-sm text-cyan-700">
                 Welcome back to your buffet label workspace
               </div>
 
-              <h1 className="text-5xl font-black leading-tight tracking-tight text-white">
+              <h1 className="text-5xl font-black leading-tight tracking-tight text-slate-950">
                 Sign in and pick up right where you left off.
               </h1>
 
-              <p className="mt-6 text-lg leading-8 text-slate-300">
+              <p className="mt-6 text-lg leading-8 text-slate-600">
                 Reopen saved sheets, update menus, adjust allergens, and print
                 polished buffet labels from your dashboard.
               </p>
 
               <div className="mt-10 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-cyan-500/5 backdrop-blur">
-                  <p className="text-2xl font-black text-white">Saved</p>
-                  <p className="mt-2 text-sm text-slate-300">
+                <div className="rounded-3xl border border-cyan-100 bg-white p-5 shadow-sm">
+                  <p className="text-2xl font-black text-slate-950">Saved</p>
+                  <p className="mt-2 text-sm text-slate-600">
                     Access saved sheets anytime
                   </p>
                 </div>
 
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-violet-500/5 backdrop-blur">
-                  <p className="text-2xl font-black text-white">Fast</p>
-                  <p className="mt-2 text-sm text-slate-300">
+                <div className="rounded-3xl border border-violet-100 bg-white p-5 shadow-sm">
+                  <p className="text-2xl font-black text-slate-950">Fast</p>
+                  <p className="mt-2 text-sm text-slate-600">
                     Update labels in minutes
                   </p>
                 </div>
 
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-cyan-500/5 backdrop-blur">
-                  <p className="text-2xl font-black text-white">Ready</p>
-                  <p className="mt-2 text-sm text-slate-300">
+                <div className="rounded-3xl border border-cyan-100 bg-white p-5 shadow-sm">
+                  <p className="text-2xl font-black text-slate-950">Ready</p>
+                  <p className="mt-2 text-sm text-slate-600">
                     Print whenever you need
                   </p>
                 </div>
@@ -65,12 +64,12 @@ export default async function LoginPage({
           </div>
 
           <div className="w-full">
-            <div className="mx-auto w-full max-w-md rounded-[2rem] border border-white/10 bg-white/10 p-3 shadow-2xl shadow-cyan-500/10 backdrop-blur-2xl">
-              <div className="rounded-[1.6rem] border border-white/10 bg-slate-950/75 p-8">
+            <div className="mx-auto w-full max-w-md rounded-[2rem] border border-slate-200/80 bg-white/85 p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+              <div className="rounded-[1.6rem] border border-slate-200 bg-white p-8">
                 <div className="mb-8 text-center">
                   <div className="flex justify-center">
                     <Image
-                      src="/logo-light.svg"
+                      src="/logo-dark.svg"
                       alt="Instabels"
                       width={160}
                       height={30}
@@ -78,24 +77,24 @@ export default async function LoginPage({
                     />
                   </div>
 
-                  <h1 className="mt-5 text-3xl font-black tracking-tight text-white">
+                  <h1 className="mt-5 text-3xl font-black tracking-tight text-slate-950">
                     Sign in
                   </h1>
 
-                  <p className="mt-2 text-sm text-slate-300">
+                  <p className="mt-2 text-sm text-slate-600">
                     Access your dashboard and manage your label sheets.
                   </p>
                 </div>
 
                 {success === "1" && (
-                  <div className="mb-5 rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-4 py-4 text-center">
-                    <p className="text-sm font-semibold text-emerald-300">Account created successfully!</p>
-                    <p className="mt-1 text-xs text-emerald-400">Sign in below to access your dashboard.</p>
+                  <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-center">
+                    <p className="text-sm font-semibold text-emerald-700">Account created successfully!</p>
+                    <p className="mt-1 text-xs text-emerald-600">Sign in below to access your dashboard.</p>
                   </div>
                 )}
 
                 {error === "invalid" && (
-                  <div className="mb-5 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     Invalid email or password.
                   </div>
                 )}
@@ -137,26 +136,26 @@ export default async function LoginPage({
                   className="space-y-5"
                 >
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-200">
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
                       Email
                     </label>
                     <input
                       name="email"
                       type="email"
                       placeholder="you@example.com"
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-400 shadow-sm transition focus:border-cyan-300 focus:outline-none focus:ring-4 focus:ring-cyan-500/20"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition focus:border-cyan-300 focus:outline-none focus:ring-4 focus:ring-cyan-500/20"
                       required
                     />
                   </div>
 
                   <div>
                     <div className="mb-2 flex items-center justify-between">
-                      <label className="text-sm font-medium text-slate-200">
+                      <label className="text-sm font-medium text-slate-700">
                         Password
                       </label>
                       <Link
                         href="/forgot-password"
-                        className="text-xs font-medium text-cyan-400 transition hover:text-cyan-300"
+                        className="text-xs font-medium text-cyan-600 transition hover:text-cyan-700"
                       >
                         Forgot password?
                       </Link>
@@ -165,7 +164,7 @@ export default async function LoginPage({
                       name="password"
                       type="password"
                       placeholder="Enter your password"
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-400 shadow-sm transition focus:border-cyan-300 focus:outline-none focus:ring-4 focus:ring-cyan-500/20"
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition focus:border-cyan-300 focus:outline-none focus:ring-4 focus:ring-cyan-500/20"
                       required
                     />
                   </div>
@@ -174,16 +173,16 @@ export default async function LoginPage({
                     <input type="hidden" name="callbackUrl" value={callbackUrl} />
                   )}
 
-                  <button className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-cyan-500/25 transition hover:scale-[1.01]">
+                  <button className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-cyan-500/25 transition hover:scale-[1.01]">
                     Sign in
                   </button>
                 </form>
 
-                <p className="mt-6 text-center text-sm text-slate-300">
+                <p className="mt-6 text-center text-sm text-slate-600">
                   Don&apos;t have an account?{" "}
                   <Link
                     href={callbackUrl ? `/signup?redirect=${encodeURIComponent(callbackUrl)}` : "/signup"}
-                    className="font-semibold text-cyan-300 transition hover:text-cyan-200"
+                    className="font-semibold text-cyan-600 transition hover:text-cyan-700"
                   >
                     Create one
                   </Link>
