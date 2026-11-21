@@ -487,6 +487,8 @@ export default function EditorFrame({ sheet, isPro = false }: { sheet: SheetData
     return () => {
       window.removeEventListener("message", handleMessage);
     };
+    // saveToDatabase only reads sheet.id, refs and state setters, so the captured copy never goes stale.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheet.id]);
 
   const triggerTitleAutosave = (nextTitle: string) => {
