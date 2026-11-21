@@ -10,6 +10,21 @@ type Release = { version: string; notes: PatchNote[] };
 
 const RELEASES: Release[] = [
   {
+    version: "v1.8",
+    notes: [
+      {
+        icon: "🍽️",
+        title: "Plated Menu Builder (Pro)",
+        description: "Build printed dinner menus in a few clicks — click any course on the menu and pick dishes from your Dish Library. Menus print two to a landscape page, ready to cut. Find it under Plated Menus on your dashboard.",
+      },
+      {
+        icon: "📚",
+        title: "Dish Library & Menu Types",
+        description: "Keep your banquet dishes organized by menu type, like Plated Dinner or Plated Lunch. Your whole team shares one library, and you can add your own sections, dishes, and menu types anytime.",
+      },
+    ],
+  },
+  {
     version: "v1.7",
     notes: [
       {

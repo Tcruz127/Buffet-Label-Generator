@@ -29,6 +29,9 @@ model User {
   emailVerifyTokens    EmailVerifyToken[]
   sheetComments        SheetComment[]
   feedbacks            Feedback[]
+  menuPackages         MenuPackage[]
+  menuSections         MenuSection[]
+  platedMenus          PlatedMenu[]
 }
 
 model PasswordResetToken {
@@ -61,6 +64,9 @@ model Organization {
   invites   OrganizationInvite[]
   sheets    LabelSheet[]
   folders   SheetFolder[]
+  menuPackages MenuPackage[]
+  menuSections MenuSection[]
+  platedMenus  PlatedMenu[]
 }
 
 model OrganizationMember {
@@ -220,4 +226,83 @@ model DishAnalysis {
 
   @@index([sheetId])
   @@index([labelItemId])
+}
+// ── Plated menu builder ────────────────────────────────────────────────
+// Library sections/dishes are scoped to an org (or a user without one).
+// PlatedMenu.content snapshots the chosen dishes so library edits never
+// rewrite menus that were already built. A package (e.g. "Plated Dinner")
+// groups the sections a menu of that type can pick from.
+
+model MenuPackage {
+  id             String        @id @default(cuid())
+  userId         String
+  organizationId String?
+  name           String
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sections       MenuSection[]
+  menus          PlatedMenu[]
+
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model MenuSection {
+  id             String        @id @default(cuid())
+  userId         String
+  organizationId String?
+  packageId      String?
+  name           String
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  package        MenuPackage?  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  dishes         MenuDish[]
+
+  @@index([packageId])
+
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model MenuDish {
+  id          String      @id @default(cuid())
+  sectionId   String
+  name        String
+  description String      @default("") // one printed line per newline
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  section     MenuSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+}
+
+model PlatedMenu {
+  id             String        @id @default(cuid())
+  userId         String
+  organizationId String?
+  packageId      String?
+  title          String        @default("Untitled Menu")
+  welcomeText    String        @default("WELCOME")
+  hostName       String        @default("")
+  eventDate      String?       // YYYY-MM-DD
+  content        Json          // { sections: [{ sectionId, name, dishes: [{ dishId, name, description }] }] }
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  package        MenuPackage?  @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
 }

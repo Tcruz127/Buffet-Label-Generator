@@ -247,6 +247,17 @@ export default async function AppDashboardPage({
                   </svg>
                   Create New Sheet
                 </Link>
+                <Link
+                  href="/app/menus"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  Plated Menus
+                  {!isPro && (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                      Pro
+                    </span>
+                  )}
+                </Link>
                 <QuickPrintButton />
               </div>
             </div>
