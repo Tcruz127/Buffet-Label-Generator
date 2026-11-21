@@ -1,51 +1,57 @@
 import Image from "next/image";
 import Link from "next/link";
+import HeroDemo from "./_landing/HeroDemo";
+import LabelCard, { LABEL_THEMES, type LabelThemeId } from "./_landing/LabelCard";
+import MenuPreview from "./_landing/MenuPreview";
+import { BrandTile, Eyebrow, LogoMark, Sparkle } from "./_landing/Brand";
 
-const features = [
+const quickLinks = [
+  { href: "#designs", icon: "🏷️", label: "Buffet labels" },
+  { href: "#menus", icon: "🍽️", label: "Plated menus" },
+  { href: "#chef-bot", icon: "🧑‍🍳", label: "Allergen check" },
+  { href: "#teams", icon: "🖨️", label: "Quick Print" },
+  { href: "#teams", icon: "👥", label: "Team workspace" },
+];
+
+const showcase: { theme: LabelThemeId; name: string; ingredients: string; tags: string[] }[] = [
+  { theme: "elegant", name: "Seared Salmon", ingredients: "lemon beurre blanc, fresh dill", tags: ["Gluten Free", "Contains Dairy"] },
+  { theme: "rustic", name: "Braised Short Rib", ingredients: "red wine jus, root vegetables", tags: ["Gluten Free"] },
+  { theme: "corporate", name: "Penne Vodka", ingredients: "san marzano tomato, cream, basil", tags: ["Vegetarian", "Contains Gluten", "Contains Dairy"] },
+  { theme: "holiday", name: "Assorted Pastries", ingredients: "chef's daily selection", tags: ["Contains Gluten", "Contains Eggs", "Contains Nuts"] },
+  { theme: "minimal", name: "Garden Salad", ingredients: "mixed greens, champagne vinaigrette", tags: ["Vegan", "Gluten Free"] },
+  { theme: "classic", name: "Chicken Milanese", ingredients: "arugula, parmigiano reggiano", tags: ["Contains Gluten", "Contains Dairy", "Contains Eggs"] },
+];
+
+const steps = [
   {
-    title: "Import menus in seconds",
-    description:
-      "Upload a PDF or Word document and Instabels pulls your menu items automatically. No copy-pasting, no re-typing.",
+    title: "Add your menu",
+    body: "Type your dishes, or upload a PDF or Word menu and Instabels pulls the items in for you.",
   },
   {
-    title: "Chef Bot allergen analysis",
-    description:
-      "AI-powered ingredient scanning detects allergens and dietary flags across your entire sheet in one click.",
+    title: "Check allergens & style it",
+    body: "Let Chef Bot flag allergens and dietary notes, then pick a design, fonts, colors and your logo.",
   },
   {
-    title: "Quick Print — any label, any sheet",
-    description:
-      "Search across all your saved sheets, pick the labels you need, and print them as a single custom sheet — no editor required.",
-  },
-  {
-    title: "Team workspace & comments",
-    description:
-      "Invite your team, share sheets across your operation, and leave notes directly inside the editor so everyone stays on the same page.",
-  },
-  {
-    title: "Customize every detail",
-    description:
-      "Adjust fonts, colors, logos, allergen styles, and layouts. Save your settings with the sheet so you never rebuild from scratch.",
-  },
-  {
-    title: "Print-ready by design",
-    description:
-      "Every sheet outputs to Avery-friendly 3.5 × 2 in. label dimensions. Send straight to the printer or save as PDF.",
-  },
-  {
-    title: "Undo, duplicate & overflow warnings",
-    description:
-      "Step back through any change with Ctrl+Z, copy labels in one click, and get automatic warnings before content gets cut off at print time.",
+    title: "Print & reuse",
+    body: "Print on Avery-friendly label sheets or save as PDF. Every sheet is saved for the next event.",
   },
 ];
 
-const industries = [
-  "Hotels & Resorts",
-  "Wedding Venues",
-  "Catering Companies",
-  "Banquet Teams",
-  "Private Clubs",
-  "Corporate Events",
+const customers = [
+  {
+    name: "Crystal Springs Resort",
+    location: "Hamburg, New Jersey",
+    logo: "/Crystal_Springs_Resort_Logo.png",
+    photo: "/crystal-springs-property.jpg",
+    fact: "Used to create and manage every buffet label at the 2026 New Jersey Beer & Food Festival.",
+  },
+  {
+    name: "Montammy Golf Country Club",
+    location: "Alpine, New Jersey",
+    logo: "/montammy-logo.png",
+    photo: "/montammy-property.jpg",
+    fact: "Keeps member dining, private event and banquet labels consistent and ready at a moment's notice.",
+  },
 ];
 
 const faqItems = [
@@ -58,6 +64,11 @@ const faqItems = [
     question: "Can I save my label sheets and reopen them later?",
     answer:
       "Yes. Every sheet is saved to your account so you can reopen, edit, duplicate, and print it again whenever needed.",
+  },
+  {
+    question: "What is the Plated Menu Builder?",
+    answer:
+      "A Pro feature for printed dinner menus. Click each course and pick dishes from your team's dish library, add your client's name, date and logo, choose fonts and borders, and print two menus per letter page, ready to cut.",
   },
   {
     question: "Can I add logos and branding?",
@@ -81,670 +92,451 @@ const faqItems = [
   },
 ];
 
+const plans = [
+  {
+    badge: "Instabels",
+    name: "Start free",
+    price: "$0",
+    period: "to get started",
+    blurb: "Get started at no cost and explore the full editor before committing to a plan.",
+    features: [
+      "Up to 3 saved label sheets",
+      "Up to 20 labels per sheet",
+      "Edit food names, allergens & dietary tags",
+      "Print-ready output & PDF export",
+    ],
+    cta: "Start free",
+    highlight: false,
+  },
+  {
+    badge: "Most popular",
+    name: "Pro Monthly",
+    price: "$49.99",
+    period: "/ month",
+    blurb: "Built for caterers, banquet teams, hotels, and venues creating labels regularly for live service and events.",
+    features: [
+      "Everything in Free",
+      "Unlimited saved sheets & labels",
+      "Plated Menu Builder — click-to-build dinner menus",
+      "Upload Menu — import from PDF or Word",
+      "Chef Bot — AI allergen & dietary analysis",
+      "Quick Print — search & print across all sheets",
+      "Sheet Comments — leave notes inside the editor",
+      "Custom logo upload & branding",
+      "Team accounts with member invites",
+    ],
+    cta: "Get started monthly",
+    highlight: true,
+  },
+  {
+    badge: "Save vs monthly",
+    name: "Pro Annual",
+    price: "$550",
+    period: "/ year",
+    blurb: "Ideal for hotels, venues, and catering companies ready to commit for the year and simplify their billing.",
+    features: [
+      "Everything in Pro Monthly",
+      "~$50 savings vs monthly billing",
+      "Simplified annual budgeting",
+      "Perfect for business accounts & invoicing",
+      "Ideal for hotels, venues & caterers",
+    ],
+    cta: "Get started annually",
+    highlight: false,
+  },
+];
+
+function SectionHeading({ eyebrow, title, body }: { eyebrow: string; title: string; body?: string }) {
+  return (
+    <div className="mx-auto max-w-3xl text-center">
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <h2 className="mt-3 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">{title}</h2>
+      {body && <p className="mt-4 text-lg leading-8 text-slate-600">{body}</p>}
+    </div>
+  );
+}
+
+function Check() {
+  return (
+    <svg className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path fillRule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.58l7.3-7.3a1 1 0 0 1 1.4 0Z" clipRule="evenodd" />
+    </svg>
+  );
+}
+
 export default function HomePage() {
   return (
-    <main className="min-h-screen overflow-x-hidden bg-slate-950 text-white">
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.20),transparent_28%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.22),transparent_30%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.15),transparent_28%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#020617_0%,#0f172a_40%,#ffffff_100%)]" />
-      </div>
+    <main className="min-h-screen overflow-x-hidden bg-white text-slate-900">
+      {/* ── Nav ─────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3 lg:px-8">
+          <Link href="/" aria-label="Instabels home">
+            <Image src="/logo-dark.svg" alt="Instabels" width={180} height={33} priority className="h-10 w-auto" />
+          </Link>
+          <nav className="hidden items-center gap-1 text-sm font-semibold text-slate-600 md:flex">
+            <a href="#designs" className="rounded-full px-4 py-2 transition hover:bg-slate-100 hover:text-slate-900">Designs</a>
+            <a href="#menus" className="rounded-full px-4 py-2 transition hover:bg-slate-100 hover:text-slate-900">Plated menus</a>
+            <a href="#pricing" className="rounded-full px-4 py-2 transition hover:bg-slate-100 hover:text-slate-900">Pricing</a>
+            <a href="#faq" className="rounded-full px-4 py-2 transition hover:bg-slate-100 hover:text-slate-900">FAQ</a>
+          </nav>
+          <div className="flex items-center gap-2">
+            <Link href="/login" className="whitespace-nowrap rounded-full px-3 sm:px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+              Sign in
+            </Link>
+            <Link
+              href="/signup"
+              className="whitespace-nowrap rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 px-4 py-2.5 sm:px-5 text-sm font-bold text-white shadow-md shadow-violet-500/20 transition hover:brightness-110"
+            >
+              Start free
+            </Link>
+          </div>
+        </div>
+      </header>
 
-      <section className="relative">
-        <div className="mx-auto max-w-7xl px-6 pt-6 lg:px-8">
-          <header className="mb-16 flex items-center justify-between rounded-full border border-white/10 bg-white/5 px-8 py-4 shadow-2xl shadow-cyan-500/5 backdrop-blur-xl">
-  <Link href="/" className="flex items-center gap-4">
-    <Image
-      src="/logo-light.svg"
-      alt="Instabels"
-      width={220}
-      height={56}
-      priority
-      className="block h-12 w-auto"
-    />
-  </Link>
+      {/* ── Hero ────────────────────────────────────────────────────── */}
+      <section className="px-3 pt-3 sm:px-4">
+        {/* Styled like the logo tile: pale cyan→violet wash inside a thin gradient stroke. */}
+        <div className="mx-auto max-w-[1400px] rounded-[2.5rem] bg-gradient-to-br from-cyan-400 to-purple-500 p-[1.5px] shadow-[0_30px_80px_rgba(168,85,247,0.12)]">
+          <div className="relative overflow-hidden rounded-[calc(2.5rem-1.5px)] bg-[linear-gradient(135deg,#ecfeff_0%,#ffffff_45%,#f5f3ff_100%)] px-6 pb-16 pt-14 sm:px-10 lg:px-16 lg:pt-20">
+            <LogoMark gradientId="hero-mark-a" className="pointer-events-none absolute -right-20 -top-12 h-96 w-96 rotate-12 opacity-[0.13]" />
+            <LogoMark gradientId="hero-mark-b" className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 -rotate-12 opacity-[0.1]" />
+            <Sparkle className="pointer-events-none absolute left-[10%] top-20 h-5 w-5 text-cyan-400/70" />
+            <Sparkle className="pointer-events-none absolute right-[14%] top-[42%] h-4 w-4 text-purple-400/70" />
+            <Sparkle className="pointer-events-none absolute bottom-16 left-[46%] h-3 w-3 text-cyan-400/60" />
 
-  <nav className="flex items-center gap-3">
-    <Link
-      href="/login"
-      className="rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
-    >
-      Sign in
-    </Link>
-
-    <Link
-      href="/signup"
-      className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-slate-100"
-    >
-      Start free
-    </Link>
-  </nav>
-</header>
-
-          <div className="grid items-center gap-16 pb-20 lg:grid-cols-[1.08fr_.92fr]">
-            <div>
-              <div className="mb-6 inline-flex items-center rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-100 backdrop-blur">
-                The label tool built for hospitality teams
+            <div className="relative mx-auto max-w-6xl">
+              <div className="mx-auto max-w-3xl text-center">
+                <p className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/80 py-1.5 pl-1.5 pr-4 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur">
+                  <LogoMark gradientId="hero-chip" className="h-7 w-7" />
+                  Buffet labels &amp; plated menus for hospitality teams
+                </p>
+                <h1 className="mt-6 text-5xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-7xl">
+                  What are you{" "}
+                  <span className="bg-gradient-to-r from-cyan-500 to-purple-500 bg-clip-text text-transparent">serving</span>{" "}
+                  today?
+                </h1>
+                <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600 md:text-xl">
+                  Type a dish and watch it become a print-ready buffet label. Then build the whole sheet,
+                  and your plated dinner menus, in minutes.
+                </p>
               </div>
 
-              <h1 className="max-w-5xl text-5xl font-black leading-[0.95] tracking-tight text-white md:text-7xl">
-                <span className="block">Instabels makes</span>
-                <span className="bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 bg-clip-text text-transparent">
-                  buffet labels feel premium.
-                </span>
-              </h1>
-
-              <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300 md:text-xl">
-                Create, save, and print polished buffet labels from one
-                workspace — built for hospitality operations that can&apos;t
-                afford to slow down.
-              </p>
-
-              <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-7 py-3.5 text-base font-semibold text-white shadow-2xl shadow-cyan-500/30 transition hover:scale-[1.02]"
-                >
-                  Start free
-                </Link>
-
-                <Link
-                  href="/login"
-                  className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-base font-semibold text-white backdrop-blur transition hover:bg-white/10"
-                >
-                  Sign in
-                </Link>
-              </div>
-
-              <div className="mt-12 grid max-w-2xl gap-4 sm:grid-cols-3">
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-cyan-500/5 backdrop-blur">
-                  <p className="text-3xl font-black text-white">Chef Bot</p>
-                  <p className="mt-2 text-sm text-slate-300">
-                    AI allergen detection in one click
-                  </p>
-                </div>
-
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-violet-500/5 backdrop-blur">
-                  <p className="text-3xl font-black text-white">Teams</p>
-                  <p className="mt-2 text-sm text-slate-300">
-                    Shared sheets across your operation
-                  </p>
-                </div>
-
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl shadow-cyan-500/5 backdrop-blur">
-                  <p className="text-3xl font-black text-white">Quick Print</p>
-                  <p className="mt-2 text-sm text-slate-300">
-                    Find and print any label instantly
-                  </p>
-                </div>
+              <div className="mt-12">
+                <HeroDemo />
               </div>
             </div>
+          </div>
+        </div>
 
+        {/* Quick links, like category shortcuts */}
+        <div className="mx-auto mt-8 flex max-w-5xl flex-wrap justify-center gap-3 px-3">
+          {quickLinks.map((q) => (
+            <a
+              key={q.label}
+              href={q.href}
+              className="group flex items-center gap-2.5 rounded-full border border-slate-200 bg-white py-2 pl-2 pr-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#ecfeff,#f5f3ff)] text-lg ring-1 ring-violet-200">
+                {q.icon}
+              </span>
+              {q.label}
+            </a>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Customers strip ─────────────────────────────────────────── */}
+      <section className="mx-auto max-w-5xl px-6 pt-16 text-center">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Trusted by New Jersey hospitality teams</p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-14 gap-y-6">
+          {customers.map((c) => (
+            <Image key={c.name} src={c.logo} alt={c.name} width={160} height={64} className="h-12 w-auto object-contain opacity-80" />
+          ))}
+        </div>
+      </section>
+
+      {/* ── Design showcase ─────────────────────────────────────────── */}
+      <section id="designs" className="scroll-mt-24 py-24">
+        <div className="px-6">
+          <SectionHeading
+            eyebrow="Designs"
+            title="Start from a design you love"
+            body="Classic, elegant, rustic or modern. Pick a look, make it yours with your fonts, colors and logo, and every label on the sheet follows."
+          />
+        </div>
+
+        {/* w-max + mx-auto centres the row when it fits and scrolls from the first card when it doesn't. */}
+        <div className="mt-14 snap-x overflow-x-auto pb-6">
+          <div className="mx-auto flex w-max gap-6 px-6 lg:px-8">
+          {showcase.map((item, i) => (
+            <figure
+              key={item.name}
+              className={`w-72 shrink-0 snap-center rounded-[1.75rem] bg-gradient-to-br p-5 ring-1 ring-violet-100 ${
+                ["from-cyan-50 to-violet-100", "from-violet-50 to-cyan-100"][i % 2]
+              }`}
+            >
+              <LabelCard name={item.name} ingredients={item.ingredients} tags={item.tags} theme={item.theme} className="shadow-lg" />
+              <figcaption className="mt-4 text-sm font-bold text-slate-700">{LABEL_THEMES[item.theme].name}</figcaption>
+            </figure>
+          ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ────────────────────────────────────────────── */}
+      <section className="bg-[#f7f9fe] py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <SectionHeading eyebrow="How it works" title="From menu to printed labels in three steps" />
+          <ol className="mt-14 grid gap-6 md:grid-cols-3">
+            {steps.map((step, i) => (
+              <li key={step.title} className="rounded-[2rem] bg-white p-8 shadow-sm ring-1 ring-slate-200/70">
+                <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#ecfeff,#f5f3ff)] ring-1 ring-violet-200">
+                  <span className="bg-gradient-to-br from-cyan-500 to-purple-500 bg-clip-text text-xl font-black text-transparent">{i + 1}</span>
+                  <Sparkle className="absolute -right-1.5 -top-1.5 h-3.5 w-3.5 text-purple-400" />
+                </span>
+                <h3 className="mt-5 text-xl font-bold text-slate-950">{step.title}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ── Spotlight: Plated menus ─────────────────────────────────── */}
+      <section id="menus" className="scroll-mt-24 py-24">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-[1fr_1.25fr] lg:px-8">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+              <Sparkle className="h-3 w-3" /> New · Pro
+            </span>
+            <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">Plated dinner menus, in a few clicks</h2>
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              Click a course and pick from your team&apos;s dish library. Add the client&apos;s name, date and logo, choose
+              fonts, dividers and borders, and print two menus per page, perfectly centered for cutting.
+            </p>
+            <ul className="mt-6 space-y-3 text-sm font-medium text-slate-700">
+              {[
+                "Dish library shared across your team, organized by menu type",
+                "Group logos, six fonts, dividers and borders",
+                "Every menu saved, ready to duplicate for the next event",
+              ].map((point) => (
+                <li key={point} className="flex gap-2.5">
+                  <Check />
+                  {point}
+                </li>
+              ))}
+            </ul>
+          </div>
+          {/* min-w-0: the scaled 11in sheet inside must not set this column's minimum width. */}
+          <BrandTile className="min-w-0" innerClassName="p-4 sm:p-8">
+            <div className="overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-900/5">
+              <MenuPreview design={{ border: "inset", courseDivider: "dots" }} />
+            </div>
+          </BrandTile>
+        </div>
+      </section>
+
+      {/* ── Spotlight: Chef Bot ─────────────────────────────────────── */}
+      <section id="chef-bot" className="scroll-mt-24 bg-[#f7f9fe] py-24">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-[1.1fr_1fr] lg:px-8">
+          <div className="order-2 lg:order-1">
+            <BrandTile className="mx-auto max-w-lg" innerClassName="p-8 sm:p-10">
             <div className="relative">
-              <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-r from-cyan-400/20 via-sky-400/10 to-violet-500/20 blur-3xl" />
-
-              <div className="relative rounded-[2.25rem] border border-white/10 bg-white/10 p-4 shadow-2xl shadow-cyan-500/10 backdrop-blur-2xl">
-                <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/70 p-4">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        Instabels Workspace
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        Wedding Buffet Labels · Saved at 3:42 PM
-                      </p>
-                    </div>
-
-                    <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-                      Autosaved
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { name: "Chicken Marsala", desc: "Wine sauce, cremini mushrooms" },
-                      { name: "Roasted Potatoes", desc: "Herb roasted, sea salt • GF" },
-                      { name: "Caesar Salad", desc: "Romaine, parmesan, house dressing" },
-                      { name: "Grilled Vegetables", desc: "Seasonal blend, olive oil • VG" },
-                    ].map((item, index) => (
-                      <div
-                        key={item.name}
-                        className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg backdrop-blur"
-                      >
-                        <div
-                          className={`mb-3 h-6 w-16 rounded-full ${
-                            index % 2 === 0
-                              ? "bg-cyan-400/20"
-                              : "bg-violet-400/20"
-                          }`}
-                        />
-                        <p className="text-base font-semibold text-white">
-                          {item.name}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-400">
-                          {item.desc}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="text-sm font-semibold text-white">
-                        Saved sheets
-                      </p>
-                      <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-semibold text-slate-300">
-                        12 saved sheets
-                      </span>
-                    </div>
-
-                    <div className="space-y-2">
-                      {[
-                        "Italian Dinner Labels",
-                        "Resort Breakfast Buffet",
-                        "Corporate Lunch Menu",
-                      ].map((item) => (
-                        <div
-                          key={item}
-                          className="rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm font-medium text-slate-200"
-                        >
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute -right-6 -top-6 hidden rounded-2xl border border-white/10 bg-white/10 px-4 py-3 shadow-xl backdrop-blur xl:block">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
-                  Built for teams
-                </p>
-                <p className="mt-1 text-sm font-semibold text-white">
-                  Save • Edit • Print • Reuse
-                </p>
+              <LabelCard
+                name="Penne alla Vodka"
+                ingredients="san marzano tomato, cream, parmesan"
+                tags={["Vegetarian", "Contains Gluten", "Contains Dairy"]}
+                theme="classic"
+                className="shadow-2xl"
+              />
+              <div className="absolute -right-4 -top-6 rounded-2xl bg-white px-4 py-3 text-sm shadow-xl ring-1 ring-slate-200 sm:-right-10">
+                <p className="font-bold text-slate-900">🧑‍🍳 Chef Bot</p>
+                <p className="mt-0.5 text-xs text-slate-500">Found: dairy, gluten · Vegetarian</p>
               </div>
             </div>
+            </BrandTile>
+          </div>
+          <div className="order-1 lg:order-2">
+            <span className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-violet-700">Pro</span>
+            <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">Allergens checked in one click</h2>
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              Chef Bot scans the ingredients across your whole sheet and suggests allergen and dietary flags, so
+              your team can review them instead of starting from scratch.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Social proof */}
-      <section className="relative bg-white text-slate-900">
-        <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-          <p className="mb-12 text-center text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-            Trusted by hospitality teams
-          </p>
-
-          <div className="space-y-8">
-          <div className="grid overflow-hidden rounded-[2.5rem] border border-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[1fr_1.1fr]">
-            {/* Left — property photo */}
-            <div className="relative min-h-[280px]">
-              <Image
-                src="/crystal-springs-property.jpg"
-                alt="Crystal Springs Resort"
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/10" />
-            </div>
-
-            {/* Right — content */}
-            <div className="flex flex-col justify-center gap-6 bg-white p-10 lg:p-12">
-              {/* Logo + badge row */}
-              <div className="flex items-center gap-4">
-                <Image
-                  src="/Crystal_Springs_Resort_Logo.png"
-                  alt="Crystal Springs Resort"
-                  width={130}
-                  height={60}
-                  className="h-12 w-auto object-contain"
-                />
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  Active Customer
-                </span>
-              </div>
-
-              <div>
-                <h3 className="text-2xl font-black tracking-tight text-slate-950">
-                  Crystal Springs Resort
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  Resort &amp; Banquet Operations · Hamburg, New Jersey
-                </p>
-                <p className="mt-4 text-sm leading-7 text-slate-600">
-                  Crystal Springs Resort is New Jersey&apos;s premier four-season destination — home to multiple hotels, award-winning golf courses, a full-service spa, and the region&apos;s most sought-after wedding and banquet venues. Their culinary team manages everything from intimate private dinners to large-scale resort events where presentation and consistency are non-negotiable.
-                </p>
-              </div>
-
-              {/* Festival highlight */}
-              <div className="flex items-start gap-3 rounded-2xl border border-cyan-100 bg-cyan-50 px-5 py-4">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-500 text-white">
-                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.403 12.652a3 3 0 0 0 0-5.304 3 3 0 0 0-3.75-3.751 3 3 0 0 0-5.305 0 3 3 0 0 0-3.751 3.75 3 3 0 0 0 0 5.305 3 3 0 0 0 3.75 3.751 3 3 0 0 0 5.305 0 3 3 0 0 0 3.751-3.75Zm-2.546-4.46a.75.75 0 0 0-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-cyan-900">New Jersey Beer &amp; Food Festival 2026</p>
-                  <p className="mt-0.5 text-xs leading-5 text-cyan-700">
-                    Instabels was used to create and manage all buffet labels for this year&apos;s New Jersey Beer &amp; Food Festival — powering a seamless, professional food presentation at one of the state&apos;s premier culinary events.
-                  </p>
+      {/* ── Spotlight: Teams & Quick Print ──────────────────────────── */}
+      <section id="teams" className="scroll-mt-24 py-24">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-[1fr_1.1fr] lg:px-8">
+          <div>
+            <span className="inline-flex rounded-full bg-cyan-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-cyan-700">Pro</span>
+            <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">One workspace for the whole kitchen</h2>
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              Invite your team, share every sheet and menu, and leave notes right inside the editor. Need three labels
+              for tonight? Quick Print finds them across all your sheets and prints them on one page.
+            </p>
+          </div>
+          <BrandTile innerClassName="p-6 sm:p-8">
+            <div className="space-y-3 rounded-2xl bg-white p-5 shadow-xl">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-bold text-slate-900">Sunday Brunch Buffet</p>
+                <div className="flex -space-x-2">
+                  {["bg-cyan-500", "bg-violet-500", "bg-slate-800"].map((c, i) => (
+                    <span key={c} className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${c}`}>
+                      {["JM", "AR", "KL"][i]}
+                    </span>
+                  ))}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Montammy Golf Country Club */}
-          <div className="grid overflow-hidden rounded-[2.5rem] border border-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[1fr_1.1fr]">
-            {/* Left — property photo */}
-            <div className="relative min-h-[280px]">
-              <Image
-                src="/montammy-property.jpg"
-                alt="Montammy Golf Country Club"
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-slate-950/10" />
-            </div>
-
-            {/* Right — content */}
-            <div className="flex flex-col justify-center gap-6 bg-white p-10 lg:p-12">
-              <div className="flex items-center gap-4">
-                <Image
-                  src="/montammy-logo.png"
-                  alt="Montammy Golf Country Club"
-                  width={130}
-                  height={60}
-                  className="h-12 w-auto object-contain"
-                />
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  Active Customer
-                </span>
+              <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <span className="font-semibold text-slate-900">Chef:</span> Swap the quiche for the frittata, it&apos;s gluten free.
               </div>
-
-              <div>
-                <h3 className="text-2xl font-black tracking-tight text-slate-950">
-                  Montammy Golf Country Club
-                </h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  Private Country Club &amp; Banquet Operations · Alpine, New Jersey
-                </p>
-                <p className="mt-4 text-sm leading-7 text-slate-600">
-                  Montammy Golf Country Club is one of New Jersey&apos;s most prestigious private clubs, offering an exceptional dining and events experience for its members and guests. Their culinary team oversees a wide range of private events, member dining, and banquet service — where flawless presentation is a standard, not an option.
-                </p>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Montammy relies on Instabels to keep their buffet and event labels consistent, polished, and ready at a moment&apos;s notice.
-                </p>
+              <div className="ml-8 rounded-xl bg-violet-50 px-4 py-3 text-sm text-slate-700">
+                <span className="font-semibold text-slate-900">Banquet captain:</span> Updated and reprinted ✓
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-500">
+                🔍 Quick Print: <span className="font-semibold text-slate-700">&quot;frittata&quot;</span>
               </div>
             </div>
-          </div>
-
-          </div>
+          </BrandTile>
         </div>
       </section>
 
-      <section className="relative bg-white text-slate-900">
-        <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600">
-              Why Instabels
-            </p>
-            <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-              Built for the way hospitality teams actually work
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-slate-600">
-              Instabels is designed to reduce busywork and help your team
-              produce consistent, polished labels faster.
-            </p>
-          </div>
-
-          <div className="mt-16 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {features.map((feature, index) => (
-              <div
-                key={feature.title}
-                className="group rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div
-                  className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-bold text-white shadow-lg ${
-                    index % 3 === 0
-                      ? "bg-gradient-to-br from-cyan-400 to-sky-500"
-                      : index % 3 === 1
-                      ? "bg-gradient-to-br from-violet-500 to-fuchsia-500"
-                      : "bg-gradient-to-br from-slate-800 to-slate-900"
-                  }`}
-                >
-                  ✦
+      {/* ── Customers ───────────────────────────────────────────────── */}
+      <section className="bg-[#f7f9fe] py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <SectionHeading eyebrow="Customers" title="Used where presentation matters" />
+          <div className="mt-14 grid gap-6 md:grid-cols-2">
+            {customers.map((c) => (
+              <article key={c.name} className="overflow-hidden rounded-[2rem] bg-white shadow-sm ring-1 ring-slate-200/70">
+                <div className="relative h-48">
+                  <Image src={c.photo} alt={c.name} fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-950">
-                  {feature.title}
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {feature.description}
-                </p>
-              </div>
+                <div className="flex items-start gap-4 p-7">
+                  <Image src={c.logo} alt="" width={96} height={48} className="h-11 w-auto shrink-0 object-contain" />
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-950">{c.name}</h3>
+                    <p className="text-xs font-medium text-slate-400">{c.location}</p>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">{c.fact}</p>
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-slate-100">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.10),transparent_30%)]" />
-        <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
-          <div className="grid gap-12 lg:grid-cols-[.95fr_1.05fr] lg:items-center">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-600">
-                Perfect for
-              </p>
-              <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-                Teams that need labels done right every time
-              </h2>
-              <p className="mt-5 text-lg leading-8 text-slate-600">
-                Whether you’re preparing a wedding buffet, hotel breakfast,
-                resort service, banquet event, or corporate lunch, Instabels
-                helps your staff move faster while keeping the final presentation
-                clean and professional.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {industries.map((useCase, index) => (
-                <div
-                  key={useCase}
-                  className={`rounded-2xl border p-5 shadow-sm ${
-                    index % 2 === 0
-                      ? "border-cyan-200 bg-white"
-                      : "border-violet-200 bg-white"
-                  }`}
-                >
-                  <p className="font-semibold text-slate-900">{useCase}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600">
-              Pricing
-            </p>
-            <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-              Simple pricing for teams using Instabels
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-slate-600">
-              Start free, then upgrade to Instabels Pro when you’re ready to
-              use it across real events and services.
-            </p>
-          </div>
-
-          <div className="mt-16 grid gap-6 lg:grid-cols-3">
-            {/* Free */}
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-5 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                Instabels
-              </div>
-
-              <h3 className="text-2xl font-bold text-slate-950">Start free</h3>
-
-              <div className="mt-4 flex items-end gap-2">
-                <span className="text-5xl font-black tracking-tight text-slate-950">
-                  $0
-                </span>
-                <span className="pb-1 text-sm text-slate-500">
-                  to get started
-                </span>
-              </div>
-
-              <p className="mt-4 text-sm leading-7 text-slate-600">
-                Get started at no cost and explore the full editor before
-                committing to a plan.
-              </p>
-
-              <div className="mt-8 space-y-3">
-                {[
-                  "Up to 3 saved label sheets",
-                  "Up to 20 labels per sheet",
-                  "Edit food names, allergens & dietary tags",
-                  "Print-ready output & PDF export",
-                ].map((feature) => (
-                  <div
-                    key={feature}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700"
-                  >
-                    {feature}
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8">
-                <Link
-                  href="/signup"
-                  className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-                >
-                  Start free
-                </Link>
-              </div>
-            </div>
-
-            {/* Pro Monthly */}
-            <div className="relative overflow-hidden rounded-[2rem] border border-slate-900 bg-slate-950 p-8 text-white shadow-2xl">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.30),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(56,189,248,0.20),transparent_35%)]" />
-              <div className="relative">
-                <div className="absolute right-0 top-0 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-100">
-                  Most Popular
-                </div>
-
-                <div className="mb-5 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-100">
-                  Instabels Pro
-                </div>
-
-                <h3 className="text-2xl font-bold">Pro Monthly</h3>
-
-                <div className="mt-4 flex items-end gap-2">
-                  <span className="text-5xl font-black tracking-tight">
-                    $49.99
-                  </span>
-                  <span className="pb-1 text-sm text-slate-300">/ month</span>
-                </div>
-
-                <p className="mt-4 text-sm leading-7 text-slate-300">
-                  Built for caterers, banquet teams, hotels, and venues
-                  creating labels regularly for live service and events.
-                </p>
-
-                <div className="mt-8 space-y-3">
-                  {[
-                    "Everything in Free",
-                    "Unlimited saved sheets",
-                    "Unlimited labels per sheet",
-                    "Upload Menu — import from PDF or Word",
-                    "Chef Bot — AI allergen & dietary analysis",
-                    "Quick Print — search & print across all sheets",
-                    "Sheet Comments — leave notes inside the editor",
-                    "Custom logo upload & branding",
-                    "Team accounts with member invites",
-                  ].map((feature) => (
-                    <div
-                      key={feature}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-slate-100"
-                    >
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-8">
-                  <Link
-                    href="/signup"
-                    className="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
-                  >
-                    Get started monthly
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Pro Annual */}
-            <div className="relative overflow-hidden rounded-[2rem] border border-cyan-400 bg-slate-950 p-8 text-white shadow-2xl">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.25),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.20),transparent_35%)]" />
-              <div className="relative">
-                <div className="absolute right-0 top-0 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
-                  Save vs monthly
-                </div>
-
-                <div className="mb-5 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-100">
-                  Instabels Pro
-                </div>
-
-                <h3 className="text-2xl font-bold">Pro Annual</h3>
-
-                <div className="mt-4 flex items-end gap-2">
-                  <span className="text-5xl font-black tracking-tight">
-                    $550
-                  </span>
-                  <span className="pb-1 text-sm text-slate-300">/ year</span>
-                </div>
-
-                <p className="mt-4 text-sm leading-7 text-slate-300">
-                  Ideal for hotels, venues, and catering companies ready to
-                  commit for the year and simplify their billing.
-                </p>
-
-                <div className="mt-8 space-y-3">
-                  {[
-                    "Everything in Pro Monthly",
-                    "~$50 savings vs monthly billing",
-                    "Simplified annual budgeting",
-                    "Perfect for business accounts & invoicing",
-                    "Ideal for hotels, venues & caterers",
-                  ].map((feature) => (
-                    <div
-                      key={feature}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-slate-100"
-                    >
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-8">
-                  <Link
-                    href="/signup"
-                    className="inline-flex w-full items-center justify-center rounded-full bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-                  >
-                    Get started annually
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-slate-50">
-        <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-600">
-              Frequently asked
-            </p>
-            <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-              Common questions before you get started
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-slate-600">
-              Everything you need to know before bringing Instabels into
-              your workflow.
-            </p>
-          </div>
-
-          <div className="mt-14 grid gap-5 md:grid-cols-2">
-            {faqItems.map((item, index) => (
+      {/* ── Pricing ─────────────────────────────────────────────────── */}
+      <section id="pricing" className="scroll-mt-24 py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <SectionHeading
+            eyebrow="Pricing"
+            title="Simple pricing for teams using Instabels"
+            body="Start free, then upgrade to Instabels Pro when you're ready to use it across real events and services."
+          />
+          <div className="mt-14 grid gap-6 lg:grid-cols-3">
+            {plans.map((plan) => (
               <div
-                key={item.question}
-                className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-sm border-l-4 ${
-                  index % 2 === 0
-                    ? "border-l-cyan-400"
-                    : "border-l-violet-400"
+                key={plan.name}
+                className={`relative flex flex-col overflow-hidden rounded-[2rem] p-8 ${
+                  plan.highlight
+                    ? "bg-slate-950 text-white shadow-2xl shadow-violet-500/20 ring-2 ring-purple-400/60"
+                    : "bg-white ring-1 ring-slate-200"
                 }`}
               >
-                <h3 className="text-base font-bold text-slate-900">
-                  {item.question}
-                </h3>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
-                  {item.answer}
-                </p>
+                {plan.highlight && (
+                  <>
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.35),transparent_45%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.25),transparent_45%)]" />
+                    <LogoMark gradientId="pricing-mark" className="pointer-events-none absolute -bottom-10 -right-10 h-44 w-44 opacity-20" />
+                  </>
+                )}
+                <div className="relative flex flex-1 flex-col">
+                  <span
+                    className={`self-start rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
+                      plan.highlight ? "bg-white/10 text-white" : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {plan.badge}
+                  </span>
+                  <h3 className="mt-5 text-2xl font-bold">{plan.name}</h3>
+                  <div className="mt-3 flex items-end gap-2">
+                    <span className="text-5xl font-black tracking-tight">{plan.price}</span>
+                    <span className={`pb-1 text-sm ${plan.highlight ? "text-slate-300" : "text-slate-500"}`}>{plan.period}</span>
+                  </div>
+                  <p className={`mt-4 text-sm leading-7 ${plan.highlight ? "text-slate-300" : "text-slate-600"}`}>{plan.blurb}</p>
+                  <ul className="mt-6 flex-1 space-y-3 text-sm">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex gap-2.5">
+                        {plan.highlight ? <Sparkle className="mt-1 h-3 w-3 shrink-0 text-cyan-300" /> : <Check />}
+                        <span className={plan.highlight ? "text-slate-100" : "text-slate-700"}>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/signup"
+                    className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-bold transition ${
+                      plan.highlight
+                        ? "bg-gradient-to-r from-cyan-400 to-purple-500 text-white hover:brightness-110"
+                        : "bg-slate-900 text-white hover:bg-slate-800"
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
-          <div className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-slate-50 p-10 md:p-14">
-            <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600">
-                  Get in touch
-                </p>
-                <h2 className="mt-3 text-4xl font-black tracking-tight text-slate-950 md:text-5xl">
-                  Have a question before you sign up?
-                </h2>
-                <p className="mt-4 max-w-xl text-lg leading-8 text-slate-600">
-                  Whether you're evaluating Instabels for your team, need help
-                  with billing, or have a question about a specific feature —
-                  we're happy to help.
-                </p>
-              </div>
-
-              <div className="flex shrink-0 flex-col items-start gap-3 lg:items-center">
-                <div className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-                  <svg className="h-5 w-5 shrink-0 text-cyan-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
-                    <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
-                  </svg>
-                  <span className="text-sm font-semibold text-slate-900 select-all">
-                    tbcbusiness127@gmail.com
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400">
-                  We typically respond within one business day.
-                </p>
-              </div>
-            </div>
+      {/* ── FAQ ─────────────────────────────────────────────────────── */}
+      <section id="faq" className="scroll-mt-24 bg-[#f7f9fe] py-24">
+        <div className="mx-auto max-w-3xl px-6">
+          <SectionHeading eyebrow="FAQ" title="Common questions" />
+          <div className="mt-12 space-y-3">
+            {faqItems.map((item) => (
+              <details key={item.question} className="group rounded-2xl bg-white px-6 py-5 shadow-sm ring-1 ring-slate-200/70">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-bold text-slate-900">
+                  {item.question}
+                  <span className="text-xl text-violet-500 transition group-open:rotate-45" aria-hidden="true">+</span>
+                </summary>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{item.answer}</p>
+              </details>
+            ))}
           </div>
+          <p className="mt-10 text-center text-sm text-slate-500">
+            Still have a question? Email{" "}
+            <span className="select-all font-semibold text-slate-800">tbcbusiness127@gmail.com</span>, we typically
+            respond within one business day.
+          </p>
         </div>
       </section>
 
-      <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 pb-16 lg:px-8">
-          <div className="overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-cyan-500 via-sky-500 to-violet-500 p-[1px] shadow-2xl shadow-cyan-500/20">
-            <div className="rounded-[2.45rem] bg-slate-950 px-8 py-12 text-white md:px-12">
-              <div className="max-w-3xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">
-                  Ready to launch faster?
-                </p>
-                <h2 className="mt-4 text-4xl font-black tracking-tight md:text-5xl">
-                  Start building beautiful buffet labels with Instabels.
-                </h2>
-                <p className="mt-4 text-lg leading-8 text-slate-300">
-                  Create your account, save your sheets, and print professional
-                  labels for your next service or event.
-                </p>
-              </div>
-
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+      {/* ── Final CTA ───────────────────────────────────────────────── */}
+      <section className="px-3 py-16 sm:px-4">
+        <div className="mx-auto max-w-[1400px] rounded-[2.5rem] bg-gradient-to-r from-cyan-400 to-purple-500 p-[1.5px] shadow-2xl shadow-violet-500/20">
+          <div className="relative overflow-hidden rounded-[calc(2.5rem-1.5px)] bg-slate-950 px-6 py-16 text-center text-white sm:px-10">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.22),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.28),transparent_40%)]" />
+            <LogoMark gradientId="cta-mark" className="pointer-events-none absolute -right-12 -top-16 h-72 w-72 rotate-12 opacity-20" />
+            <div className="relative">
+              <Image src="/logo-light.svg" alt="Instabels" width={220} height={40} className="mx-auto h-12 w-auto" />
+              <h2 className="mt-8 text-4xl font-black tracking-tight md:text-5xl">
+                Your next event deserves{" "}
+                <span className="bg-gradient-to-r from-cyan-300 to-purple-400 bg-clip-text text-transparent">better labels.</span>
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl text-lg text-slate-300">
+                Create your account, save your sheets, and print professional labels and menus for your next service.
+              </p>
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <Link
                   href="/signup"
-                  className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-base font-semibold text-slate-950 transition hover:bg-slate-100"
+                  className="rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-violet-500/30 transition hover:brightness-110"
                 >
-                  Create Instabels account
+                  Start free
                 </Link>
-
-                <Link
-                  href="/login"
-                  className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
-                >
+                <Link href="/login" className="rounded-full border border-white/15 bg-white/5 px-8 py-3.5 text-base font-bold text-white transition hover:bg-white/10">
                   Sign in
                 </Link>
               </div>
@@ -753,44 +545,41 @@ export default function HomePage() {
         </div>
       </section>
 
-<footer className="border-t border-slate-200 bg-white text-slate-500">
-  <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-    <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+      {/* ── Footer ──────────────────────────────────────────────────── */}
+      <footer className="border-t border-slate-200 bg-white text-slate-500">
+        <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
+          <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+            <div>
+              <Image src="/logo-dark.svg" alt="Instabels" width={170} height={31} className="h-9 w-auto" />
+              <p className="mt-3 max-w-xs text-sm leading-6 text-slate-500">
+                Professional buffet labels and plated menus for hospitality teams.
+              </p>
+            </div>
 
-      <div>
-        <Image src="/logo-dark.svg" alt="Instabels" width={130} height={24} />
-        <p className="mt-3 max-w-xs text-sm leading-6 text-slate-500">
-          Professional buffet labeling for hospitality teams.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-10 text-sm">
-        <div className="flex flex-col gap-2">
-          <p className="font-semibold uppercase tracking-[0.14em] text-slate-400 text-xs">Product</p>
-          <Link href="/signup" className="transition hover:text-slate-900">Get started free</Link>
-          <Link href="/login" className="transition hover:text-slate-900">Sign in</Link>
-          <Link href="/#pricing" className="transition hover:text-slate-900">Pricing</Link>
+            <div className="flex flex-wrap gap-10 text-sm">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Product</p>
+                <Link href="/signup" className="transition hover:text-slate-900">Get started free</Link>
+                <Link href="/login" className="transition hover:text-slate-900">Sign in</Link>
+                <a href="#pricing" className="transition hover:text-slate-900">Pricing</a>
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Support</p>
+                <Link href="/contact" className="transition hover:text-slate-900">Contact us</Link>
+                <Link href="/login" className="transition hover:text-slate-900">Dashboard</Link>
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Legal</p>
+                <Link href="/terms" className="transition hover:text-slate-900">Terms</Link>
+                <Link href="/privacy" className="transition hover:text-slate-900">Privacy</Link>
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 border-t border-slate-100 pt-6 text-xs text-slate-400">
+            © {new Date().getFullYear()} Instabels. All rights reserved.
+          </div>
         </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="font-semibold uppercase tracking-[0.14em] text-slate-400 text-xs">Support</p>
-          <a href="mailto:tbcbusiness127@gmail.com" className="transition hover:text-slate-900">Contact us</a>
-          <Link href="/login" className="transition hover:text-slate-900">Dashboard</Link>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="font-semibold uppercase tracking-[0.14em] text-slate-400 text-xs">Legal</p>
-          <Link href="/terms" className="transition hover:text-slate-900">Terms</Link>
-          <Link href="/privacy" className="transition hover:text-slate-900">Privacy</Link>
-        </div>
-      </div>
-    </div>
-
-    <div className="mt-8 border-t border-slate-100 pt-6 text-xs text-slate-400">
-      © {new Date().getFullYear()} Instabels. All rights reserved.
-    </div>
-  </div>
-</footer>
+      </footer>
     </main>
   );
 }
