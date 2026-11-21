@@ -15,6 +15,11 @@ export type MenuSectionEntry = {
 export const HEADER_DIVIDERS = ["classic", "line", "double", "diamond", "none"] as const;
 export const COURSE_DIVIDERS = ["none", "short", "dots", "diamond"] as const;
 export const MENU_BORDERS = ["none", "thin", "double", "inset", "rounded", "corners"] as const;
+export const LOGO_POSITIONS = ["top", "name", "bottom"] as const;
+export const LOGO_SIZES = ["small", "medium", "large"] as const;
+export const MENU_FONTS = ["montserrat", "raleway", "lato", "playfair", "cormorant", "garamond"] as const;
+/** Multipliers applied to every text size (and the spacing between lines). */
+export const TEXT_SCALES = [0.85, 0.92, 1, 1.08, 1.16] as const;
 
 export type MenuDesign = {
   /** Rule under the heading (welcome / name / date). */
@@ -23,12 +28,21 @@ export type MenuDesign = {
   courseDivider: (typeof COURSE_DIVIDERS)[number];
   /** Frame around each printed menu. */
   border: (typeof MENU_BORDERS)[number];
+  /** Where the group logo sits: above the heading, in place of the client name, or at the bottom. */
+  logoPosition: (typeof LOGO_POSITIONS)[number];
+  logoSize: (typeof LOGO_SIZES)[number];
+  font: (typeof MENU_FONTS)[number];
+  textScale: (typeof TEXT_SCALES)[number];
 };
 
 export const DEFAULT_MENU_DESIGN: MenuDesign = {
   divider: "classic",
   courseDivider: "none",
   border: "none",
+  logoPosition: "top",
+  logoSize: "medium",
+  font: "montserrat",
+  textScale: 1,
 };
 
 export type MenuContent = {
@@ -61,7 +75,7 @@ export function sectionsForPackage(library: Library, packageId: string | null): 
   return library.sections.filter((s) => s.packageId === packageId);
 }
 
-function pick<T extends string>(options: readonly T[], value: unknown, fallback: T): T {
+function pick<T extends string | number>(options: readonly T[], value: unknown, fallback: T): T {
   return options.includes(value as T) ? (value as T) : fallback;
 }
 
@@ -71,6 +85,10 @@ function parseMenuDesign(value: unknown): MenuDesign {
     divider: pick(HEADER_DIVIDERS, raw.divider, DEFAULT_MENU_DESIGN.divider),
     courseDivider: pick(COURSE_DIVIDERS, raw.courseDivider, DEFAULT_MENU_DESIGN.courseDivider),
     border: pick(MENU_BORDERS, raw.border, DEFAULT_MENU_DESIGN.border),
+    logoPosition: pick(LOGO_POSITIONS, raw.logoPosition, DEFAULT_MENU_DESIGN.logoPosition),
+    logoSize: pick(LOGO_SIZES, raw.logoSize, DEFAULT_MENU_DESIGN.logoSize),
+    font: pick(MENU_FONTS, raw.font, DEFAULT_MENU_DESIGN.font),
+    textScale: pick(TEXT_SCALES, raw.textScale, DEFAULT_MENU_DESIGN.textScale),
   };
 }
 

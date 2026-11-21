@@ -24,6 +24,7 @@ export default async function MenusPage() {
           where: workspaceWhere(ws),
           orderBy: { updatedAt: "desc" },
           include: { package: { select: { name: true } } },
+          omit: { logoData: true },
         }),
         getLibrary(ws),
       ])

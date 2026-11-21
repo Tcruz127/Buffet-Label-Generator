@@ -295,6 +295,7 @@ model PlatedMenu {
   welcomeText    String        @default("WELCOME")
   hostName       String        @default("")
   eventDate      String?       // YYYY-MM-DD
+  logoData       String?       // group logo as a downscaled PNG data URL
   content        Json          // { sections: [{ sectionId, name, dishes: [{ dishId, name, description }] }] }
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

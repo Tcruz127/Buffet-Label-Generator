@@ -1,10 +1,25 @@
 "use client";
 
-import { Montserrat } from "next/font/google";
+import { Cormorant_Garamond, EB_Garamond, Lato, Montserrat, Playfair_Display, Raleway } from "next/font/google";
 import type { CSSProperties } from "react";
 import type { MenuDesign, MenuSectionEntry } from "@/lib/menuContent";
 
 const montserrat = Montserrat({ subsets: ["latin"], weight: ["300", "400", "500"] });
+const raleway = Raleway({ subsets: ["latin"], weight: ["300", "400", "500"] });
+const lato = Lato({ subsets: ["latin"], weight: ["300", "400", "700"] });
+const playfair = Playfair_Display({ subsets: ["latin"], weight: ["400", "500"] });
+const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["300", "400", "500"] });
+const garamond = EB_Garamond({ subsets: ["latin"], weight: ["400", "500"] });
+
+/** Font class per design option; Montserrat matches the reference menu. */
+export const MENU_FONT_CLASSES: Record<MenuDesign["font"], string> = {
+  montserrat: montserrat.className,
+  raleway: raleway.className,
+  lato: lato.className,
+  playfair: playfair.className,
+  cormorant: cormorant.className,
+  garamond: garamond.className,
+};
 
 export type MenuSelection =
   | { type: "header" }
@@ -18,6 +33,8 @@ type MenuSheetProps = {
   dateLabel: string;
   sections: MenuSectionEntry[];
   design: MenuDesign;
+  /** Group logo as an image data URL. */
+  logo?: string | null;
   /** When set, sections and the header become clickable (screen only). */
   interactive?: {
     selection: MenuSelection;
@@ -33,13 +50,20 @@ const INK = "#4a4a4a";
 const SOFT_INK = "#5f5f5f";
 const RULE = "#555";
 
-// Columns centred 2.36in either side of the page's middle, as in the PDF.
-const COLUMN_LEFTS = ["calc(5.5in - 2.36in - 2.3in)", "calc(5.5in + 2.36in - 2.3in)"];
+const LOGO_HEIGHTS: Record<MenuDesign["logoSize"], string> = {
+  small: "0.55in",
+  medium: "0.85in",
+  large: "1.2in",
+};
+
+// The sheet is cut in half at 5.5in, so each 4.6in column is centred on its own
+// 5.5in half (centres at 2.75in and 8.25in) to give two identical menus.
+const COLUMN_LEFTS = ["calc(2.75in - 2.3in)", "calc(8.25in - 2.3in)"];
 
 export default function MenuSheet(props: MenuSheetProps) {
   return (
     <div
-      className={montserrat.className}
+      className={MENU_FONT_CLASSES[props.design.font]}
       style={{
         width: "11in",
         height: "8.5in",
@@ -53,13 +77,23 @@ export default function MenuSheet(props: MenuSheetProps) {
     >
       {COLUMN_LEFTS.map((left) => (
         <div key={left}>
-          {/* 4.4in leaves a clear gap at the centre cut line between the two frames. */}
-          <div style={{ position: "absolute", left: `calc(${left} + 0.1in)`, top: "0.3in", width: "4.4in", height: "7.9in" }}>
+          {/* 4.8in frame centred on its half: 0.35in margin to the paper edge and to the cut line. */}
+          <div style={{ position: "absolute", left: `calc(${left} - 0.1in)`, top: "0.3in", width: "4.8in", height: "7.9in" }}>
             <BorderFrame border={props.design.border} />
           </div>
           <div style={{ ...columnStyle, left }}>
             <MenuCard {...props} />
           </div>
+          {props.logo && props.design.logoPosition === "bottom" && (
+            <div style={{ position: "absolute", left, bottom: "0.55in", width: "4.6in" }}>
+              <Clickable
+                active={props.interactive?.selection?.type === "header"}
+                onClick={props.interactive ? () => props.interactive?.onSelect({ type: "header" }) : undefined}
+              >
+                <MenuLogo src={props.logo} size={props.design.logoSize} />
+              </Clickable>
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -73,10 +107,12 @@ const columnStyle: CSSProperties = {
   textAlign: "center",
 };
 
-function MenuCard({ welcomeText, hostName, dateLabel, sections, design, interactive }: MenuSheetProps) {
+function MenuCard({ welcomeText, hostName, dateLabel, sections, design, logo, interactive }: MenuSheetProps) {
   const selection = interactive?.selection ?? null;
   const visibleSections = interactive ? sections : sections.filter((s) => s.dishes.length > 0);
   const hasCourseDivider = design.courseDivider !== "none";
+  // Text sizes and the spacing between text scale together so the layout keeps its rhythm.
+  const s = (pt: number) => `${pt * design.textScale}pt`;
 
   return (
     <div>
@@ -84,19 +120,30 @@ function MenuCard({ welcomeText, hostName, dateLabel, sections, design, interact
         active={selection?.type === "header"}
         onClick={interactive ? () => interactive.onSelect({ type: "header" }) : undefined}
       >
-        <div style={{ fontSize: "26pt", fontWeight: 300, lineHeight: "34.5pt", letterSpacing: "0.01em", color: SOFT_INK, textTransform: "uppercase" }}>
+        {logo && design.logoPosition === "top" && (
+          <div style={{ marginBottom: s(8) }}>
+            <MenuLogo src={logo} size={design.logoSize} />
+          </div>
+        )}
+        <div style={{ fontSize: s(26), fontWeight: 300, lineHeight: s(34.5), letterSpacing: "0.01em", color: SOFT_INK, textTransform: "uppercase" }}>
           {welcomeText || (interactive ? <Placeholder>Welcome line</Placeholder> : null)}
         </div>
-        <div style={{ fontSize: "24pt", fontWeight: 500, lineHeight: "34.5pt", letterSpacing: "0.01em", textTransform: "uppercase" }}>
-          {hostName || (interactive ? <Placeholder>Client name</Placeholder> : null)}
-        </div>
-        <div style={{ fontSize: "12pt", fontWeight: 400, marginTop: "9pt", color: SOFT_INK }}>
+        {logo && design.logoPosition === "name" ? (
+          <div style={{ marginTop: s(6), marginBottom: s(2) }}>
+            <MenuLogo src={logo} size={design.logoSize} />
+          </div>
+        ) : (
+          <div style={{ fontSize: s(24), fontWeight: 500, lineHeight: s(34.5), letterSpacing: "0.01em", textTransform: "uppercase" }}>
+            {hostName || (interactive ? <Placeholder>Client name</Placeholder> : null)}
+          </div>
+        )}
+        <div style={{ fontSize: s(12), fontWeight: 400, marginTop: s(9), color: SOFT_INK }}>
           {dateLabel || (interactive ? <Placeholder>Event date</Placeholder> : null)}
         </div>
       </Clickable>
 
       <Clickable
-        style={{ marginTop: "10.75pt" }}
+        style={{ marginTop: s(10.75) }}
         active={selection?.type === "design"}
         onClick={interactive ? () => interactive.onSelect({ type: "design" }) : undefined}
       >
@@ -109,12 +156,12 @@ function MenuCard({ welcomeText, hostName, dateLabel, sections, design, interact
         return (
           <div key={`${section.sectionId ?? "custom"}-${sectionIndex}`}>
             {showCourseDivider && (
-              <div style={{ marginTop: "11pt" }}>
+              <div style={{ marginTop: s(11) }}>
                 <CourseDivider style={design.courseDivider} />
               </div>
             )}
             <Clickable
-              style={{ marginTop: index === 0 ? "16.75pt" : showCourseDivider ? "8pt" : "16pt" }}
+              style={{ marginTop: index === 0 ? s(16.75) : showCourseDivider ? s(8) : s(16) }}
               active={selection?.type === "section" && selection.index === sectionIndex}
               onClick={
                 interactive
@@ -122,24 +169,24 @@ function MenuCard({ welcomeText, hostName, dateLabel, sections, design, interact
                   : undefined
               }
             >
-              <div style={{ fontSize: "20pt", fontWeight: 300, lineHeight: "26.5pt", color: SOFT_INK, textTransform: "uppercase" }}>
+              <div style={{ fontSize: s(20), fontWeight: 300, lineHeight: s(26.5), color: SOFT_INK, textTransform: "uppercase" }}>
                 {section.name}
               </div>
 
               {section.dishes.length === 0 && interactive && (
-                <div style={{ fontSize: "11pt", marginTop: "6pt" }}>
+                <div style={{ fontSize: s(11), marginTop: s(6) }}>
                   <Placeholder>Click to add dishes</Placeholder>
                 </div>
               )}
 
               {section.dishes.map((dish, dishIndex) => (
-                <div key={`${dish.dishId ?? dish.name}-${dishIndex}`} style={{ marginTop: dishIndex === 0 ? "9pt" : "13pt" }}>
-                  <div style={{ fontSize: "16pt", fontWeight: 500, lineHeight: "21.25pt" }}>{dish.name}</div>
+                <div key={`${dish.dishId ?? dish.name}-${dishIndex}`} style={{ marginTop: dishIndex === 0 ? s(9) : s(13) }}>
+                  <div style={{ fontSize: s(16), fontWeight: 500, lineHeight: s(21.25) }}>{dish.name}</div>
                   {dish.description
                     .split("\n")
                     .filter((line) => line.trim())
                     .map((line, i) => (
-                      <div key={i} style={{ fontSize: "11.75pt", fontWeight: 400, lineHeight: "17pt", color: SOFT_INK }}>
+                      <div key={i} style={{ fontSize: s(11.75), fontWeight: 400, lineHeight: s(17), color: SOFT_INK }}>
                         {line.trim()}
                       </div>
                     ))}
@@ -187,6 +234,17 @@ function Clickable({
     >
       {children}
     </div>
+  );
+}
+
+function MenuLogo({ src, size }: { src: string; size: MenuDesign["logoSize"] }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- data URL; next/image adds nothing here
+    <img
+      src={src}
+      alt="Group logo"
+      style={{ display: "block", height: LOGO_HEIGHTS[size], maxWidth: "3.6in", objectFit: "contain", marginInline: "auto" }}
+    />
   );
 }
 

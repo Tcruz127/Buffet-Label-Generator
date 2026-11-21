@@ -31,6 +31,7 @@ export default async function MenuBuilderPage({ params }: { params: Promise<{ id
         welcomeText: menu.welcomeText,
         hostName: menu.hostName,
         eventDate: menu.eventDate,
+        logoData: menu.logoData,
         content: parseMenuContent(menu.content),
       }}
       packageId={menu.packageId}

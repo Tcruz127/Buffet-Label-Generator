@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import MenuSheet, { BorderFrame, CourseDivider, HeaderDivider, type MenuSelection } from "../MenuSheet";
-import { createDish, createSection, duplicateMenu, saveMenu } from "../actions";
+import MenuSheet, {
+  BorderFrame,
+  CourseDivider,
+  HeaderDivider,
+  MENU_FONT_CLASSES,
+  type MenuSelection,
+} from "../MenuSheet";
+import { createDish, createSection, duplicateMenu, saveMenu, setMenuLogo } from "../actions";
 import {
   formatMenuDate,
   type LibrarySection,
@@ -19,6 +25,7 @@ type MenuBuilderProps = {
     welcomeText: string;
     hostName: string;
     eventDate: string | null;
+    logoData: string | null;
     content: MenuContent;
   };
   packageId: string | null;
@@ -37,6 +44,7 @@ export default function MenuBuilder({
   const [welcomeText, setWelcomeText] = useState(menu.welcomeText);
   const [hostName, setHostName] = useState(menu.hostName);
   const [eventDate, setEventDate] = useState(menu.eventDate ?? "");
+  const [logo, setLogo] = useState<string | null>(menu.logoData);
   const [sections, setSections] = useState<MenuSectionEntry[]>(menu.content.sections);
   const [design, setDesign] = useState<MenuDesign>(menu.content.design);
   const [library, setLibrary] = useState(initialLibrary);
@@ -179,6 +187,7 @@ export default function MenuBuilder({
                 dateLabel={dateLabel}
                 sections={sections}
                 design={design}
+                logo={logo}
                 interactive={{ selection, onSelect: setSelection }}
               />
             </ScaledSheet>
@@ -195,7 +204,15 @@ export default function MenuBuilder({
                   onHostName={setHostName}
                   onEventDate={setEventDate}
                   onDone={() => setSelection(null)}
-                />
+                >
+                  <LogoControls
+                    menuId={menu.id}
+                    logo={logo}
+                    design={design}
+                    onLogo={setLogo}
+                    onDesign={setDesign}
+                  />
+                </HeaderPanel>
               )}
 
               {selection?.type === "design" && (
@@ -247,6 +264,7 @@ export default function MenuBuilder({
           dateLabel={dateLabel}
           sections={sections}
           design={design}
+          logo={logo}
         />
       </div>
     </main>
@@ -313,6 +331,23 @@ function PanelTitle({ title, onDone }: { title: string; onDone?: () => void }) {
   );
 }
 
+const FONT_OPTIONS: { value: MenuDesign["font"]; label: string }[] = [
+  { value: "montserrat", label: "Montserrat" },
+  { value: "raleway", label: "Raleway" },
+  { value: "lato", label: "Lato" },
+  { value: "playfair", label: "Playfair" },
+  { value: "cormorant", label: "Cormorant" },
+  { value: "garamond", label: "Garamond" },
+];
+
+const TEXT_SCALE_OPTIONS: { value: MenuDesign["textScale"]; label: string }[] = [
+  { value: 0.85, label: "XS" },
+  { value: 0.92, label: "S" },
+  { value: 1, label: "M" },
+  { value: 1.08, label: "L" },
+  { value: 1.16, label: "XL" },
+];
+
 const DIVIDER_OPTIONS: { value: MenuDesign["divider"]; label: string }[] = [
   { value: "classic", label: "Classic" },
   { value: "line", label: "Single line" },
@@ -352,6 +387,32 @@ function DesignPanel({
   return (
     <div>
       <PanelTitle title="Design" onDone={onDone} />
+
+      <div className={labelClass}>Font</div>
+      <div className="mb-5 grid grid-cols-3 gap-2">
+        {FONT_OPTIONS.map((o) => (
+          <OptionTile key={o.value} label={o.label} active={design.font === o.value} onClick={() => set("font", o.value)}>
+            <span className={`${MENU_FONT_CLASSES[o.value]} text-2xl text-slate-700`}>Aa</span>
+          </OptionTile>
+        ))}
+      </div>
+
+      <div className={labelClass}>Text size</div>
+      <div className="mb-5 flex gap-1 rounded-xl bg-slate-100 p-1">
+        {TEXT_SCALE_OPTIONS.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={design.textScale === o.value}
+            onClick={() => set("textScale", o.value)}
+            className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-semibold transition ${
+              design.textScale === o.value ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
 
       <div className={labelClass}>Divider under heading</div>
       <div className="mb-5 grid grid-cols-2 gap-2">
@@ -427,6 +488,7 @@ function HeaderPanel(props: {
   onHostName: (v: string) => void;
   onEventDate: (v: string) => void;
   onDone: () => void;
+  children?: React.ReactNode;
 }) {
   return (
     <div>
@@ -463,7 +525,168 @@ function HeaderPanel(props: {
             onChange={(e) => props.onEventDate(e.target.value)}
           />
         </div>
+        {props.children}
       </div>
+    </div>
+  );
+}
+
+const LOGO_MAX_PIXELS = 1200;
+const LOGO_MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+
+/** Downscales any browser-readable image to a PNG data URL (keeps transparency). */
+async function imageFileToPngDataUrl(file: File): Promise<string> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("unreadable"));
+      image.src = url;
+    });
+    const width = img.naturalWidth || LOGO_MAX_PIXELS;
+    const height = img.naturalHeight || LOGO_MAX_PIXELS;
+    const scale = Math.min(1, LOGO_MAX_PIXELS / Math.max(width, height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/png");
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+const LOGO_POSITION_OPTIONS: { value: MenuDesign["logoPosition"]; label: string }[] = [
+  { value: "top", label: "Above heading" },
+  { value: "name", label: "Replace name" },
+  { value: "bottom", label: "Bottom" },
+];
+
+const LOGO_SIZE_OPTIONS: { value: MenuDesign["logoSize"]; label: string }[] = [
+  { value: "small", label: "S" },
+  { value: "medium", label: "M" },
+  { value: "large", label: "L" },
+];
+
+function LogoControls({
+  menuId,
+  logo,
+  design,
+  onLogo,
+  onDesign,
+}: {
+  menuId: string;
+  logo: string | null;
+  design: MenuDesign;
+  onLogo: (logo: string | null) => void;
+  onDesign: (design: MenuDesign) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState("");
+  const [isSaving, startSaving] = useTransition();
+
+  const saveLogo = (next: string | null) =>
+    startSaving(async () => {
+      try {
+        await setMenuLogo(menuId, next);
+        onLogo(next);
+      } catch {
+        setError("Couldn't save the logo. Please try again.");
+      }
+    });
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file (PNG, JPG or SVG).");
+      return;
+    }
+    if (file.size > LOGO_MAX_UPLOAD_BYTES) {
+      setError("That image is over 15 MB. Please use a smaller file.");
+      return;
+    }
+    try {
+      saveLogo(await imageFileToPngDataUrl(file));
+    } catch {
+      setError("That image couldn't be read. Try a PNG or JPG.");
+    }
+  };
+
+  const segment = (active: boolean) =>
+    `flex-1 rounded-lg px-2 py-1.5 text-xs font-semibold transition ${
+      active ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+    }`;
+
+  return (
+    <div className="border-t border-slate-100 pt-4">
+      <div className={labelClass}>Group logo</div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+        className="hidden"
+        onChange={(e) => {
+          void handleFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+
+      {logo ? (
+        <>
+          <div className="mb-3 flex items-center gap-3 rounded-xl border border-slate-200 p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element -- data URL preview */}
+            <img src={logo} alt="Group logo" className="h-12 w-20 object-contain" />
+            <div className="flex flex-1 justify-end gap-1">
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => fileInputRef.current?.click()}
+                className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Replace
+              </button>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => saveLogo(null)}
+                className="rounded-full px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-1 text-xs font-medium text-slate-500">Position</div>
+          <div className="mb-3 flex gap-1 rounded-xl bg-slate-100 p-1">
+            {LOGO_POSITION_OPTIONS.map((o) => (
+              <button key={o.value} type="button" className={segment(design.logoPosition === o.value)} onClick={() => onDesign({ ...design, logoPosition: o.value })}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="mb-1 text-xs font-medium text-slate-500">Size</div>
+          <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
+            {LOGO_SIZE_OPTIONS.map((o) => (
+              <button key={o.value} type="button" className={segment(design.logoSize === o.value)} onClick={() => onDesign({ ...design, logoSize: o.value })}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <button
+          type="button"
+          disabled={isSaving}
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full rounded-xl border border-dashed border-slate-300 px-3 py-3 text-sm font-semibold text-slate-600 transition hover:border-cyan-400 hover:text-cyan-700 disabled:opacity-50"
+        >
+          {isSaving ? "Uploading…" : "+ Upload logo"}
+        </button>
+      )}
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
   );
 }

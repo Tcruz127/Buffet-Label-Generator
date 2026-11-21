@@ -130,11 +130,32 @@ export async function duplicateMenu(menuId: string) {
       welcomeText: menu.welcomeText,
       hostName: menu.hostName,
       eventDate: menu.eventDate,
+      logoData: menu.logoData,
       content: parseMenuContent(menu.content),
     },
   });
 
   redirect(`/app/menus/${copy.id}`);
+}
+
+// Logos arrive already downscaled to PNG in the browser; this cap is a safety net.
+const MAX_LOGO_DATA_URL_LENGTH = 3_000_000;
+
+/** Sets (or with null, removes) the menu's group logo. Saved apart from autosave so the image isn't resent on every edit. */
+export async function setMenuLogo(menuId: string, logoData: string | null) {
+  const ws = await requireProWorkspace();
+  await requireMenu(ws, menuId);
+
+  if (logoData !== null) {
+    if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(logoData)) {
+      throw new Error("Logo must be a PNG, JPEG or WebP image.");
+    }
+    if (logoData.length > MAX_LOGO_DATA_URL_LENGTH) {
+      throw new Error("Logo image is too large.");
+    }
+  }
+
+  await prisma.platedMenu.update({ where: { id: menuId }, data: { logoData } });
 }
 
 export async function deleteMenu(menuId: string) {
