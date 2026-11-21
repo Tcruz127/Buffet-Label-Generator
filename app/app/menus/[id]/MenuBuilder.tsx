@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import MenuSheet, { type MenuSelection } from "../MenuSheet";
+import MenuSheet, { BorderFrame, CourseDivider, HeaderDivider, type MenuSelection } from "../MenuSheet";
 import { createDish, createSection, duplicateMenu, saveMenu } from "../actions";
 import {
   formatMenuDate,
   type LibrarySection,
   type MenuContent,
+  type MenuDesign,
   type MenuDishEntry,
   type MenuSectionEntry,
 } from "@/lib/menuContent";
@@ -37,6 +38,7 @@ export default function MenuBuilder({
   const [hostName, setHostName] = useState(menu.hostName);
   const [eventDate, setEventDate] = useState(menu.eventDate ?? "");
   const [sections, setSections] = useState<MenuSectionEntry[]>(menu.content.sections);
+  const [design, setDesign] = useState<MenuDesign>(menu.content.design);
   const [library, setLibrary] = useState(initialLibrary);
   const [selection, setSelection] = useState<MenuSelection>(
     menu.hostName ? null : { type: "header" }
@@ -59,7 +61,7 @@ export default function MenuBuilder({
           welcomeText,
           hostName,
           eventDate: eventDate || null,
-          content: { sections },
+          content: { sections, design },
         });
         setSaveStatus("saved");
       } catch (error) {
@@ -68,7 +70,7 @@ export default function MenuBuilder({
       }
     }, 800);
     return () => clearTimeout(timer);
-  }, [menu.id, welcomeText, hostName, eventDate, sections]);
+  }, [menu.id, welcomeText, hostName, eventDate, sections, design]);
 
   const dateLabel = formatMenuDate(eventDate);
   const activeSection =
@@ -99,7 +101,7 @@ export default function MenuBuilder({
   };
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(to_bottom,#f8fbff_0%,#f6f8fc_45%,#ffffff_100%)] text-slate-900">
+    <main className="min-h-screen print:min-h-0 print:bg-none print:bg-white bg-[linear-gradient(to_bottom,#f8fbff_0%,#f6f8fc_45%,#ffffff_100%)] text-slate-900">
       <style>{`
         @media print {
           @page { size: letter landscape; margin: 0; }
@@ -137,6 +139,17 @@ export default function MenuBuilder({
               </Link>
               <button
                 type="button"
+                onClick={() => setSelection({ type: "design" })}
+                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                  selection?.type === "design"
+                    ? "border-cyan-300 bg-cyan-50 text-cyan-800"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                Design
+              </button>
+              <button
+                type="button"
                 disabled={isDuplicating}
                 onClick={() => startDuplicate(() => duplicateMenu(menu.id))}
                 className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
@@ -165,6 +178,7 @@ export default function MenuBuilder({
                 hostName={hostName}
                 dateLabel={dateLabel}
                 sections={sections}
+                design={design}
                 interactive={{ selection, onSelect: setSelection }}
               />
             </ScaledSheet>
@@ -182,6 +196,10 @@ export default function MenuBuilder({
                   onEventDate={setEventDate}
                   onDone={() => setSelection(null)}
                 />
+              )}
+
+              {selection?.type === "design" && (
+                <DesignPanel design={design} onChange={setDesign} onDone={() => setSelection(null)} />
               )}
 
               {selection?.type === "section" && activeSection && (
@@ -221,12 +239,14 @@ export default function MenuBuilder({
       </div>
 
       {/* Print-only page */}
-      <div className="hidden print:block">
+      {/* Slightly shorter than the page so rounding never spills onto a blank second page. */}
+      <div className="hidden print:block print:h-[8.45in] print:overflow-hidden">
         <MenuSheet
           welcomeText={welcomeText}
           hostName={hostName}
           dateLabel={dateLabel}
           sections={sections}
+          design={design}
         />
       </div>
     </main>
@@ -291,6 +311,112 @@ function PanelTitle({ title, onDone }: { title: string; onDone?: () => void }) {
       )}
     </div>
   );
+}
+
+const DIVIDER_OPTIONS: { value: MenuDesign["divider"]; label: string }[] = [
+  { value: "classic", label: "Classic" },
+  { value: "line", label: "Single line" },
+  { value: "double", label: "Double line" },
+  { value: "diamond", label: "Diamond" },
+  { value: "none", label: "None" },
+];
+
+const COURSE_DIVIDER_OPTIONS: { value: MenuDesign["courseDivider"]; label: string }[] = [
+  { value: "none", label: "None" },
+  { value: "short", label: "Short line" },
+  { value: "dots", label: "Dots" },
+  { value: "diamond", label: "Diamond" },
+];
+
+const BORDER_OPTIONS: { value: MenuDesign["border"]; label: string }[] = [
+  { value: "none", label: "None" },
+  { value: "thin", label: "Thin" },
+  { value: "double", label: "Double" },
+  { value: "inset", label: "Inset" },
+  { value: "rounded", label: "Rounded" },
+  { value: "corners", label: "Corners" },
+];
+
+function DesignPanel({
+  design,
+  onChange,
+  onDone,
+}: {
+  design: MenuDesign;
+  onChange: (design: MenuDesign) => void;
+  onDone: () => void;
+}) {
+  const set = <K extends keyof MenuDesign>(key: K, value: MenuDesign[K]) =>
+    onChange({ ...design, [key]: value });
+
+  return (
+    <div>
+      <PanelTitle title="Design" onDone={onDone} />
+
+      <div className={labelClass}>Divider under heading</div>
+      <div className="mb-5 grid grid-cols-2 gap-2">
+        {DIVIDER_OPTIONS.map((o) => (
+          <OptionTile key={o.value} label={o.label} active={design.divider === o.value} onClick={() => set("divider", o.value)}>
+            {o.value === "none" ? <NoneMark /> : <HeaderDivider style={o.value} width="130px" />}
+          </OptionTile>
+        ))}
+      </div>
+
+      <div className={labelClass}>Between courses</div>
+      <div className="mb-5 grid grid-cols-2 gap-2">
+        {COURSE_DIVIDER_OPTIONS.map((o) => (
+          <OptionTile key={o.value} label={o.label} active={design.courseDivider === o.value} onClick={() => set("courseDivider", o.value)}>
+            {o.value === "none" ? <NoneMark /> : <CourseDivider style={o.value} width="80px" />}
+          </OptionTile>
+        ))}
+      </div>
+
+      <div className={labelClass}>Border</div>
+      <div className="grid grid-cols-3 gap-2">
+        {BORDER_OPTIONS.map((o) => (
+          <OptionTile key={o.value} label={o.label} active={design.border === o.value} onClick={() => set("border", o.value)}>
+            {o.value === "none" ? (
+              <NoneMark />
+            ) : (
+              <div className="relative mx-auto h-12 w-9 bg-white">
+                <BorderFrame border={o.value} scale={0.5} />
+              </div>
+            )}
+          </OptionTile>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OptionTile({
+  label,
+  active,
+  onClick,
+  children,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex flex-col items-center gap-2 rounded-xl border px-2 py-3 transition ${
+        active ? "border-cyan-400 bg-cyan-50 ring-2 ring-cyan-100" : "border-slate-200 bg-white hover:border-cyan-300"
+      }`}
+    >
+      <div className="flex h-12 w-full items-center justify-center">{children}</div>
+      <span className={`text-xs font-semibold ${active ? "text-cyan-800" : "text-slate-600"}`}>{label}</span>
+    </button>
+  );
+}
+
+function NoneMark() {
+  return <span className="text-sm font-medium text-slate-300">None</span>;
 }
 
 function HeaderPanel(props: {
@@ -611,6 +737,11 @@ function OverviewPanel({
         <li>
           <button type="button" onClick={() => onSelect({ type: "header" })} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-left text-sm font-semibold text-slate-700 transition hover:border-cyan-300 hover:bg-cyan-50/40">
             Heading — welcome, name & date
+          </button>
+        </li>
+        <li>
+          <button type="button" onClick={() => onSelect({ type: "design" })} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-left text-sm font-semibold text-slate-700 transition hover:border-cyan-300 hover:bg-cyan-50/40">
+            Design — dividers &amp; border
           </button>
         </li>
         {sections.map((section, i) => (

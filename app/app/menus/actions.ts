@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import {
+  DEFAULT_MENU_DESIGN,
   getLibrary,
   getMenuWorkspace,
   parseMenuContent,
@@ -69,6 +70,7 @@ export async function createMenu(formData: FormData) {
       : null;
 
   const content: MenuContent = {
+    design: DEFAULT_MENU_DESIGN,
     sections: sectionsForPackage(library, packageId).map((s) => ({
       sectionId: s.id,
       name: s.name,
