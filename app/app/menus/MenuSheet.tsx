@@ -177,10 +177,11 @@ function Clickable({
           onClick();
         }
       }}
-      style={{ ...style, borderRadius: "6pt" }}
+      // Shrink-wrap and centre so the outline hugs the text rather than the full column.
+      style={{ ...style, width: "fit-content", marginInline: "auto", paddingInline: "6pt", borderRadius: "4pt" }}
       // Use bare `outline` (1px) only inside hover/active: in Tailwind v4, width
       // utilities like `outline-2` also switch the outline on permanently.
-      className={`cursor-pointer outline-offset-4 transition-colors ${
+      className={`cursor-pointer outline-offset-2 transition-colors ${
         active ? "bg-cyan-50 outline outline-cyan-400/70" : "hover:outline hover:outline-slate-400/50"
       }`}
     >
