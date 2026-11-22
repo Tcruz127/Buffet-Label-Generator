@@ -60,6 +60,24 @@ export const PRINT_TEMPLATES: PrintTemplate[] = [
     marginSide: 0,
     labelsPerSheet: 1,
   },
+  {
+    // Avery 95324 / 5302 small tent cards: four 3.5" × 4" cards per letter sheet,
+    // each folding to 3.5" × 2". You design the 3.5" × 2" face; printing adds an
+    // upside-down copy on the top half so the card reads from both sides.
+    id: "95324",
+    name: "Tent Card",
+    averyProduct: "Avery 95324",
+    description: '2" × 3.5" folded tent cards — 4 per sheet. Prints front and back so it reads from both sides of the table.',
+    columns: 2,
+    rows: 2,
+    labelWidth: 3.5,
+    labelHeight: 2,
+    columnGap: 0,
+    rowGap: 0,
+    marginTop: 1.5,
+    marginSide: 0.75,
+    labelsPerSheet: 4,
+  },
 ];
 
 export const DEFAULT_PRINT_TEMPLATE = PRINT_TEMPLATES[0];

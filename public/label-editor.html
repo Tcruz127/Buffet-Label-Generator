@@ -1294,6 +1294,14 @@ const EDITOR_PRINT_TEMPLATES = {
             printColumnGap: "0in", marginTop: "0", marginSide: "0",
             pageWidth: "3.5in", pageHeight: "2in",
             gridWidth: "3.5in", gridHeight: "2in", evenLabelOffset: "" },
+  // Avery 95324 / 5302 tent cards: 2 x 2 cards of 3.5" x 4" (unfolded), centred on
+  // the letter sheet. Each label is the 3.5" x 2" front face; at print time every
+  // card becomes 4" tall with the face on the bottom half and an upside-down copy
+  // on the top half (see tentCard in printSheets).
+  "95324": { columns: 2, rows: 2, labelWidth: "3.5in", labelHeight: "2in", columnGap: "0.2in",
+            printColumnGap: "0in", marginTop: "1.5in", marginSide: "0.75in",
+            pageWidth: "8.5in", pageHeight: "11in",
+            gridWidth: "7in", gridHeight: "8in", evenLabelOffset: "", tentCard: true, cardHeight: "4in" },
 };
 
 function applyGridStyles(tmpl) {
@@ -2362,6 +2370,22 @@ function openPrintWindow() {
 
   ${_pt.evenLabelOffset ? ".label:nth-child(even) { position: relative !important; left: " + _pt.evenLabelOffset + " !important; }" : ""}
 
+  ${_pt.tentCard ? `
+  .labels { grid-template-rows: repeat(${_pt.rows}, ${_pt.cardHeight}) !important; }
+  .label {
+    height: ${_pt.cardHeight} !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .label > .label-content {
+    flex: 0 0 ${_pt.labelHeight} !important;
+    height: ${_pt.labelHeight} !important;
+  }
+  /* Back face: rotated so it reads correctly from the other side once folded. */
+  .label > .label-content.tent-back { transform: rotate(180deg) !important; }
+  ` : ""}
+
   .label-content {
     width: 100% !important;
     height: 100% !important;
@@ -2436,6 +2460,16 @@ function openPrintWindow() {
       el.style.boxShadow = "none";
       el.style.outline = "none";
     });
+
+    if (${_pt.tentCard ? "true" : "false"}) {
+      document.querySelectorAll(".label").forEach((label) => {
+        const front = label.querySelector(".label-content");
+        if (!front) return;
+        const back = front.cloneNode(true);
+        back.classList.add("tent-back");
+        label.insertBefore(back, front);
+      });
+    }
 
     document.querySelectorAll(".description-line").forEach((el) => {
       const text = (el.textContent || "").trim();
