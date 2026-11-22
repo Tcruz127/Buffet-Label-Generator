@@ -178,6 +178,7 @@ export default function HomePage() {
             <a href="#menus" className="rounded-full px-4 py-2 transition hover:bg-slate-100 hover:text-slate-900">Plated menus</a>
             <a href="#pricing" className="rounded-full px-4 py-2 transition hover:bg-slate-100 hover:text-slate-900">Pricing</a>
             <a href="#faq" className="rounded-full px-4 py-2 transition hover:bg-slate-100 hover:text-slate-900">FAQ</a>
+            <Link href="/shop" className="rounded-full px-4 py-2 transition hover:bg-slate-100 hover:text-slate-900">Shop</Link>
           </nav>
           <div className="flex items-center gap-2">
             <Link href="/login" className="whitespace-nowrap rounded-full px-3 sm:px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
@@ -562,6 +563,7 @@ export default function HomePage() {
                 <Link href="/signup" className="transition hover:text-slate-900">Get started free</Link>
                 <Link href="/login" className="transition hover:text-slate-900">Sign in</Link>
                 <a href="#pricing" className="transition hover:text-slate-900">Pricing</a>
+                <Link href="/shop" className="transition hover:text-slate-900">Shop supplies</Link>
               </div>
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Support</p>
