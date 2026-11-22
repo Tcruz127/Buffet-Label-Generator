@@ -65,7 +65,7 @@ export default async function SignsPage() {
                     <span className="text-xs text-slate-400">
                       Updated {set.updatedAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                     </span>
-                    <SignSetRowActions signSetId={set.id} />
+                    <SignSetRowActions signSetId={set.id} title={set.title} />
                   </div>
                 </li>
               );

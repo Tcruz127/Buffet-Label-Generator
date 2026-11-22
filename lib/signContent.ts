@@ -91,6 +91,14 @@ export function sortRooms(rooms: string[]): string[] {
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
 }
 
+/**
+ * The name a sign set gets from its group name. A set keeps following its group
+ * name until someone renames it (i.e. while its title still equals this).
+ */
+export function autoSignSetTitle(lines: string[]) {
+  return lines.find((l) => l.trim())?.trim().slice(0, 120) || "Untitled Signs";
+}
+
 export function newSignId() {
   return Math.random().toString(36).slice(2, 10);
 }

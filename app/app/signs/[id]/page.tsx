@@ -25,6 +25,7 @@ export default async function SignBuilderPage({ params }: { params: Promise<{ id
     <SignBuilder
       signSet={{
         id: signSet.id,
+        title: signSet.title,
         lines: parseSignLines(signSet.lines),
         room: signSet.room,
         signs: parseSigns(signSet.signs),

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import {
   DEFAULT_SIGN_DESIGN,
+  autoSignSetTitle,
   getSignageWorkspace,
   newSignId,
   parseSignDesign,
@@ -59,19 +60,31 @@ export async function saveSignSet(
   data: { lines: string[]; room: string; signs: SignEntry[]; design: SignDesign }
 ) {
   const ws = await requireSignageWorkspace();
-  await requireSignSet(ws, signSetId);
+  const existing = await requireSignSet(ws, signSetId);
 
   const lines = parseSignLines(data.lines);
+  // Follow the group name only while the set hasn't been renamed.
+  const isAutoTitle = existing.title === autoSignSetTitle(parseSignLines(existing.lines));
   await prisma.signSet.update({
     where: { id: signSetId },
     data: {
-      title: lines.find((l) => l.trim())?.trim().slice(0, 120) || "Untitled Signs",
+      title: isAutoTitle ? autoSignSetTitle(lines) : existing.title,
       lines,
       room: typeof data.room === "string" ? data.room.trim().slice(0, 80) : "",
       signs: parseSigns(data.signs),
       design: parseSignDesign(data.design),
     },
   });
+}
+
+/** Renames a sign set; an empty name goes back to following the group name. */
+export async function renameSignSet(signSetId: string, name: string) {
+  const ws = await requireSignageWorkspace();
+  const existing = await requireSignSet(ws, signSetId);
+  const title = (typeof name === "string" ? name.trim().slice(0, 120) : "") || autoSignSetTitle(parseSignLines(existing.lines));
+  await prisma.signSet.update({ where: { id: signSetId }, data: { title } });
+  revalidatePath("/app/signs");
+  return title;
 }
 
 // Logos arrive already downscaled to PNG in the browser; this cap is a safety net.

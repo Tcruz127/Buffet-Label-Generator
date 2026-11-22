@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import SignPage, { ArrowGlyph, ScaledSign, SIGN_FONT_FACES } from "../SignPage";
-import { addSignRoom, duplicateSignSet, removeSignRoom, saveSignSet, setSignLogo } from "../actions";
+import { addSignRoom, duplicateSignSet, removeSignRoom, renameSignSet, saveSignSet, setSignLogo } from "../actions";
 import { imageFileToPngDataUrl, logoFileError } from "@/lib/imageFile";
 import {
   ARROWS,
@@ -13,6 +13,7 @@ import {
   SIGN_FONTS,
   SIGN_LINE_HEIGHT,
   SIGN_SPACING,
+  autoSignSetTitle,
   newSignId,
   type Arrow,
   type SignDesign,
@@ -23,6 +24,7 @@ import {
 type SignBuilderProps = {
   signSet: {
     id: string;
+    title: string;
     lines: string[];
     room: string;
     signs: SignEntry[];
@@ -58,6 +60,10 @@ const ADD_ORDER: Arrow[] = ["left", "right", "up", "down", "up-left", "up-right"
 
 export default function SignBuilder({ signSet, rooms: initialRooms }: SignBuilderProps) {
   const [lines, setLines] = useState(signSet.lines);
+  // null = name follows the group name; otherwise the custom name it was renamed to.
+  const [customTitle, setCustomTitle] = useState<string | null>(
+    signSet.title === autoSignSetTitle(signSet.lines) ? null : signSet.title
+  );
   const [room, setRoom] = useState(signSet.room);
   const [rooms, setRooms] = useState(initialRooms);
   const [signs, setSigns] = useState(signSet.signs);
@@ -135,7 +141,13 @@ export default function SignBuilder({ signSet, rooms: initialRooms }: SignBuilde
               <Link href="/app/signs" className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
                 ← Signs
               </Link>
-              <h1 className="truncate text-lg font-bold text-slate-950">{lines.find((l) => l.trim()) || "Untitled Signs"}</h1>
+              <EditableTitle
+                title={customTitle ?? autoSignSetTitle(lines)}
+                onRename={async (name) => {
+                  const saved = await renameSignSet(signSet.id, name);
+                  setCustomTitle(name.trim() ? saved : null);
+                }}
+              />
               <SaveBadge status={saveStatus} />
             </div>
             <div className="flex items-center gap-2">
@@ -697,6 +709,64 @@ function RoomPanel({
       </button>
       <div className="mt-4 border-t border-slate-100 pt-4">{children}</div>
     </Panel>
+  );
+}
+
+/** Sign set name in the header; click to rename. Clearing it goes back to the group name. */
+function EditableTitle({ title, onRename }: { title: string; onRename: (name: string) => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(title);
+  const [isSaving, startSaving] = useTransition();
+
+  const commit = () => {
+    setEditing(false);
+    if (draft.trim() === title) return;
+    startSaving(async () => {
+      try {
+        await onRename(draft);
+      } catch {
+        setDraft(title);
+      }
+    });
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={draft}
+        maxLength={120}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") {
+            setDraft(title);
+            setEditing(false);
+          }
+        }}
+        placeholder="Name this sign set"
+        aria-label="Sign set name"
+        className="w-72 rounded-lg border border-cyan-300 px-2 py-1 text-lg font-bold text-slate-950 outline-none ring-2 ring-cyan-100"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setDraft(title);
+        setEditing(true);
+      }}
+      title="Rename sign set"
+      className="group flex min-w-0 items-center gap-1.5 rounded-lg px-1 py-0.5 text-left transition hover:bg-slate-100"
+    >
+      <h1 className="truncate text-lg font-bold text-slate-950">{title}</h1>
+      <span className="text-sm text-slate-400 transition group-hover:text-slate-600" aria-hidden="true">
+        {isSaving ? "…" : "✎"}
+      </span>
+    </button>
   );
 }
 
