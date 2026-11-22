@@ -10,6 +10,7 @@ import SheetActionsMenu from "./SheetActionsMenu";
 import CreateOrgButton from "./CreateOrgButton";
 import FolderBar from "./FolderBar";
 import { isOrgProUser } from "@/lib/plan";
+import { hasSignage } from "@/lib/signs";
 import { resendVerificationEmail } from "./resendVerification";
 import OnboardingModal from "./OnboardingModal";
 import WhatsNewModal from "./WhatsNewModal";
@@ -115,6 +116,7 @@ export default async function AppDashboardPage({
   const orgMembership = memberships[0] ?? null;
   const org = orgMembership?.organization ?? null;
   const isOrgOwner = orgMembership?.role === "owner";
+  const signageEnabled = await hasSignage(org?.id);
 
   // Fetch folders scoped to org or user
   const folders: { id: string; name: string }[] = await db.sheetFolder.findMany({
@@ -258,6 +260,14 @@ export default async function AppDashboardPage({
                     </span>
                   )}
                 </Link>
+                {signageEnabled && (
+                  <Link
+                    href="/app/signs"
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                  >
+                    Signage
+                  </Link>
+                )}
                 <QuickPrintButton />
               </div>
             </div>

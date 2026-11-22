@@ -10,6 +10,7 @@ import MenuSheet, {
   type MenuSelection,
 } from "../MenuSheet";
 import { createDish, createSection, duplicateMenu, saveMenu, setMenuLogo } from "../actions";
+import { imageFileToPngDataUrl, logoFileError } from "@/lib/imageFile";
 import {
   formatMenuDate,
   type LibrarySection,
@@ -531,32 +532,6 @@ function HeaderPanel(props: {
   );
 }
 
-const LOGO_MAX_PIXELS = 1200;
-const LOGO_MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
-
-/** Downscales any browser-readable image to a PNG data URL (keeps transparency). */
-async function imageFileToPngDataUrl(file: File): Promise<string> {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("unreadable"));
-      image.src = url;
-    });
-    const width = img.naturalWidth || LOGO_MAX_PIXELS;
-    const height = img.naturalHeight || LOGO_MAX_PIXELS;
-    const scale = Math.min(1, LOGO_MAX_PIXELS / Math.max(width, height));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(width * scale));
-    canvas.height = Math.max(1, Math.round(height * scale));
-    canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/png");
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
-
 const LOGO_POSITION_OPTIONS: { value: MenuDesign["logoPosition"]; label: string }[] = [
   { value: "top", label: "Above heading" },
   { value: "name", label: "Replace name" },
@@ -599,12 +574,9 @@ function LogoControls({
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     setError("");
-    if (!file.type.startsWith("image/")) {
-      setError("Please choose an image file (PNG, JPG or SVG).");
-      return;
-    }
-    if (file.size > LOGO_MAX_UPLOAD_BYTES) {
-      setError("That image is over 15 MB. Please use a smaller file.");
+    const fileError = logoFileError(file);
+    if (fileError) {
+      setError(fileError);
       return;
     }
     try {
